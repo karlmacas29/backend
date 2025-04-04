@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Api\PlantillaController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Middleware\EnsureTokenIsValid;
 use Illuminate\Http\Request;
