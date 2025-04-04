@@ -25,5 +25,4 @@ Route::post('/login', [AuthController::class, 'Token_Login']);
 
 Route::middleware([EnsureTokenIsValid::class])->group(function () {
     Route::post('/logout', [AuthController::class, 'Token_Logout']);
-    Route::get('/employees', [EmployeeController::class, 'index']);
 });
