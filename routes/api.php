@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\PlantillaController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AuthController;
@@ -9,6 +10,8 @@ use App\Http\Controllers\Api\RatersController;
 use App\Http\Controllers\Api\ViewActiveController;
 
 Route::get('/raters', [RatersController::class, 'index']);
+
+Route::get('/plantilla', [PlantillaController::class, 'index']);
 
 Route::get('/vw-Active', [ViewActiveController::class, 'getActiveCount']);
 

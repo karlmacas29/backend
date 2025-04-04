@@ -10,7 +10,7 @@ class RatersController extends Controller
 {
     public function index()
     {
-        // Fetch data from the existing 'Employees' table in SSMS
+        // Fetch data from the existing 'rater' table in SSMS
         $rater = DB::table('tblRater')->get();
 
         return response()->json($rater);
