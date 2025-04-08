@@ -51,12 +51,44 @@ class AuthController extends Controller
     public function Token_Login(Request $request)
     {
         // Attempt to authenticate the user with the provided username and password
-        if (!Auth::attempt($request->only('username', 'password'))) {
+        // First check if the username exists
+        // First check if username and password are provided
+        if (empty($request->username) || empty($request->password)) {
             return response([
-                'status' => false,
-                'message' => 'Invalid Credentials',
+            'status' => false,
+            'message' => 'Invalid Credentials',
+            'errors' => [
+                'username' => empty($request->username) ? ['Please enter username'] : [],
+                'password' => empty($request->password) ? ['Please enter password'] : []
+            ]
             ], 401);
         }
+
+        $user = User::where('username', $request->username)->first();
+        if (!$user) {
+            return response([
+            'status' => false,
+            'message' => 'Invalid Credentials',
+            'errors' => [
+            'username' => ['Username does not exist'],
+            'password' => ['Please enter password']
+            ]
+            ], 401);
+        }
+
+        // Then check if the password is correct
+        if (!Hash::check($request->password, $user->password)) {
+            return response([
+            'status' => false,
+            'message' => 'Invalid Credentials',
+            'errors' => [
+                'password' => ['Wrong password']
+            ]
+            ], 401);
+        }
+
+        // If both checks pass, authenticate the user
+        Auth::login($user);
 
         $user = Auth::user();
 

@@ -16,7 +16,13 @@ Route::get('/vw-Active', [ViewActiveController::class, 'getActiveCount']);
 
 //check user
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
-    return $request->user();
+    $user = $request->user();
+    if (!$user) {
+        return response()->json([
+            'message' => 'Token expired or invalid'
+        ], 401);
+    }
+    return $user;
 });
 
 Route::post('/registration', [AuthController::class, 'Token_Register']);
