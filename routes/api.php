@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ViewActiveController;
 Route::get('/raters', [RatersController::class, 'index']);
 
 Route::get('/plantilla', [PlantillaController::class, 'index']);
+Route::get('/plantillaData', [PlantillaController::class, 'vwActiveGet']);
 
 Route::get('/vw-Active', [ViewActiveController::class, 'getActiveCount']);
 
