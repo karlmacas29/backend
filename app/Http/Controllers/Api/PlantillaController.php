@@ -17,16 +17,7 @@ class PlantillaController extends Controller
     }
     public function vwActiveGet()
     {
-        $data = DB::table('vwplantillaStructure')
-            ->leftJoin('vwActive as office', function($join) {
-                $join->on('office.PMID', '=', 'vwplantillaStructure.officePMID')
-                    ->orOn('office.PMID', '=', 'vwplantillaStructure.office2PMID')
-                    ->orOn('office.PMID', '=', 'vwplantillaStructure.positionPMID')
-                    ->orOn('office.PMID', '=', 'vwplantillaStructure.groupPMID')
-                    ->orOn('office.PMID', '=', 'vwplantillaStructure.unitPMID')
-                    ->orOn('office.PMID', '=', 'vwplantillaStructure.sectionPMID')
-                    ->orOn('office.PMID', '=', 'vwplantillaStructure.divisionPMID');
-            })
+        $data = DB::table('vwActive')
             ->get();
         return response()->json($data);
     }
