@@ -11,7 +11,7 @@ use App\Http\Controllers\LogController;
 use App\Http\Controllers\RatersBatchController;
 
 Route::get('/raters', [RatersController::class, 'index']);
-// for CRUD api
+// for CRUD api Raters Batch
 Route::apiResource('/raters_batch', RatersBatchController::class);
 
 Route::get('/plantilla', [PlantillaController::class, 'index']);

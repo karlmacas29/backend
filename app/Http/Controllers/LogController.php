@@ -26,7 +26,7 @@ class LogController extends Controller
             'username' => $user->name,
             'actions' => $request->action, // Logged In or Logged Out
             'position' => $user->position,
-            'date_performed' => now(),
+            'date_performed' => now()->setTimezone('Asia/Manila'),
             'user_agent' => $request->header('User-Agent'),
             'ip_address' => $request->ip()
         ]);
