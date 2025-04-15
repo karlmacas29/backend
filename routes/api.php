@@ -13,9 +13,12 @@ use App\Http\Controllers\RatersBatchController;
 Route::get('/raters', [RatersController::class, 'index']);
 // for CRUD api Raters Batch
 Route::apiResource('/raters_batch', RatersBatchController::class);
-
+//plantilla
 Route::get('/plantilla', [PlantillaController::class, 'index']);
 Route::get('/plantillaData', [PlantillaController::class, 'vwActiveGet']);
+
+//active employee
+Route::post('/vw-Active/status', [ViewActiveController::class, 'getStatus']);
 
 Route::get('/vw-Active', [ViewActiveController::class, 'getActiveCount']);
 
