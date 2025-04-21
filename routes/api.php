@@ -15,6 +15,7 @@ Route::get('/raters', [RatersController::class, 'index']);
 Route::apiResource('/raters_batch', RatersBatchController::class);
 
 Route::get('/plantilla', [PlantillaController::class, 'index']);
+
 Route::get('/plantillaData', [PlantillaController::class, 'vwActiveGet']);
 
 Route::get('/vw-Active', [ViewActiveController::class, 'getActiveCount']);
