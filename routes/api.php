@@ -16,6 +16,7 @@ Route::get('/raters', [RatersController::class, 'index']);
 Route::apiResource('/raters_batch', RatersBatchController::class);
 //plantilla
 Route::get('/plantilla', [PlantillaController::class, 'index']);
+
 Route::get('/plantillaData', [PlantillaController::class, 'vwActiveGet']);
 
 //get PDS
