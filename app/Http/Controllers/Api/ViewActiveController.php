@@ -34,4 +34,9 @@ class ViewActiveController extends Controller
 
         return response()->json(['data' => $results]);
     }
+    public function allCountStatus()
+    {
+        $count = DB::select("SELECT COUNT(*) as total FROM vwActive")[0]->total;
+        return response()->json(['total' => $count]);
+    }
 }

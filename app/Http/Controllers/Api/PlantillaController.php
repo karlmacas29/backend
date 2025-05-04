@@ -23,15 +23,3 @@ class PlantillaController extends Controller
     }
 }
 
-// ->join('vwActive', 'vwActive.PMID', '=', 'vwplantillaStructure.office2PMID')
-//             ->join('vwActive', 'vwActive.PMID', '=', 'vwplantillaStructure.groupPMID')
-//             ->join('vwActive', 'vwActive.PMID', '=', 'vwplantillaStructure.sectionPMID')
-//             ->join('vwActive', 'vwActive.PMID', '=', 'vwplantillaStructure.unitPMID')
-//             ->join('vwActive', 'vwActive.PMID', '=', 'vwplantillaStructure.divisionPMID')
-//             ->select('vwActive.PMID', 'vwActive.Status', 'vwActive.Name2',
-//                 'vwplantillaStructure.PageNo', 'vwplantillaStructure.ItemNo',
-//                 'vwplantillaStructure.SG', 'vwplantillaStructure.position',
-//                 'vwplantillaStructure.office', 'vwplantillaStructure.office2',
-//                 'vwplantillaStructure.group', 'vwplantillaStructure.division',
-//                 'vwplantillaStructure.section', 'vwplantillaStructure.unit',
-//                 'vwplantillaStructure.Funded')

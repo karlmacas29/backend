@@ -26,7 +26,7 @@ Route::post('/xPDS', [xPDSController::class, 'getPersonalDataSheet']);
 Route::post('/vw-Active/status', [ViewActiveController::class, 'getStatus']);
 
 Route::get('/vw-Active', [ViewActiveController::class, 'getActiveCount']);
-
+Route::get('/vw-Active/count', [ViewActiveController::class, 'allCountStatus']);
 //check user
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     $user = $request->user();
