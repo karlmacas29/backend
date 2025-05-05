@@ -161,7 +161,7 @@ class AuthController extends Controller
     {
         try {
             $users = User::with('rspControl')
-                ->select('id', 'name', 'username', 'position', 'active', 'created_at')
+                ->select('id', 'name', 'username', 'position', 'active', 'created_at', 'updated_at')
                 ->orderBy('id', 'desc')
                 ->get();
 
