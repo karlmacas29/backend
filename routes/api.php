@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureTokenIsValid;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\RatersController;
 use App\Http\Controllers\Api\ViewActiveController;
+use App\Http\Controllers\DesignationQSController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\RatersBatchController;
 use App\Http\Controllers\xPDSController;
@@ -17,8 +18,8 @@ Route::get('/raters', [RatersController::class, 'index']);
 Route::apiResource('/raters_batch', RatersBatchController::class);
 //plantilla
 Route::get('/plantilla', [PlantillaController::class, 'index']);
-
 Route::get('/plantillaData', [PlantillaController::class, 'vwActiveGet']);
+Route::post('/plantillaData/qs', [DesignationQSController::class, 'getDesignation']);
 
 //get PDS
 Route::post('/xPDS', [xPDSController::class, 'getPersonalDataSheet']);
