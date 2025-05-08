@@ -17,6 +17,7 @@ class UserRspControl extends Model
         'isUserM',
         'isRaterM',
         'isCriteria',
+        'isDashboardStat',
     ];
 
     // In UserRspControl.php

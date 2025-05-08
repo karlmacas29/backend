@@ -31,6 +31,7 @@ class AuthController extends Controller
             'permissions.isUserM' => 'boolean',
             'permissions.isRaterM' => 'boolean',
             'permissions.isCriteria' => 'boolean',
+            'permissions.isDashboardStat' => 'boolean',
         ]);
 
         try {
@@ -50,6 +51,7 @@ class AuthController extends Controller
                     'isUserM' => $request->input('permissions.isUserM', false),
                     'isRaterM' => $request->input('permissions.isRaterM', false),
                     'isCriteria' => $request->input('permissions.isCriteria', false),
+                    'isDashboardStat' => $request->input('permissions.isDashboardStat', false),
                 ]);
             }
 
@@ -218,6 +220,7 @@ class AuthController extends Controller
                 'permissions.isUserM' => 'boolean',
                 'permissions.isRaterM' => 'boolean',
                 'permissions.isCriteria' => 'boolean',
+                'permissions.isDashboardStat' => 'boolean',
             ];
 
             // Add username validation, but exclude the current user's username from the unique check
@@ -251,6 +254,7 @@ class AuthController extends Controller
                         'isUserM' => $request->input('permissions.isUserM', false),
                         'isRaterM' => $request->input('permissions.isRaterM', false),
                         'isCriteria' => $request->input('permissions.isCriteria', false),
+                        'isDashboardStat' => $request->input('permissions.isDashboardStat', false),
                     ]);
                 } else {
                     $user->rspControl()->create([
@@ -258,6 +262,7 @@ class AuthController extends Controller
                         'isUserM' => $request->input('permissions.isUserM', false),
                         'isRaterM' => $request->input('permissions.isRaterM', false),
                         'isCriteria' => $request->input('permissions.isCriteria', false),
+                        'isDashboardStat' => $request->input('permissions.isDashboardStat', false),
                     ]);
                 }
             }
