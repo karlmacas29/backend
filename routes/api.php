@@ -57,11 +57,13 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
         'isUserM' => $user->rspControl->isUserM,
         'isRaterM' => $user->rspControl->isRaterM,
         'isCriteria' => $user->rspControl->isCriteria,
+        'isDashboardStat' => $user->rspControl->isDashboardStat,
     ] : [
         'isFunded' => false,
         'isUserM' => false,
         'isRaterM' => false,
         'isCriteria' => false,
+        'isDashboardStat' => false,
     ];
 
     $userData['permissions'] = $permissions;
