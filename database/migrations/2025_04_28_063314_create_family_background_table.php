@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('spouse_name', 100)->nullable(); // Spouse's surname
             $table->string('spouse_firstname', 100)->nullable(); // Spouse's firstname
             $table->string('spouse_middlename', 100)->nullable(); // Spouse's middlename
+            $table->string('spouse_extension', 10)->nullable(); // Spouse's name extension
             $table->string('spouse_occupation', 100)->nullable(); // Spouse's occupation
             $table->string('spouse_employer', 255)->nullable(); // Spouse's employer/business name
             $table->string('spouse_employer_address', 255)->nullable(); // Spouse's business address
@@ -24,9 +25,11 @@ return new class extends Migration
             $table->string('father_name', 100)->nullable(); // Father's surname
             $table->string('father_firstname', 100)->nullable(); // Father's firstname
             $table->string('father_middlename', 100)->nullable(); // Father's middlename
+            $table->string('father_extension', 10)->nullable(); // Father's name extension
             $table->string('mother_name', 100)->nullable(); // Mother's maiden surname
             $table->string('mother_firstname', 100)->nullable(); // Mother's firstname
             $table->string('mother_middlename', 100)->nullable(); // Mother's maiden middlename
+            $table->string('mother_maidenname', 100)->nullable(); // Mother's maiden surname
             $table->timestamps(); // Created at and updated at timestamps
         });
     }

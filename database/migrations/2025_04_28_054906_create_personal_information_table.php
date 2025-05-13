@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('lastname', 100); // Last name
             $table->string('firstname', 100); // First name
             $table->string('middlename', 100)->nullable(); // Middle name (nullable)
+            $table->string('name_extension', 10)->nullable(); // Name extension (JR., SR., etc.)
             $table->string('sex', 10); // Sex (Male/Female)
             $table->string('civil_status', 20); // Civil status
             $table->string('tin_no', 50)->nullable(); // TIN number
@@ -43,7 +44,6 @@ return new class extends Migration
             $table->string('permanent_city', 100)->nullable(); // Permanent city
             $table->string('permanent_province', 100)->nullable(); // Permanent province
             $table->string('permanent_zip', 10)->nullable(); // Permanent ZIP code
-            $table->string('gender', 50)->nullable(); // Gender
             $table->decimal('height', 5, 2)->nullable(); // Height
             $table->decimal('weight', 5, 2)->nullable(); // Weight
             $table->string('blood_type', 5)->nullable(); // Blood type
