@@ -8,7 +8,9 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Api\RatersController;
 use App\Http\Controllers\Api\ViewActiveController;
 use App\Http\Controllers\DesignationQSController;
+use App\Http\Controllers\JobBatchesRspController;
 use App\Http\Controllers\LogController;
+use App\Http\Controllers\OnCriteriaJobController;
 use App\Http\Controllers\RatersBatchController;
 use App\Http\Controllers\xPDSController;
 use App\Models\User;
@@ -94,3 +96,8 @@ Route::middleware('auth:sanctum')->group(function () {
 //logs
 Route::middleware('auth:sanctum')->post('/logs/auth', [LogController::class, 'logAuth']);
 Route::get('/logs', [LogController::class, 'index']);
+
+
+//Job Post RSP
+Route::apiResource('job-batches-rsp', JobBatchesRspController::class);
+Route::apiResource('on-criteria-job', OnCriteriaJobController::class);
