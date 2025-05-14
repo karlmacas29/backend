@@ -10,7 +10,7 @@ class JobBatchesRspController extends Controller
     // List all
     public function index()
     {
-        return response()->json(JobBatchesRsp::all());
+        return response()->json(JobBatchesRsp::orderBy('created_at', 'asc')->get());
     }
 
     // Create

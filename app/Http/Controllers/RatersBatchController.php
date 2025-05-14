@@ -15,12 +15,7 @@ class RatersBatchController extends Controller
     {
         $ratersBatch = RatersBatch::all();
 
-        // Decode `position` JSON into an array for display
-        $ratersBatch->transform(function ($batch) {
-            $batch->position = json_decode($batch->position);
-            return $batch;
-        });
-
+        // No need to decode `position` as it is now a string
         return response()->json($ratersBatch);
     }
 
@@ -32,15 +27,8 @@ class RatersBatchController extends Controller
     {
         $validatedData = $request->validate([
             'raters' => 'required|string',
-            'assign_batch' => 'required|date',
-            'position' => 'required|array', // Validate as an array
-            'office' => 'required|string',
-            'pending' => 'required|integer',
-            'completed' => 'required|integer',
+            'position' => 'required|string', // Validate as a string
         ]);
-
-        // Convert `position` to JSON and save it
-        $validatedData['position'] = json_encode($validatedData['position']);
 
         $ratersBatch = RatersBatch::create($validatedData);
 
@@ -66,11 +54,7 @@ class RatersBatchController extends Controller
 
         $validatedData = $request->validate([
             'raters' => 'string',
-            'assign_batch' => 'date',
-            'position' => 'string',
-            'office' => 'string',
-            'pending' => 'integer',
-            'completed' => 'integer',
+            'position' => 'string', // Validate as a string
         ]);
 
         $ratersBatch->update($validatedData);
