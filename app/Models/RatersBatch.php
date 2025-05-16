@@ -14,10 +14,6 @@ class RatersBatch extends Model
 
     protected $fillable = [
         'raters',
-        'assign_batch',
         'position',
-        'office',
-        'pending',
-        'completed',
     ];
 }

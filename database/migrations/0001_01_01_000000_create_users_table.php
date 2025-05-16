@@ -17,10 +17,11 @@ return new class extends Migration
             $table->string('username')->unique(); // Replace email with username
             $table->string('position');
             $table->boolean('active')->default(true); // Add active column
-            $table->timestamp('email_verified_at')->nullable();
+            $table->timestamp('email_verified_at')->nullable()->useCurrent()->setTimezone('Asia/Manila');
+            $table->timestamp('created_at')->useCurrent()->setTimezone('Asia/Manila');
+            $table->timestamp('updated_at')->useCurrent()->setTimezone('Asia/Manila');
             $table->string('password');
             $table->rememberToken();
-            $table->timestamps();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

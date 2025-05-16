@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,4 +32,9 @@ class User extends Authenticatable
         'password' => 'hashed',
         'active' => 'boolean', // Cast active as a boolean
     ];
+
+    public function rspControl()
+    {
+        return $this->hasOne(UserRspControl::class);
+    }
 }
