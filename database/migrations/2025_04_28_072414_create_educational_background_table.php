@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('highest_units', 50)->nullable(); // Highest level/units earned
             $table->string('year_graduated', 10)->nullable(); // Year graduated
             $table->string('scholarship', 255)->nullable(); // Scholarship or academic honors
+            $table->string('level', 50); // Level (Elementary, Secondary, College, etc.)
             $table->timestamps(); // Created at and updated at timestamps
         });
     }
