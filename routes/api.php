@@ -11,6 +11,7 @@ use App\Http\Controllers\DesignationQSController;
 use App\Http\Controllers\JobBatchesRspController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\OnCriteriaJobController;
+use App\Http\Controllers\OnFundedPlantillaController;
 use App\Http\Controllers\RatersBatchController;
 use App\Http\Controllers\xPDSController;
 use App\Models\User;
@@ -18,10 +19,14 @@ use App\Models\User;
 Route::get('/raters', [RatersController::class, 'index']);
 // for CRUD api Raters Batch
 Route::apiResource('/raters_batch', RatersBatchController::class);
-//plantilla
+
+//plantilla and funded plantilla
 Route::get('/plantilla', [PlantillaController::class, 'index']);
 Route::get('/plantillaData', [PlantillaController::class, 'vwActiveGet']);
 Route::post('/plantillaData/qs', [DesignationQSController::class, 'getDesignation']);
+Route::middleware('api')->group(function () {
+    Route::apiResource('/plantilla/funded', OnFundedPlantillaController::class);
+});
 
 //get PDS
 Route::post('/xPDS', [xPDSController::class, 'getPersonalDataSheet']);
