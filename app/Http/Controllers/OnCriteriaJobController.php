@@ -18,6 +18,7 @@ class OnCriteriaJobController extends Controller
     {
         $validated = $request->validate([
             'PositionID' => 'nullable|integer',
+            'ItemNo' => 'nullable|integer', // Added ItemNo validation
             'EduPercent' => 'nullable|string',
             'EliPercent' => 'nullable|string',
             'TrainPercent' => 'nullable|string',
@@ -34,9 +35,11 @@ class OnCriteriaJobController extends Controller
     }
 
     // Read single
-    public function show($PositionID)
+    public function show($PositionID, $ItemNo)
     {
-        $criteria = OnCriteriaJob::where('PositionID', $PositionID)->firstOrFail();
+        $criteria = OnCriteriaJob::where('PositionID', $PositionID)
+            ->where('ItemNo', $ItemNo)
+            ->firstOrFail();
         return response()->json($criteria);
     }
 
@@ -47,6 +50,7 @@ class OnCriteriaJobController extends Controller
 
         $validated = $request->validate([
             'PositionID' => 'nullable|integer',
+            'ItemNo' => 'nullable|integer', // Added ItemNo validation
             'EduPercent' => 'nullable|string',
             'EliPercent' => 'nullable|string',
             'TrainPercent' => 'nullable|string',

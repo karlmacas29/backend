@@ -23,6 +23,7 @@ class OnFundedPlantilla extends Model
      */
     protected $fillable = [
         'fileUpload',
-        'PositionID'
+        'PositionID',
+        'ItemNo'
     ];
 }

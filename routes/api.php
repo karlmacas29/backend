@@ -13,8 +13,12 @@ use App\Http\Controllers\LogController;
 use App\Http\Controllers\OnCriteriaJobController;
 use App\Http\Controllers\OnFundedPlantillaController;
 use App\Http\Controllers\RatersBatchController;
+use App\Http\Controllers\StructureDetailController;
 use App\Http\Controllers\xPDSController;
 use App\Models\User;
+
+//Notice: when route with middleware requires bearer token else will return error 401
+//Notice: when route with apiResource use CRUD => POST-Create , PUT-Update , DELETE-Delete , GET-Read
 
 Route::get('/raters', [RatersController::class, 'index']);
 // for CRUD api Raters Batch
@@ -27,6 +31,13 @@ Route::post('/plantillaData/qs', [DesignationQSController::class, 'getDesignatio
 Route::middleware('api')->group(function () {
     Route::apiResource('/plantilla/funded', OnFundedPlantillaController::class);
 });
+
+//update plantilla in PageNo and Funded Separately
+// Route to update only the Funded status
+Route::post('/structure-details/update-funded', [StructureDetailController::class, 'updateFunded']);
+Route::get('/on-funded-plantilla/by-funded/{positionID}/{itemNO}', [OnFundedPlantillaController::class, 'showByFunded']);
+// Route to update only the PageNo
+Route::post('/structure-details/update-pageno', [StructureDetailController::class, 'updatePageNo']);
 
 //get PDS
 Route::post('/xPDS', [xPDSController::class, 'getPersonalDataSheet']);
@@ -105,4 +116,7 @@ Route::get('/logs', [LogController::class, 'index']);
 
 //Job Post RSP
 Route::apiResource('job-batches-rsp', JobBatchesRspController::class);
+Route::get('/job-batches-rsp/{PositionID}/{ItemNo}', [JobBatchesRspController::class, 'show']);
+
 Route::apiResource('on-criteria-job', OnCriteriaJobController::class);
+Route::get('/on-criteria-job/{PositionID}/{ItemNo}', [OnCriteriaJobController::class, 'show']);

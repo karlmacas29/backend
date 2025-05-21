@@ -19,6 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
+    // Allows requests from any domain
     'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],

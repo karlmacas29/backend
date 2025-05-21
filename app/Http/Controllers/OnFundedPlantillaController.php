@@ -33,27 +33,34 @@ class OnFundedPlantillaController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'PositionID' => 'required|string',
-            'file' => 'nullable|mimes:pdf|max:5120' // 5MB max size
+            'ItemNo' => 'nullable|string', // Added ItemNo validation
+            'fileUpload' => 'nullable|mimes:pdf|max:5120' // 5MB max size. Changed 'file' to 'fileUpload'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
+                'message' => 'Validation failed', // Added a general message
                 'errors' => $validator->errors()
             ], 422);
         }
 
         $plantilla = new OnFundedPlantilla();
         $plantilla->PositionID = $request->PositionID;
+        $plantilla->ItemNo = $request->ItemNo; // Assign ItemNo
 
         // Handle file upload if present
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
+        if ($request->hasFile('fileUpload')) { // Changed 'file' to 'fileUpload'
+            $file = $request->file('fileUpload'); // Changed 'file' to 'fileUpload'
             $fileName = time() . '_' . $file->getClientOriginalName();
 
             // Store file in the 'public/plantilla_files' directory
+            // Ensure this path is symlinked: php artisan storage:link
             $filePath = $file->storeAs('plantilla_files', $fileName, 'public');
             $plantilla->fileUpload = $filePath;
+        } else {
+            // Optional: Log if no file is received when one might be expected
+            // \Log::info('No fileUpload field present in the request for PositionID: ' . $request->PositionID);
         }
 
         $plantilla->save();
@@ -99,12 +106,14 @@ class OnFundedPlantillaController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'PositionID' => 'sometimes|required|string',
-            'file' => 'nullable|mimes:pdf|max:5120' // 5MB max size
+            'ItemNo' => 'sometimes|nullable|string', // Added ItemNo validation
+            'fileUpload' => 'nullable|mimes:pdf|max:5120' // 5MB max size. Changed 'file' to 'fileUpload'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
+                'message' => 'Validation failed', // Added a general message
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -122,17 +131,22 @@ class OnFundedPlantillaController extends Controller
             $plantilla->PositionID = $request->PositionID;
         }
 
+        if ($request->has('ItemNo')) { // Check if ItemNo is in request
+            $plantilla->ItemNo = $request->ItemNo; // Assign ItemNo if present
+        }
+
         // Handle file upload if present
-        if ($request->hasFile('file')) {
+        if ($request->hasFile('fileUpload')) { // Changed 'file' to 'fileUpload'
             // Delete old file if exists
             if ($plantilla->fileUpload && Storage::disk('public')->exists($plantilla->fileUpload)) {
                 Storage::disk('public')->delete($plantilla->fileUpload);
             }
 
-            $file = $request->file('file');
+            $file = $request->file('fileUpload'); // Changed 'file' to 'fileUpload'
             $fileName = time() . '_' . $file->getClientOriginalName();
 
             // Store file in the 'public/plantilla_files' directory
+            // Ensure this path is symlinked: php artisan storage:link
             $filePath = $file->storeAs('plantilla_files', $fileName, 'public');
             $plantilla->fileUpload = $filePath;
         }
@@ -173,6 +187,37 @@ class OnFundedPlantillaController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Plantilla record deleted successfully'
+        ]);
+    }
+    /**
+     * Display the specified resource by PositionID.
+     *
+     * @param  string  $positionID
+     * @return \Illuminate\Http\Response
+     */
+    public function showByFunded($positionID, $itemNO)
+    {
+        $plantilla = OnFundedPlantilla::where('PositionID', $positionID)
+            ->where('ItemNo', $itemNO)
+            ->first();
+
+        if (!$plantilla) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Plantilla record not found for the given PositionID and ItemNo'
+            ], 404);
+        }
+
+        if (!$plantilla->fileUpload) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No file associated with this Plantilla record for the given PositionID and ItemNo'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $plantilla
         ]);
     }
 }

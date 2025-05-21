@@ -41,11 +41,18 @@ class JobBatchesRspController extends Controller
         return response()->json($jobBatch, 201);
     }
 
-    // Read single by PositionID
-    public function show($PositionID)
+    // Read single by PositionID and ItemNo
+    public function show($PositionID, $ItemNo)
     {
-        $jobBatch = JobBatchesRsp::where('PositionID', $PositionID)->firstOrFail();
-        return response()->json($jobBatch);
+        // Ensure you have `use Illuminate\Support\Facades\DB;` at the top of your file.
+        $jobBatches = \Illuminate\Support\Facades\DB::select('SELECT * FROM job_batches_rsp WHERE PositionID = ? AND ItemNo = ?', [$PositionID, $ItemNo]);
+
+        if (empty($jobBatches)) {
+            return response()->json(['error' => 'No matching record found'], 404);
+        }
+
+        // DB::select returns an array of objects, so we take the first one.
+        return response()->json($jobBatches[0]);
     }
 
     // Update

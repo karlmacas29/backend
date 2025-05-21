@@ -21,5 +21,6 @@ class OnCriteriaJob extends Model
         'Eligibility',
         'Training',
         'Experience',
+        'ItemNo'
     ];
 }
