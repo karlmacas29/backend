@@ -33,6 +33,7 @@ class JobBatchesRspController extends Controller
             'SalaryGrade' => 'nullable|string',
             'salaryMin' => 'nullable|string',
             'salaryMax' => 'nullable|string',
+            'level' => 'nullable|string', // Changed to string
         ]);
 
         // No default for post_date or end_date; must be set explicitly if required
@@ -77,6 +78,7 @@ class JobBatchesRspController extends Controller
             'SalaryGrade' => 'nullable|string',
             'salaryMin' => 'nullable|string',
             'salaryMax' => 'nullable|string',
+            'level' => 'nullable|string', // Changed to string
         ]);
 
         $jobBatch->update($validated);

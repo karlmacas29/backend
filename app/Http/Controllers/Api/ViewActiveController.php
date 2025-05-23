@@ -39,4 +39,14 @@ class ViewActiveController extends Controller
         $count = DB::select("SELECT COUNT(*) as total FROM vwActive")[0]->total;
         return response()->json(['total' => $count]);
     }
+    public function getSexCount()
+    {
+        $totalMale = DB::select("SELECT COUNT(*) as totalMale FROM vwActive WHERE SEX = 'MALE'")[0]->totalMale ?? 0;
+        $totalFemale = DB::select("SELECT COUNT(*) as totalFemale FROM vwActive WHERE SEX = 'FEMALE'")[0]->totalFemale ?? 0;
+
+        return response()->json([
+            'totalMale' => (int)$totalMale,
+            'totalFemale' => (int)$totalFemale
+        ]);
+    }
 }

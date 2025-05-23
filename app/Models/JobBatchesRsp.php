@@ -28,5 +28,6 @@ class JobBatchesRsp extends Model
         'SalaryGrade',
         'salaryMin',
         'salaryMax',
+        'level',
     ];
 }
