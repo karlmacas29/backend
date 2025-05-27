@@ -14,3 +14,33 @@ A Recruitment, Selection and Placement Web System for tagum created by DNSC OJT 
 ## Documentation
 
 [Documentation for Laravel](https://laravel.com/docs/12.x)
+
+
+## Run Locally 
+- Make sure you have to install node.js, composer, laravel and also has a server tool like xampp, wampp, etc.
+- It required MS SQL (required permission)
+
+Clone the project
+
+```bash
+  git clone https://github.com/karlmacas29/backend.git
+```
+
+Go to the project directory
+
+```bash
+  cd backend
+```
+
+Install dependencies
+
+```bash
+  composer install
+```
+
+Start the server
+
+```bash
+  php artisan serve
+```
+
