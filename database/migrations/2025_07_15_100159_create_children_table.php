@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('nChildren', function (Blueprint $table) {
             $table->id(); // Primary key
-            $table->string('control_no', 50); // Control number
-            $table->string('child_name', 255); // Name of the child
-            $table->date('birth_date'); // Date of birth
+            $table->foreignId('nPersonalInfo_id')->constrained('nPersonalInfo')->onDelete('cascade');
+            $table->string('child_name')->nullable(); // Name of the child
+            $table->date('birth_date')->nullable(); // Date of birth
             $table->timestamps(); // Created at and updated at timestamps
         });
     }

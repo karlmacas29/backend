@@ -10,6 +10,9 @@ class JobBatchesRspController extends Controller
     // List all
     public function index()
     {
+        // Fetch all job batches,  Open
+        // Fetch all job batches, Open - order by post_date instead
+
         return response()->json(JobBatchesRsp::orderBy('created_at', 'asc')->get());
     }
 

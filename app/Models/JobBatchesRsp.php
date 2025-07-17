@@ -30,4 +30,9 @@ class JobBatchesRsp extends Model
         'salaryMax',
         'level',
     ];
+
+    public function users()
+    {
+        return $this->hasMany(User::class,);
+    }
 }
