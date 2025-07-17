@@ -11,15 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('nTrainings', function (Blueprint $table) {
+        Schema::create('nVoluntaryWork', function (Blueprint $table) {
             $table->id(); // Primary key
-            $table->string('control_no', 50); // Control number to associate with the user
-            $table->string('training_title', 255); // Title of the training
-            $table->date('inclusive_date_from'); // Inclusive date from
+            $table->foreignId('nPersonalInfo_id')->constrained('nPersonalInfo')->onDelete('cascade');
+            $table->string('organization_name')->nullable(); // Name and address of the organization
+            $table->date('inclusive_date_from')->nullable(); // Inclusive date from
             $table->date('inclusive_date_to')->nullable(); // Inclusive date to
             $table->integer('number_of_hours')->nullable(); // Number of hours
-            $table->string('type', 255)->nullable(); // Type of L&D
-            $table->string('conducted_by', 255)->nullable(); // Conducted/Sponsored by
+            $table->string('position')->nullable(); // Position
             $table->timestamps(); // Created at and updated at timestamps
         });
     }
@@ -29,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('nTrainings');
+        Schema::dropIfExists('nVoluntaryWork');
     }
 };

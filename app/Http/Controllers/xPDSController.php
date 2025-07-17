@@ -43,43 +43,80 @@ class xPDSController extends Controller
         }
     }
 
+    // private function getCombinedUserData($controlNo)
+    // {
+    //     // Get base personal data
+    //     $personalData = $this->getUserData($controlNo);
+
+    //     // If no personal data found, return empty array
+    //     if (empty($personalData)) {
+    //         return [];
+    //     }
+
+    //     // Get additional data from other tables
+    //     $pwdData = $this->getPWDData($controlNo);
+    //     $personalAddtData = $this->getPersonalAddtData($controlNo);
+    //     $personalDiversityData = $this->getPersonalDiversityData($controlNo);
+    //     $childrenData = $this->getChildrenData($controlNo);
+
+    //     // Convert first user record to array if it's an object
+    //     $userArray = is_object($personalData[0]) ? json_decode(json_encode($personalData[0]), true) : $personalData[0];
+
+    //     // Merge all additional data into the user array
+    //     if (!empty($pwdData)) {
+    //         $userArray = array_merge($userArray, $this->convertToArray($pwdData));
+    //     }
+
+    //     if (!empty($personalAddtData)) {
+    //         $userArray = array_merge($userArray, $this->convertToArray($personalAddtData));
+    //     }
+
+    //     if (!empty($personalDiversityData)) {
+    //         $userArray = array_merge($userArray, $this->convertToArray($personalDiversityData));
+    //     }
+
+    //     // Add children data
+    //     $userArray['children'] = $childrenData;
+
+    //     return [$userArray];
+    // }
+
     private function getCombinedUserData($controlNo)
     {
-        // Get base personal data
-        $personalData = $this->getUserData($controlNo);
+        // Fetch all user-related data in one query using joins
+        $user = DB::connection('sqlsrv')
+            ->table('xPersonal')
+            ->leftJoin('xPWD', 'xPersonal.ControlNo', '=', 'xPWD.ControlNo')
+            ->leftJoin('xPersonalAddt', 'xPersonal.ControlNo', '=', 'xPersonalAddt.ControlNo')
+            ->leftJoin('xPersonalDiversity', 'xPersonal.ControlNo', '=', 'xPersonalDiversity.ControlNo')
+            ->where('xPersonal.ControlNo', $controlNo)
+            ->select([
+                'xPersonal.*',
+                'xPWD.*',
+                'xPersonalAddt.*',
+                'xPersonalDiversity.*'
+            ])
+            ->first();
 
-        // If no personal data found, return empty array
-        if (empty($personalData)) {
+        if (!$user) {
             return [];
         }
 
-        // Get additional data from other tables
-        $pwdData = $this->getPWDData($controlNo);
-        $personalAddtData = $this->getPersonalAddtData($controlNo);
-        $personalDiversityData = $this->getPersonalDiversityData($controlNo);
-        $childrenData = $this->getChildrenData($controlNo);
+        $userArray = (array)$user;
 
-        // Convert first user record to array if it's an object
-        $userArray = is_object($personalData[0]) ? json_decode(json_encode($personalData[0]), true) : $personalData[0];
+        // Children are multiple records, so fetch separately
+        $children = DB::connection('sqlsrv')
+            ->table('xChildren')
+            ->where('ControlNo', $controlNo)
+            ->select('ChildName', 'BirthDate', 'PMID')
+            ->get()
+            ->toArray();
 
-        // Merge all additional data into the user array
-        if (!empty($pwdData)) {
-            $userArray = array_merge($userArray, $this->convertToArray($pwdData));
-        }
-
-        if (!empty($personalAddtData)) {
-            $userArray = array_merge($userArray, $this->convertToArray($personalAddtData));
-        }
-
-        if (!empty($personalDiversityData)) {
-            $userArray = array_merge($userArray, $this->convertToArray($personalDiversityData));
-        }
-
-        // Add children data
-        $userArray['children'] = $childrenData;
+        $userArray['children'] = $children;
 
         return [$userArray];
     }
+
 
     private function getUserData($controlNo)
     {

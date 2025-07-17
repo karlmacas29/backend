@@ -6,11 +6,15 @@ use App\Http\Controllers\OnFundedPlantillaController;
 use App\Http\Controllers\DesignationQSController;
 use App\Http\Controllers\StructureDetailController;
 
+Route::get('/plantilla/test', [PlantillaController::class, 'test']);
+
 Route::get('/plantilla', [PlantillaController::class, 'index']);
+Route::get('/plantilla/office/rater', [PlantillaController::class, 'fetch_office_rater']);
 Route::get('/plantillaData', [PlantillaController::class, 'vwActiveGet']);
 Route::post('/plantillaData/qs', [DesignationQSController::class, 'getDesignation']);
 
 Route::get('/on-funded-plantilla/by-funded/{positionID}/{itemNO}', [OnFundedPlantillaController::class, 'showByFunded']);
+
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/plantilla/funded', OnFundedPlantillaController::class);

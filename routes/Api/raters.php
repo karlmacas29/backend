@@ -9,4 +9,7 @@ Route::apiResource('/raters_batch', RatersBatchController::class)->only(['index'
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/raters_batch', RatersBatchController::class)->except(['index', 'show']);
+
+
+    
 });

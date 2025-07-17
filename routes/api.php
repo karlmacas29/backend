@@ -7,3 +7,4 @@ require __DIR__ . '/Api/logs.php';
 require __DIR__ . '/Api/pds.php';
 require __DIR__ . '/Api/view_active.php';
 require __DIR__ . '/Api/jobs.php';
+require __DIR__ . '/Api/applicant.php';

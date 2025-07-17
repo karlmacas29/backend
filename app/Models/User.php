@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Role;
+use App\Models\JobBatchesRsp;
+use App\Models\UserRspControl;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
@@ -18,6 +21,10 @@ class User extends Authenticatable
         'password',
         'position', // Add position to fillable
         'active',   // Add active to fillable
+        'role_id',  // Add role_id to fillable
+        'remember_token', // Add remember_token to fillable
+        'office', // Add office_id to fillable
+        'job_batches_rsp_id', // Add job_batches_rsp_id to fillable
     ];
 
     // Specify the hidden fields for serialization
@@ -37,4 +44,23 @@ class User extends Authenticatable
     {
         return $this->hasOne(UserRspControl::class);
     }
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function job_batches_rsp()
+    {
+        return $this->belongsToMany(
+            JobBatchesRsp::class,
+            'job_batches_user',       // pivot table
+            'user_id',                // foreign key sa User
+            'job_batches_rsp_id'      // foreign key sa JobBatchesRsp
+        )->withTimestamps();
+    }
+    public function office()
+    {
+        return $this->hasOne(vwplantillaStructure::class, 'office_id', 'office_id');
+    }
+
 }

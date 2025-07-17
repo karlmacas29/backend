@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('username')->unique(); // Replace email with username
             $table->string('position');
             $table->boolean('active')->default(true); // Add active column
+            // $table->string('email')->nullable(); // <--- After 'active'
             $table->timestamp('email_verified_at')->nullable()->useCurrent()->setTimezone('Asia/Manila');
             $table->timestamp('created_at')->useCurrent()->setTimezone('Asia/Manila');
             $table->timestamp('updated_at')->useCurrent()->setTimezone('Asia/Manila');
