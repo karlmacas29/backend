@@ -20,11 +20,11 @@ class nFamily extends Model
         'spouse_employer',
         'spouse_employer_address',
         'spouse_employer_telephone',
-        'father_name',
+        'father_lastname',
         'father_firstname',
         'father_middlename',
         'father_extension',
-        'mother_name',
+        'mother_lastname',
         'mother_firstname',
         'mother_middlename',
         'mother_maidenname'

@@ -35,4 +35,9 @@ class JobBatchesRsp extends Model
     {
         return $this->hasMany(User::class,);
     }
+
+    public function personal_info()
+    {
+        return $this->hasMany(nPersonal_info::class,);
+    }
 }

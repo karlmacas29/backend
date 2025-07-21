@@ -38,13 +38,13 @@ class nFamilySheet implements WithEvents
                 'spouse_employer_address' => $sheet->getCell('D7')->getValue(),
                 'spouse_employer_telephone' => $sheet->getCell('D8')->getValue(),
 
-                'father_name' => $sheet->getCell('D6')->getValue(),
-                'father_last' => $sheet->getCell('D9')->getValue(),
+                'father_lastname' => $sheet->getCell('D9')->getValue(),
                 'father_firstname' => $sheet->getCell('D10')->getValue(),
+                'father_middlename' => $sheet->getCell('D11')->getValue(),
                 'father_extension' => $sheet->getCell('I10')->getValue(),
 
-                'mother_name' => $sheet->getCell('D13')->getValue(),
-                'mother_lastname' => $sheet->getCell('D12')->getValue(),
+
+                'mother_lastname' => $sheet->getCell('D13')->getValue(),
                 'mother_firstname' => $sheet->getCell('D14')->getValue(),
                 'mother_middlename' => $sheet->getCell('D15')->getValue(),
                 'mother_maidenname' => $sheet->getCell('D12')->getValue(),
@@ -54,14 +54,14 @@ class nFamilySheet implements WithEvents
 
             // Validate family data
             $validator = Validator::make($familyData, [
-                'spouse_name' => 'required',
-                'spouse_firstname' => 'required',
-                'nPersonalInfo_id' => 'required|exists:nPersonalInfo,id'
-            ], [
-                'spouse_name.required' => 'Spouse last name is required',
-                'spouse_firstname.required' => 'Spouse first name is required',
-                'nPersonalInfo_id.required' => 'Personal Info reference is required',
-                'nPersonalInfo_id.exists' => 'Referenced Personal Info does not exist'
+            //     'spouse_name' => 'required',
+            //     'spouse_firstname' => 'required',
+            //     'nPersonalInfo_id' => 'required|exists:nPersonalInfo,id'
+            // ], [
+            //     'spouse_name.required' => 'Spouse last name is required',
+            //     'spouse_firstname.required' => 'Spouse first name is required',
+            //     'nPersonalInfo_id.required' => 'Personal Info reference is required',
+            //     'nPersonalInfo_id.exists' => 'Referenced Personal Info does not exist'
             ]);
 
             if ($validator->fails()) {

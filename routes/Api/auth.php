@@ -15,6 +15,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/{id}', [AuthController::class, 'updateUser']);
     // Route::delete('/users/{id}', [AuthController::class, 'deleteUser']);
     Route::post('rater/logout', [AuthController::class, 'Rater_logout']);
+    Route::get('/rater/assign', [AuthController::class, 'fetch_rater_assign']); // public
 
 });
 Route::get('/users', [AuthController::class, 'getAllUsers']);

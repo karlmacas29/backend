@@ -15,10 +15,45 @@ class nPersonal_info extends Model
     protected  $table = 'nPersonalInfo';
 
     protected $fillable = [
-        'firstname',
         'lastname',
-        'image_path'
+        'firstname',
+        'middlename',
+        'name_extension',
+        'date_of_birth',
+        'sex',
+        'place_of_birth',
+        'height',
+        'weight',
+        'blood_type',
+        'gsis_no',
+        'pagibig_no',
+        'philhealth_no',
+        'sss_no',
+        'tin_no',
+        'image_path',
+        'civil_status',
+        'citizenship',
+        'citizenship_status',
 
+        'residential_house',
+        'residential_street',
+        'residential_subdivision',
+        'residential_barangay',
+        'residential_city',
+        'residential_province',
+        'residential_zip',
+
+        'permanent_house',
+        'permanent_street',
+        'permanent_subdivision',
+        'permanent_barangay',
+        'permanent_city',
+        'permanent_province',
+        'permanent_zip',
+
+        'telephone_number',
+        'cellphone_number',
+        'email_address',
     ];
 
     public function family(){
@@ -57,6 +92,24 @@ class nPersonal_info extends Model
 
         return $this->hasMany(Learning_development::class);
     }
+
+    public function personal_declarations()
+    {
+
+        return $this->hasMany(Personal_declarations::class);
+    }
+
+    public function job_batches_rsp()
+    {
+        return $this->belongsToMany(
+            JobBatchesRsp::class,
+            'submission',       // pivot table
+            'nPersonalInfo_id',               // foreign key sa User
+            'job_batches_rsp_id'      // foreign key sa JobBatchesRsp
+        )->withTimestamps();
+    }
+
+
 
 }
 
