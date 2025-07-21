@@ -24,7 +24,7 @@ class User extends Authenticatable
         'role_id',  // Add role_id to fillable
         'remember_token', // Add remember_token to fillable
         'office', // Add office_id to fillable
-        'job_batches_rsp_id', // Add job_batches_rsp_id to fillable
+
     ];
 
     // Specify the hidden fields for serialization
@@ -58,6 +58,7 @@ class User extends Authenticatable
             'job_batches_rsp_id'      // foreign key sa JobBatchesRsp
         )->withTimestamps();
     }
+
     public function office()
     {
         return $this->hasOne(vwplantillaStructure::class, 'office_id', 'office_id');

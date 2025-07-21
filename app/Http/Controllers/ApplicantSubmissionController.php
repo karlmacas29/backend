@@ -11,68 +11,93 @@ use Maatwebsite\Excel\Facades\Excel;
 class ApplicantSubmissionController extends Controller
 {
     //
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'excel_file' => 'required|file|mimes:xlsx,xls,csv',
+            'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+        ]);
+
+        Excel::import(new ApplicantFormImport($validated['job_batches_rsp_id']), $request->file('excel_file'));
+
+        return response()->json(['message' => 'Applicant submissions imported successfully.']);
+    }
+
+
+
     // public function store(Request $request)
     // {
     //     $request->validate([
     //         'excel_file' => 'required|file|mimes:xlsx,xls,csv',
+    //         'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // if you're also uploading images directly
     //     ]);
+
+    //     // Handle image upload if present
+    //     if ($request->hasFile('image')) {
+    //         $imagePath = $request->file('image')->store('applicant_images', 'public');
+    //         // You can pass this to your import if needed
+    //     }
 
     //     Excel::import(new ApplicantFormImport, $request->file('excel_file'));
     //     return response()->json(['message' => 'Applicant submissions imported successfully.']);
     // }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls,csv',
-            'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // if you're also uploading images directly
-        ]);
-
-        // Handle image upload if present
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('applicant_images', 'public');
-            // You can pass this to your import if needed
-        }
-
-        Excel::import(new ApplicantFormImport, $request->file('excel_file'));
-        return response()->json(['message' => 'Applicant submissions imported successfully.']);
-    }
     // Delete a user and associated rspControl data
-    public function deleteUser($id)
+    // public function deleteUser($id)
+    // {
+    //     try {
+    //         DB::beginTransaction();
+
+    //         $user = nPersonal_info::findOrFail($id);
+    //         // Prevent deleting currently authenticated user
+    //         // Delete associated rspControl first (if not using cascading deletes)
+    //         if ($user->rspControl) {
+    //             $user->rspControl->delete();
+    //         }
+    //         // Delete the user
+    //         $user->delete();
+    //         DB::commit();
+    //         return response()->json([
+    //             'status' => true,
+    //             'message' => 'User and associated permissions deleted successfully'
+    //         ]);
+    //     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+    //         DB::rollBack();
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'User not found'
+    //         ], 404);
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Failed to delete user',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
+    public function deleteAllUsers()
     {
         try {
             DB::beginTransaction();
 
-            $user = nPersonal_info::findOrFail($id);
+            $users = nPersonal_info::all();
 
-            // Prevent deleting currently authenticated user
-
-
-            // Delete associated rspControl first (if not using cascading deletes)
-            if ($user->rspControl) {
-                $user->rspControl->delete();
+            foreach ($users as $user) {
+                $user->delete(); // This ensures related data is deleted if you set up relationships with cascade
             }
-
-            // Delete the user
-            $user->delete();
 
             DB::commit();
 
             return response()->json([
                 'status' => true,
-                'message' => 'User and associated permissions deleted successfully'
+                'message' => 'All users and their associated data deleted successfully'
             ]);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            DB::rollBack();
-            return response()->json([
-                'status' => false,
-                'message' => 'User not found'
-            ], 404);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to delete user',
+                'message' => 'Failed to delete users',
                 'error' => $e->getMessage()
             ], 500);
         }

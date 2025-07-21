@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Employee;
+use App\Models\Submission;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -26,6 +27,33 @@ class AuthController extends Controller
             'data' => $data
         ]);
       }
+
+    public function fetch_rater_assign()
+    {
+        $raterId = 40043;
+
+        $jobBatchIds = DB::table('job_batches_user')
+            ->where('user_id', $raterId)
+            ->pluck('job_batches_rsp_id');
+
+        return response()->json([
+            'rater_id' => $raterId,
+            'job_batch_ids' => $jobBatchIds,
+        ]);
+    }
+    // public function fetch_rater_assign()
+    // {
+    //     $raterId = 40043;
+
+    //     $jobBatchIds = DB::table('job_batches_user')
+    //         ->where('user_id', $raterId)
+    //         ->pluck('job_batches_rsp_id');
+
+    //     $submissions = Submission::whereIn('job_batches_rsp_id', $jobBatchIds)->get();
+
+    //     return response()->json($submissions);
+    // }
+
 
     // create raters account
     // public function Raters_register(Request $request)
@@ -89,6 +117,7 @@ class AuthController extends Controller
 
         // Attach job batches
         $user->job_batches_rsp()->attach($validated['job_batches_rsp_id']);
+
         return response()->json([
             'status' => true,
             'message' => 'Rater Registered Successfully',

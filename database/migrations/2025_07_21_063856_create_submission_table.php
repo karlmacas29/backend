@@ -11,16 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('question_answer', function (Blueprint $table) {
+        Schema::create('submission', function (Blueprint $table) {
             $table->id();
             $table->foreignId('nPersonalInfo_id')->constrained('nPersonalInfo')->onDelete('cascade');
-            $table->string('34_question')->nullable();
-            $table->string('35_question')->nullable();
-            $table->string('36_question')->nullable();
-            $table->string('37_question')->nullable();
-            $table->string('38_question')->nullable();
-            $table->string('39_question')->nullable();
-            $table->string('40_question')->nullable();
+            $table->foreignId('job_batches_rsp_id')->constrained('job_batches_rsp')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -30,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('question_answer');
+        Schema::dropIfExists('submission');
     }
 };
