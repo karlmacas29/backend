@@ -2,7 +2,7 @@
 
 namespace App\Imports;
 
-use App\Models\Personal_declarations;
+use App\Models\excel\Personal_declarations;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Illuminate\Support\Facades\Validator;

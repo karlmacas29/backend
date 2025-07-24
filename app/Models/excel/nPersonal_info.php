@@ -1,9 +1,12 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\excel;
 
-use App\Models\nFamily;
+
+use App\Models\JobBatchesRsp;
+use App\Models\Submission;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class nPersonal_info extends Model
@@ -50,6 +53,7 @@ class nPersonal_info extends Model
         'permanent_city',
         'permanent_province',
         'permanent_zip',
+        'excel_file',
 
         'telephone_number',
         'cellphone_number',
@@ -110,7 +114,17 @@ class nPersonal_info extends Model
     }
 
 
+    // public function upload_file_image()
+    // {
+    //     return $this->hasMany(Upload_file_image::class);
+    // }
 
+
+
+    public function submission()
+    {
+        return $this->belongsTo(Submission::class, 'submission_id');
+    }
 }
 
 

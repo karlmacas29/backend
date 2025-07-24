@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\excel\nPersonal_info;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -33,11 +34,18 @@ class JobBatchesRsp extends Model
 
     public function users()
     {
-        return $this->hasMany(User::class,);
+        return $this->belongsToMany(User::class, 'job_batches_user', 'job_batches_rsp_id', 'user_id')->withTimestamps();
     }
 
     public function personal_info()
     {
         return $this->hasMany(nPersonal_info::class,);
+    }
+
+
+    public function applicants()
+    {
+        return $this->belongsToMany(nPersonal_info::class, 'submission', 'job_batches_rsp_id', 'nPersonalInfo_id')
+            ->withTimestamps();
     }
 }

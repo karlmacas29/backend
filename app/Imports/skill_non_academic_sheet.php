@@ -2,7 +2,7 @@
 
 namespace App\Imports;
 
-use App\Models\skill_non_academic;
+use App\Models\excel\skill_non_academic;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;

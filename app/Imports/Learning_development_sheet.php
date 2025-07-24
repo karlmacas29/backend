@@ -2,10 +2,11 @@
 
 namespace App\Imports;
 
+use App\Models\excel\Learning_development;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use App\Models\Learning_development;
+
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithStartRow;
@@ -42,7 +43,7 @@ class Learning_development_sheet implements ToCollection, WithStartRow
 
                     $inclusive_date_from = $this->parseDate($row[1]);
                     $inclusive_date_to   = $this->parseDate($row[2]);
-                    
+
                     $trainingData = [
                         'nPersonalInfo_id'     => $this->importer->getPersonalInfoId(),
                         'training_title'       => $row[0] ?? null,

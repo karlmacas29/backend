@@ -28,19 +28,20 @@ class AuthController extends Controller
         ]);
       }
 
-    public function fetch_rater_assign()
-    {
-        $raterId = 40043;
+    
+    // public function fetch_rater_assign()
+    // {
+    //     $raterId = 40043;
 
-        $jobBatchIds = DB::table('job_batches_user')
-            ->where('user_id', $raterId)
-            ->pluck('job_batches_rsp_id');
+    //     $jobBatchIds = DB::table('job_batches_user')
+    //         ->where('user_id', $raterId)
+    //         ->pluck('job_batches_rsp_id');
 
-        return response()->json([
-            'rater_id' => $raterId,
-            'job_batch_ids' => $jobBatchIds,
-        ]);
-    }
+    //     return response()->json([
+    //         'rater_id' => $raterId,
+    //         'job_batch_ids' => $jobBatchIds,
+    //     ]);
+    // }
     // public function fetch_rater_assign()
     // {
     //     $raterId = 40043;
@@ -56,74 +57,6 @@ class AuthController extends Controller
 
 
     // create raters account
-    // public function Raters_register(Request $request)
-    // {
-
-
-    //     $validated = $request->validate([
-    //         'name' => 'required|string|max:255',
-    //         'username' => 'required|string|max:255|unique:users,username',
-    //         'job_batches_rsp_id' => 'required|array',
-    //         'job_batches_rsp_id.*' => 'exists:job_batches_rsp,id',
-    //         'position' => 'required|string|max:255',
-    //         'office_id' => 'required|integer',
-    //         'password' => 'required|string|min:5',
-    //     ]);
-
-    //     $user = User::create([
-    //         'name' => $validated['name'],
-    //         'username' => $validated['username'],
-    //         'position' => $validated['position'],
-    //         'office_id' => $validated['office_id'],
-    //         'password' => Hash::make($validated['password']),
-    //         'role_id' => 2,
-    //         'remember_token' => Str::random(32)
-    //     ]);
-
-    //     $user->job_batches_rsp()->attach($validated['job_batches_rsp_id']);
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'Rater Registered Successfully',
-    //         'data' => $user->load('job_batches_rsp')
-    //     ], 201);
-    // }
-    public function Raters_register(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'username' => 'sometimes|string|max:255|unique:users,username',
-            'job_batches_rsp_id' => 'required|array',
-            'job_batches_rsp_id.*' => 'exists:job_batches_rsp,id',
-            'position' => 'required|string|max:255',
-            'office' => 'required|string|max:255',
-            'password' => 'required|string|min:5',
-        ]);
-
-        // Generate username from name if not provided
-        if (empty($validated['username'])) {
-            $validated['username'] = strtolower(str_replace(' ', '', $validated['name']));
-        }
-
-        $user = User::create([
-            'name' => $validated['name'],
-            'username' => $validated['name'],
-            'position' => $validated['position'],
-            'office' => $validated['office'],
-            'password' => Hash::make($validated['password']),
-            'role_id' => 2, // Assuming 2 is for raters
-            'remember_token' => Str::random(32)
-        ]);
-
-        // Attach job batches
-        $user->job_batches_rsp()->attach($validated['job_batches_rsp_id']);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Rater Registered Successfully',
-            'data' => $user->load('job_batches_rsp')
-        ], 201);
-    }
 
     // create account
     public function Token_Register(Request $request)
@@ -259,6 +192,7 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'position' => $user->position,
                 'role_id' => (int)$user->role_id, // Always integer
+
             ],
             'token' => $token,
         ])->withCookie($cookie);
@@ -300,154 +234,7 @@ class AuthController extends Controller
     }
 
 
-    // login
-    public function Raters_Login(Request $request)
-    {
-        // First check if username and password are provided
-        if (empty($request->username) || empty($request->password)) {
-            return response([
-                'status' => false,
-                'message' => 'Invalid Credentials',
-                'errors' => [
-                    'username' => empty($request->username) ? ['Please enter username'] : [],
-                    'password' => empty($request->password) ? ['Please enter password'] : []
-                ]
-            ], 401);
-        }
 
-        $user = User::where('username', $request->username)->first();
-        if (!$user) {
-            return response([
-                'status' => false,
-                'message' => 'Invalid Credentials',
-                'errors' => [
-                    'username' => ['Username does not exist'],
-                    'password' => ['Please enter password']
-                ]
-            ], 401);
-        }
-
-        // Then check if the password is correct
-        if (!Hash::check($request->password, $user->password)) {
-            return response([
-                'status' => false,
-                'message' => 'Invalid Credentials',
-                'errors' => [
-                    'password' => ['Wrong password']
-                ]
-            ], 401);
-        }
-
-        // Only allow users with role_id == 1
-        if ($user->role_id != 2) {
-            return response([
-                'status' => false,
-                'message' => 'Access Denied: You do not have permission to login.',
-                'errors' => [
-                    'role_id' => ['Only Rater admin can login.']
-                ]
-            ], 403);
-        }
-
-        // Authenticate the user
-        Auth::login($user);
-
-        $user = Auth::user();
-
-        // Check if the user is active
-        if (!$user->active) {
-            return response([
-                'status' => false,
-                'message' => 'Your account is inactive. Please contact the administrator.',
-            ], 403);
-        }
-
-        // Generate a token for the user
-        $token = $user->createToken('my-secret-token')->plainTextToken;
-
-        // Set the token in a secure cookie
-        $cookie = cookie('rater_token', $token, 60 * 24, null, null, true, true, false, 'None');
-
-        return response([
-            'status' => true,
-            'message' => 'Login Successfully',
-            'user' => [
-                'name' => $user->name,
-                'position' => $user->position,
-                'role_id' => (int)$user->role_id, // Always integer
-            ],
-            'token' => $token,
-        ])->withCookie($cookie);
-    }
-    // public function Token_Login(Request $request)
-    // {
-    //     // Attempt to authenticate the user with the provided username and password
-    //     // First check if the username exists
-    //     // First check if username and password are provided
-    //     if (empty($request->username) || empty($request->password)) {
-    //         return response([
-    //             'status' => false,
-    //             'message' => 'Invalid Credentials',
-    //             'errors' => [
-    //                 'username' => empty($request->username) ? ['Please enter username'] : [],
-    //                 'password' => empty($request->password) ? ['Please enter password'] : []
-    //             ]
-    //         ], 401);
-    //     }
-
-    //     $user = User::where('username', $request->username)->first();
-    //     if (!$user) {
-    //         return response([
-    //             'status' => false,
-    //             'message' => 'Invalid Credentials',
-    //             'errors' => [
-    //                 'username' => ['Username does not exist'],
-    //                 'password' => ['Please enter password']
-    //             ]
-    //         ], 401);
-    //     }
-
-    //     // Then check if the password is correct
-    //     if (!Hash::check($request->password, $user->password)) {
-    //         return response([
-    //             'status' => false,
-    //             'message' => 'Invalid Credentials',
-    //             'errors' => [
-    //                 'password' => ['Wrong password']
-    //             ]
-    //         ], 401);
-    //     }
-
-    //     // If both checks pass, authenticate the user
-    //     Auth::login($user);
-
-    //     $user = Auth::user();
-
-    //     // Check if the user is active
-    //     if (!$user->active) {
-    //         return response([
-    //             'status' => false,
-    //             'message' => 'Your account is inactive. Please contact the administrator.',
-    //         ], 403);
-    //     }
-
-    //     // Generate a token for the user
-    //     $token = $user->createToken('my-secret-token')->plainTextToken;
-
-    //     // Set the token in a secure cookie
-    //     $cookie = cookie('auth_token', $token, 60 * 24, null, null, true, true, false, 'None');
-
-    //     return response([
-    //         'status' => true,
-    //         'message' => 'Login Successfully',
-    //         'user' => [
-    //             'name' => $user->name,
-    //             'position' => $user->position,
-    //             'role_id' => (int)$user->role_id, // <-- Always integer
-    //         ],
-    //         'token' => $token,
-    //     ])->withCookie($cookie);
-    // }
 
     // logout
 
@@ -476,69 +263,9 @@ class AuthController extends Controller
 
 
 
-    // Get all users (User Management) with rspControl data
-    public function get_all_raters()
-    {
-        try {
-            $users = User::where('role_id', 2)
-                ->orderBy('created_at', 'desc') // Order by latest created first
-                ->get()
-                ->map(function ($user) {
-                    return [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'username' => $user->username,
-                    'job_batches_rsp' => $user->job_batches_rsp->pluck('Position')->implode(', '),
-                    'office' => $user->office,
-                        'created_at' => $user->created_at->format('Y-m-d H:i:s'), // Include created date
-                        'updated_at' => $user->updated_at->format('Y-m-d H:i:s'), // Include updated date
-                    ];
-                });
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Raters retrieved successfully',
-                'data' => $users
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to retrieve raters',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
 
 
 
-    // Get all users (User Management) with rspControl data
-    public function get_rater_usernames()
-    {
-        try {
-            $users = User::where('role_id', 2)
-                ->orderBy('created_at', 'desc') // Order by latest created first
-                ->get()
-                ->map(function ($user) {
-                    return [
-                        'id' => $user->id,
-                        'username' => $user->username,
-                        'office'=> $user->office,
-                    ];
-                });
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Raters retrieved successfully',
-                'data' => $users
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to retrieve raters',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
 
 
     // Get a specific user by ID with rspControl data
@@ -709,38 +436,5 @@ class AuthController extends Controller
     }
 
 
-    public function rater_register(Request $request)
-    {
-        $validatedData = $request->validate([
 
-
-            // Optional permission flags
-
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $user = User::create([
-
-                'role_id' => 2,
-                'remember_token' => Str::random(32)
-            ]);
-
-
-
-            DB::commit();
-            return response()->json([
-                'status' => true,
-                'message' => 'Rater Registered Successfully',
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'status' => false,
-                'message' => 'Registration Failed',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
 }

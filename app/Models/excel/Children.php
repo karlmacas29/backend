@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\excel;
+
 
 use Illuminate\Database\Eloquent\Model;
+
 
 class Children extends Model
 {

@@ -2,18 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\JobBatchesRsp;
+
+use Carbon\Carbon;
+use App\Models\Submission;
 use Illuminate\Http\Request;
+use App\Models\JobBatchesRsp;
 
 class JobBatchesRspController extends Controller
 {
     // List all
     public function index()
     {
-        // Fetch all job batches,  Open
-        // Fetch all job batches, Open - order by post_date instead
+        // Only fetch jobs where end_post is today or later (still active)
+        $today = Carbon::today();
+        $activeJobs = JobBatchesRsp::whereDate('end_date', '>=', $today)
+            ->orderBy('post_date', 'asc') // Optional: you can change this to 'created_at' if preferred
+            ->get();
 
-        return response()->json(JobBatchesRsp::orderBy('created_at', 'asc')->get());
+        return response()->json($activeJobs);
+    }
+
+    public function office()
+    {
+        // Only fetch jobs where end_post is today or later (still active)
+       $data = JobBatchesRsp::select('Office','Position','SalaryGrade','ItemNo','id')->get();
+
+       return response()->json($data);
     }
 
     // Create
@@ -96,5 +110,20 @@ class JobBatchesRspController extends Controller
         $jobBatch->delete();
 
         return response()->json(null, 204);
+    }
+
+    public function getApplicants($id)
+    {
+        $jobBatch = JobBatchesRsp::with('applicants')->findOrFail($id);
+        $applicants = $jobBatch->applicants->map(function ($applicant) {
+            return [
+                'id' => $applicant->id,
+                'name' => $applicant->firstname . ' ' . $applicant->lastname,
+                'appliedDate' => $applicant->created_at->format('Y-m-d'),
+                'status' => $applicant->status, // adjust based on your DB column
+            ];
+        });
+
+        return response()->json(['applicants' => $applicants]);
     }
 }

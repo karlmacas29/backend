@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Imports\ApplicantFormImport;
 use App\Models\nPersonal_info;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Imports\ApplicantFormImport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 
 class ApplicantSubmissionController extends Controller
 {
     //
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -18,12 +23,73 @@ class ApplicantSubmissionController extends Controller
             'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
         ]);
 
-        Excel::import(new ApplicantFormImport($validated['job_batches_rsp_id']), $request->file('excel_file'));
+        $file = $request->file('excel_file');
+        $fileName = time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
 
-        return response()->json(['message' => 'Applicant submissions imported successfully.']);
+        try {
+            // Try to import using the uploaded file directly
+            // Excel::import(new ApplicantFormImport($validated['job_batches_rsp_id']), $file);
+            $import = new ApplicantFormImport($validated['job_batches_rsp_id'], null, $fileName);
+            Excel::import($import, $file);
+
+            // Only save the file if import was successful
+            $file->storeAs('excels', $fileName);
+
+            return response()->json([
+                'message' => 'Applicant submissions imported successfully.',
+                'excel_file_name' => $fileName
+            ]);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed during Excel import.',
+                'errors' => $e->failures()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to import Excel file.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
 
+
+    // get the image value..
+    // public function read_excel()
+    // {
+    //     $excel_file = base_path($fileName);
+
+    //     $reader = new Xlsx();
+    //     $spreadsheet = $reader->load($excel_file);
+    //     $sheet = $spreadsheet->getActiveSheet();
+
+    //     $drawings = $sheet->getDrawingCollection();
+
+    //     foreach ($drawings as $index => $drawing) {
+    //         $coordinates = $drawing->getCoordinates();
+    //         $drawing_path = $drawing->getPath(); // This is a "zip://" path
+    //         $extension = pathinfo($drawing_path, PATHINFO_EXTENSION);
+
+    //         // Ensure images directory exists
+    //         $image_dir = public_path('storage/images');
+    //         if (!file_exists($image_dir)) {
+    //             mkdir($image_dir, 0777, true);
+    //         }
+
+    //         // Create a unique name for the image
+    //         $filename = $coordinates . '_' . $index . '.' . $extension;
+    //         $save_path = $image_dir . '/' . $filename;
+
+    //         // Save image to public storage path
+    //         $contents = file_get_contents($drawing_path);
+    //         file_put_contents($save_path, $contents);
+
+    //         // Display image
+    //         $public_url = asset('storage/images/' . $filename);
+
+
+    //     }
+    // }
 
     // public function store(Request $request)
     // {
@@ -84,7 +150,16 @@ class ApplicantSubmissionController extends Controller
             $users = nPersonal_info::all();
 
             foreach ($users as $user) {
-                $user->delete(); // This ensures related data is deleted if you set up relationships with cascade
+                if ($user->uploaded_file_image) {
+                    $fileName = $user->uploaded_file_image->excel_file_name;
+                    if ($fileName && Storage::exists('excels/' . $fileName)) {
+                        Storage::delete('excels/' . $fileName);
+                    }
+
+                    $user->uploaded_file_image->delete();
+                }
+
+                $user->delete();
             }
 
             DB::commit();
