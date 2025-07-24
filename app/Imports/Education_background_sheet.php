@@ -4,7 +4,7 @@ namespace App\Imports;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use App\Models\Education_background;
+use App\Models\excel\Education_background;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 

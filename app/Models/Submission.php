@@ -14,4 +14,10 @@ class Submission extends Model
             'nPersonalInfo_id',
             'job_batches_rsp_id'
     ];
+
+    public function nPersonalInfo()
+    {
+        return $this->belongsTo(nPersonal_info::class, 'nPersonalInfo_id');
+    }
 }
+

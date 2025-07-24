@@ -2,7 +2,7 @@
 
 namespace App\Imports;
 
-use App\Models\nPersonal_info;
+use App\Models\excel\nPersonal_info;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Events\AfterSheet;
@@ -18,14 +18,18 @@ class PersonalInformationSheet implements WithEvents
 
     protected $importer;
     protected $jobBatchId;
+    protected $fileName;
+    protected $ImageValue;
 
-    public function __construct($importer, $jobBatchId )
+    public function __construct($importer, $jobBatchId,$fileName,$ImageValue )
     {
 
         $this->importer = $importer;
         $this->jobBatchId = $jobBatchId;
+        $this->fileName = $fileName;
+        $this->ImageValue = $ImageValue;
     }
-    public $images = [];
+
 
 
 
@@ -34,25 +38,6 @@ class PersonalInformationSheet implements WithEvents
 
 
         $sheet = $event->sheet->getDelegate();
-        $drawings = $sheet->getParent()->getActiveSheet()->getDrawingCollection();
-
-        $imagePath = null;
-
-        // Loop through drawings and find image at S3
-        foreach ($drawings as $drawing) {
-            /** @var Drawing $drawing */
-            $coordinates = $drawing->getCoordinates(); // e.g., 'S3'
-            if (strtoupper($coordinates) === 'S3') {
-                $extension = $drawing->getExtension();
-                $filename = uniqid('excel_image_') . '.' . $extension;
-                $contents = file_get_contents($drawing->getPath());
-
-                // Save to local/public or S3
-                Storage::put("public/excel_images/{$filename}", $contents);
-                $imagePath = "storage/excel_images/{$filename}";
-                break;
-            }
-        }
 
         DB::beginTransaction();
 
@@ -149,7 +134,8 @@ class PersonalInformationSheet implements WithEvents
                 'philhealth_no' => $sheet->getCell('D30')->getValue(),
                 'sss_no' => $sheet->getCell('D31')->getValue(),
                 'tin_no' => $sheet->getCell('D32')->getValue(),
-                'image_path' => $imagePath,
+                'image_path'  => $event->getConcernable()->importer->getImageValue(),
+
 
                 'residential_house' => $sheet->getCell('I17')->getValue(),
                 'residential_street' => $sheet->getCell('L17')->getValue(),
@@ -157,7 +143,6 @@ class PersonalInformationSheet implements WithEvents
                 'residential_barangay' => $sheet->getCell('L19')->getValue(),
                 'residential_city' => $sheet->getCell('I21')->getValue(),
                 'residential_province' => $sheet->getCell('L21')->getValue(),
-                // 'residential_region' => $sheet->getCell('I19')->getValue(),
                 'residential_zip' => $sheet->getCell('I23')->getValue(),
 
                 'permanent_house' => $sheet->getCell('I24')->getValue(),
@@ -167,6 +152,7 @@ class PersonalInformationSheet implements WithEvents
                 'permanent_city' => $sheet->getCell('I28')->getValue(),
                 'permanent_province' => $sheet->getCell('L28')->getValue(),
                 'permanent_zip' => $sheet->getCell('I30')->getValue(),
+                'excel_file' => $event->getConcernable()->importer->getFileName(),
 
                 'telephone_number' => $sheet->getCell('I31')->getValue(),
                 'cellphone_number' => $sheet->getCell('I32')->getValue(),
@@ -186,7 +172,6 @@ class PersonalInformationSheet implements WithEvents
                 throw new ValidationException($validator);
             }
 
-            // Create personal info
             // Create personal info
             $personalInfo = nPersonal_info::create($data);
 

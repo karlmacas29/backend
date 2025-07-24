@@ -8,10 +8,10 @@ use Illuminate\Http\Request;
 class OnCriteriaJobController extends Controller
 {
     // List all
-    public function index()
-    {
-        return response()->json(OnCriteriaJob::all());
-    }
+    // public function index()
+    // {
+    //     return response()->json(OnCriteriaJob::all());
+    // }
 
     // Create
     public function store(Request $request)

@@ -2,7 +2,7 @@
 
 namespace App\Imports;
 
-use App\Models\nFamily;
+use App\Models\excel\nFamily;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;

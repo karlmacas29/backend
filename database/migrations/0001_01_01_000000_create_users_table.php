@@ -22,6 +22,11 @@ return new class extends Migration
             $table->timestamp('created_at')->useCurrent()->setTimezone('Asia/Manila');
             $table->timestamp('updated_at')->useCurrent()->setTimezone('Asia/Manila');
             $table->string('password');
+              $table->foreignId('role_id')
+                ->nullable() // allow nulls for existing users
+                ->after('active') // place it right after the ID
+                ->constrained()
+                ->onDelete('cascade');
             $table->rememberToken();
         });
 

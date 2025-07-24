@@ -11,6 +11,9 @@ Route::apiResource('on-criteria-job', OnCriteriaJobController::class)->only(['in
 Route::get('/on-criteria-job/{PositionID}/{ItemNo}', [OnCriteriaJobController::class, 'show']);
 
 
+// Route::get('/job-batches-rsp', [JobBatchesRspController::class, 'index']);
 
+Route::post('/job-batches-rsp/applicant/view/{id}', [JobBatchesRspController::class, 'getApplicants']);
+Route::post('/job-batches-rsp/get/view/', [JobBatchesRspController::class, 'get_submission_table']);
 
-
+Route::get('/job-batches-rsp/office', [JobBatchesRspController::class, 'office']);

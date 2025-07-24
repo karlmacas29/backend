@@ -3,7 +3,7 @@
 namespace App\Imports;
 
 use Carbon\Carbon;
-use App\Models\Voluntary_work;
+use App\Models\excel\Voluntary_work;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;

@@ -4,7 +4,9 @@ namespace App\Imports;
 
 use Carbon\Carbon;
 
-use App\Models\Children;
+
+
+use App\Models\excel\Children;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
