@@ -22,13 +22,37 @@ class JobBatchesRspController extends Controller
         return response()->json($activeJobs);
     }
 
-    public function office()
+    public function job_list()
     {
         // Only fetch jobs where end_post is today or later (still active)
-       $data = JobBatchesRsp::select('Office','Position','SalaryGrade','ItemNo','id')->get();
 
-       return response()->json($data);
+        $activeJobs = JobBatchesRsp::all();
+        return response()->json($activeJobs);
     }
+
+    // public function job_list()
+    // {
+    //     // Get all job posts with criteria and assigned raters
+    //     $jobs = JobBatchesRsp::with(['criteriaRatings', 'users:id,name'])->select('id','office','isOpen','Position') // Include only user id and name
+    //         ->get();
+
+    //     // Add 'status' and 'assigned_raters' to each job
+    //     $jobsWithDetails = $jobs->map(function ($job) {
+    //         $job->status = $job->criteriaRatings->isNotEmpty() ? 'created' : 'no criteria';
+    //         $job->assigned_raters = $job->users; // Include users as assigned raters
+    //         unset($job->users); // Optionally remove the original 'users' relation if not needed directly
+    //         return $job;
+    //     });
+
+    //     return response()->json($jobsWithDetails);
+    // }
+
+    // public function office()
+    // {
+    //     // Only fetch jobs where end_post is today or later (still active)
+    //    $data = JobBatchesRsp::select('Office','Position','SalaryGrade','ItemNo','id')->get();
+    //    return response()->json($data);
+    // }
 
     // Create
     public function store(Request $request)
@@ -109,21 +133,41 @@ class JobBatchesRspController extends Controller
         $jobBatch = JobBatchesRsp::findOrFail($id);
         $jobBatch->delete();
 
-        return response()->json(null, 204);
+        return response()->json([
+            'message' => 'deleted successfully',
+            'jobBatch' => $jobBatch,
+        ]);
     }
-
-    public function getApplicants($id)
+    public function get_applicant($id)
     {
-        $jobBatch = JobBatchesRsp::with('applicants')->findOrFail($id);
-        $applicants = $jobBatch->applicants->map(function ($applicant) {
+        // Fetch applicants for the given job post
+        $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
+            ->with([
+            'nPersonalInfo.education',
+            'nPersonalInfo.work_experience',
+            'nPersonalInfo.training',
+            'nPersonalInfo.eligibity',
+            'nPersonalInfo.family',
+            'nPersonalInfo.children',
+            'nPersonalInfo.personal_declarations',
+            'nPersonalInfo.skills',
+            'nPersonalInfo.voluntary_work',
+            ])
+            ->get();
+
+        $applicants = $qualifiedApplicants->map(function ($submission) {
             return [
-                'id' => $applicant->id,
-                'name' => $applicant->firstname . ' ' . $applicant->lastname,
-                'appliedDate' => $applicant->created_at->format('Y-m-d'),
-                'status' => $applicant->status, // adjust based on your DB column
+                'id' => $submission->id,
+                'job_batches_rsp_id' => $submission->job_batches_rsp_id,
+                'status' => $submission->status,
+                'n_personal_info' => $submission->nPersonalInfo,
             ];
         });
 
-        return response()->json(['applicants' => $applicants]);
+        return response()->json([
+            'status' => true,
+            'applicants' => $applicants,
+        ]);
     }
 }
+

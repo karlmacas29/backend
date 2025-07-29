@@ -60,71 +60,69 @@ class nPersonal_info extends Model
         'email_address',
     ];
 
-    public function family(){
-
-        return $this->hasMany(nFamily::class);
-
+    public function family()
+    {
+        return $this->hasMany(nFamily::class, 'nPersonalInfo_id');
     }
 
-    public function children(){
-
-        return $this->hasMany(Children::class);
+    public function children()
+    {
+        return $this->hasMany(Children::class, 'nPersonalInfo_id');
     }
 
     public function education()
     {
-
-        return $this->hasMany(Education_background::class);
+        return $this->hasMany(Education_background::class, 'nPersonalInfo_id');
     }
 
-    public function eligibity(){
-
-        return $this->hasMany(Civil_service_eligibity::class);
+    public function eligibity()
+    {
+        return $this->hasMany(Civil_service_eligibity::class, 'nPersonalInfo_id');
     }
 
     public function work_experience()
     {
-
-        return $this->hasMany(Work_experience::class);
+        return $this->hasMany(Work_experience::class, 'nPersonalInfo_id');
     }
 
-    public function voluntary_work(){
-
-        return $this->hasMany(Voluntary_work::class);
+    public function voluntary_work()
+    {
+        return $this->hasMany(Voluntary_work::class, 'nPersonalInfo_id');
     }
-    public function training(){
 
-        return $this->hasMany(Learning_development::class);
+    public function training()
+    {
+        return $this->hasMany(Learning_development::class, 'nPersonalInfo_id');
     }
 
     public function personal_declarations()
     {
-
-        return $this->hasMany(Personal_declarations::class);
+        return $this->hasMany(Personal_declarations::class, 'nPersonalInfo_id');
     }
 
+    public function skills()
+    {
+        return $this->hasMany(skill_non_academic::class, 'nPersonalInfo_id');
+    }
     public function job_batches_rsp()
     {
         return $this->belongsToMany(
             JobBatchesRsp::class,
-            'submission',       // pivot table
-            'nPersonalInfo_id',               // foreign key sa User
-            'job_batches_rsp_id'      // foreign key sa JobBatchesRsp
+            'submission',
+            'nPersonalInfo_id',
+            'job_batches_rsp_id'
         )->withTimestamps();
     }
-
-
-    // public function upload_file_image()
-    // {
-    //     return $this->hasMany(Upload_file_image::class);
-    // }
-
-
 
     public function submission()
     {
         return $this->belongsTo(Submission::class, 'submission_id');
     }
 }
+    // public function upload_file_image()
+    // {
+    //     return $this->hasMany(Upload_file_image::class);
+    // }
+
 
 

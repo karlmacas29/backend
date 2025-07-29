@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('on_criteria_job', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('job_batches_rsp_id')->nullable()->constrained('job_batches_rsp')->onDelete('cascade');
+            // $table->foreignId('job_batches_rsp_id')->nullable()->constrained('job_batches_rsp')->onDelete('cascade');
             $table->integer('PositionID')->nullable();
             $table->text('EduPercent')->nullable();
             $table->text('EliPercent')->nullable();

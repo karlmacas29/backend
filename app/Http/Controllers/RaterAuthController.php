@@ -12,80 +12,8 @@ use Illuminate\Support\Facades\Validator;
 
 class RaterAuthController extends Controller
 {
-    //
-    public function getAssignedJobs()
-    {
-        $user = Auth::user();
 
-        // Get only the assigned job batches for the authenticated user
-        $assignedJobs = $user->job_batches_rsp()->where('isOpen', true)->get();
-
-        return response()->json([
-            'status' => true,
-            'assigned_jobs' => $assignedJobs,
-        ]);
-    }
-    public function get_all_raters()
-    {
-        try {
-            $users = User::where('role_id', 2)
-                ->orderBy('created_at', 'desc') // Order by latest created first
-                ->get()
-                ->map(function ($user) {
-                    return [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'username' => $user->username,
-                        'job_batches_rsp' => $user->job_batches_rsp->pluck('Position')->implode(', '),
-                        'office' => $user->office,
-                        'created_at' => $user->created_at->format('Y-m-d H:i:s'), // Include created date
-                        'updated_at' => $user->updated_at->format('Y-m-d H:i:s'), // Include updated date
-                    ];
-                });
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Raters retrieved successfully',
-                'data' => $users
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to retrieve raters',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function get_rater_usernames()
-    {
-        try {
-            $users = User::where('role_id', 2)
-                ->orderBy('created_at', 'desc') // Order by latest created first
-                ->get()
-                ->map(function ($user) {
-                    return [
-                        'id' => $user->id,
-                        'username' => $user->username,
-                        'office' => $user->office,
-                    ];
-                });
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Raters retrieved successfully',
-                'data' => $users
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to retrieve raters',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-
+      //create account and register rater account
     public function Raters_register(Request $request)
     {
         $validated = $request->validate([
@@ -113,12 +41,39 @@ class RaterAuthController extends Controller
 
         // Attach job batches
         $user->job_batches_rsp()->attach($validated['job_batches_rsp_id']);
-
         return response()->json([
             'status' => true,
             'message' => 'Rater Registered Successfully',
             'data' => $user->load('job_batches_rsp')
         ], 201);
+    }
+
+    //edit rater where his assign
+    public function editRater(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'job_batches_rsp_id' => 'nullable|array',
+            'job_batches_rsp_id.*' => 'exists:job_batches_rsp,id',
+            'office' => 'required|string|max:255',
+        ]);
+
+        // Find the user (rater) by ID
+        $user = User::findOrFail($id);
+
+        // Update office
+        $user->office = $validated['office'];
+        $user->save();
+
+        // Sync job_batches_rsp only if provided
+        if (isset($validated['job_batches_rsp_id'])) {
+            $user->job_batches_rsp()->sync($validated['job_batches_rsp_id']);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Rater Updated Successfully',
+            'data' => $user->load('job_batches_rsp')
+        ]);
     }
 
 
@@ -285,6 +240,8 @@ public function change_password(Request $request)
             ], 500);
         }
     }
+
+    // Get all users (User Management) with rspControl data
 
 
 }

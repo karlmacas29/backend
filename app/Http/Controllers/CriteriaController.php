@@ -20,89 +20,229 @@ class CriteriaController extends Controller
     //     $this->criteria = $criteria;
     // }
 
+    // public function store_criteria(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         // 'job_batches_rsp_id' => 'required|integer',
+    //         'job_batches_rsp_id' => 'required|array',
+    //         'job_batches_rsp_id.*' => 'exists:job_batches_rsp,id',
+
+    //         'education.Rate' => 'required|string',
+    //         'education.description' => 'required|array',
+    //         'education.description.*' => 'required|string',
+
+    //         'experience.Rate' => 'required|string',
+    //         'experience.description' => 'required|array',
+    //         'experience.description.*' => 'required|string',
+
+    //         'training.Rate' => 'required|string',
+    //         'training.description' => 'required|array',
+    //         'training.description.*' => 'required|string',
+
+    //         'performance.Rate' => 'required|string',
+    //         'performance.description' => 'required|array',
+    //         'performance.description.*' => 'required|string',
+
+    //         'behavioral.Rate' => 'required|string',
+    //         'behavioral.description' => 'required|array',
+    //         'behavioral.description.*' => 'required|string',
+    //     ]);
+
+
+    //     // Find or create the main criteria_rating
+    //     $criteria = criteria_rating::firstOrCreate(
+    //         ['job_batches_rsp_id' => $validated['job_batches_rsp_id']]
+    //     );
+
+    //     // Now update or create education
+
+    //     $criteria->educations()->updateOrCreate(
+    //         ['criteria_rating_id' => $criteria->id],
+    //         [
+    //             'Rate' => $request->education['Rate'],
+    //             'description' => implode(', ', $request->education['description']),
+    //         ]
+    //     );
+
+    //     $criteria->experiences()->updateOrCreate(
+    //         ['criteria_rating_id' => $criteria->id],
+    //         [
+    //             'Rate' => $request->experience['Rate'],
+    //             'description' => implode(', ', $request->experience['description']),
+    //         ]
+    //     );
+    //     $criteria->trainings()->updateOrCreate(
+    //         ['criteria_rating_id' => $criteria->id],
+    //         [
+    //             'Rate' => $request->training['Rate'],
+    //             'description' => implode(', ', $request->training['description']),
+    //         ]
+    //     );
+    //     $criteria->performances()->updateOrCreate(
+    //         ['criteria_rating_id' => $criteria->id],
+    //         [
+    //             'Rate' => $request->performance['Rate'],
+    //             'description' => implode(', ', $request->performance['description']),
+    //         ]
+    //     );
+    //     $criteria->behaviorals()->updateOrCreate(
+    //         ['criteria_rating_id' => $criteria->id],
+    //         [
+    //             'Rate' => $request->behavioral['Rate'],
+    //             'description' => implode(', ', $request->behavioral['description']),
+    //         ]
+    //     );
+
+
+    //     return response()->json([
+    //         'message' => $criteria->wasRecentlyCreated ? 'Created new criteria' : 'Updated existing criteria',
+    //         'criteria' => $criteria->load([
+    //             'educations',
+    //             'experiences',
+    //             'trainings',
+    //             'performances',
+    //             'behaviorals',
+    //         ]),
+    //     ]);
+    // }
+
     public function store_criteria(Request $request)
     {
-        // Validate input for criteria_rating
         $validated = $request->validate([
-            'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
-            'education.Rate' => 'required',
-            'education.Min_qualification'=> 'required',
-            'education.Title' => 'required',
-            'education.Description' => 'required',
+            'job_batches_rsp_id' => 'required|array',
+            'job_batches_rsp_id.*' => 'exists:job_batches_rsp,id',
 
-            'experience.Rate' => 'required',
-            'experience.Min_qualification' => 'required',
-            'experience.Title' => 'required',
-            'experience.Description' => 'required',
+            'education.Rate' => 'required|string',
+            'education.description' => 'required|array',
+            'education.description.*' => 'required|string',
 
-            'training.Rate' => 'required',
-            'training.Title' => 'required',
-            'training.Desription' => 'required',
+            'experience.Rate' => 'required|string',
+            'experience.description' => 'required|array',
+            'experience.description.*' => 'required|string',
 
-            'performance.Rate' => 'required',
-            'performance.Title' => 'required',
-            'performance.Outstanding_rating' => 'required',
-            'performance.Very_Satisfactory' => 'required',
-            'performance.Below_rating' => 'required',
+            'training.Rate' => 'required|string',
+            'training.description' => 'required|array',
+            'training.description.*' => 'required|string',
 
+            'performance.Rate' => 'required|string',
+            'performance.description' => 'required|array',
+            'performance.description.*' => 'required|string',
 
-            'behavioral.Rate' => 'required',
-            'behavioral.Title' => 'required',
-            'behavioral.Desription' => 'required',
+            'behavioral.Rate' => 'required|string',
+            'behavioral.description' => 'required|array',
+            'behavioral.description.*' => 'required|string',
         ]);
 
-        // Step 1: Create criteria_rating
-        $criteria = criteria_rating::create([
-            'job_batches_rsp_id' => $validated['job_batches_rsp_id'],
-        ]);
+        $results = [];
 
-        // Step 2: Create c_education using the created criteria_rating ID
-        $education = c_education::create([
-            'criteria_rating_id' => $criteria->id,
-            'Rate' => $request->education['Rate'],
-            'Min_qualification' => $request->education['Min_qualification'],
-            'Title' => $request->education['Title'],
-            'Description' => $request->education['Description'],
-        ]);
+        foreach ($validated['job_batches_rsp_id'] as $jobId) {
+            $criteria = criteria_rating::firstOrCreate([
+                'job_batches_rsp_id' => $jobId
+            ]);
 
-        $experience = c_experience::create([
-            'criteria_rating_id' => $criteria->id,
-            'Rate' => $request->experience['Rate'],
-            'Min_qualification' =>$request->experienced['Min_qualification'],
-            'Title' =>  $request->experience['Title'],
+            $criteria->educations()->updateOrCreate(
+                ['criteria_rating_id' => $criteria->id],
+                [
+                    'Rate' => $request->education['Rate'],
+                    'description' => implode(', ', $request->education['description']),
+                ]
+            );
 
-        ]);
-        $training = c_training::create([
-            'criteria_rating_id' => $criteria->id,
-            'Rate' => $request->training['Rate'],
-              'Title' =>  $request->training['Title'],
-            'Description' => $request->training['Description'],
-        ]);
+            $criteria->experiences()->updateOrCreate(
+                ['criteria_rating_id' => $criteria->id],
+                [
+                    'Rate' => $request->experience['Rate'],
+                    'description' => implode(', ', $request->experience['description']),
+                ]
+            );
 
-        $performance = c_performance::create([
-            'criteria_rating_id' => $criteria->id,
-            'Rate' => $request->performance['Rate'],
-            'Title' =>  $request->performance['Title'],
-            'Outstanding_rating' => $request->performance['Outstanding_rating'],
-            'Very_Satisfactory' => $request->performance['Very_Satisfactory'],
-            'Below_rating' => $request->performance['Below_rating'],
-        ]);
+            $criteria->trainings()->updateOrCreate(
+                ['criteria_rating_id' => $criteria->id],
+                [
+                    'Rate' => $request->training['Rate'],
+                    'description' => implode(', ', $request->training['description']),
+                ]
+            );
 
-        $behavioral = c_behavioral_bei::create([
-            'criteria_rating_id' => $criteria->id,
-            'Rate' => $request->behavioral['Rate'],
-            'Title' =>  $request->behavioral['Title'],
-            'Description' => $request->behavioral['Description'],
-        ]);
+            $criteria->performances()->updateOrCreate(
+                ['criteria_rating_id' => $criteria->id],
+                [
+                    'Rate' => $request->performance['Rate'],
+                    'description' => implode(', ', $request->performance['description']),
+                ]
+            );
+
+            $criteria->behaviorals()->updateOrCreate(
+                ['criteria_rating_id' => $criteria->id],
+                [
+                    'Rate' => $request->behavioral['Rate'],
+                    'description' => implode(', ', $request->behavioral['description']),
+                ]
+            );
+
+            $results[] = $criteria->load([
+                'educations',
+                'experiences',
+                'trainings',
+                'performances',
+                'behaviorals',
+            ]);
+        }
+
+        $count = count($results);
+        $jobIds = array_column($results, 'job_batches_rsp_id');
 
         return response()->json([
-            'message' => 'Successfully saved criteria and education',
-            'criteria' => $criteria,
-            'education' => $education,
-            'experience'=> $experience,
-            'training'=> $training,
-            'performance' => $performance,
-            'behavioral' => $behavioral
+            'message' => "Criteria stored for {$count} job(s): " . implode(', ', $jobIds),
+            'criteria' => $results,
+        ]);
+    }
+
+
+
+    public function delete($id)
+    {
+        $criteria = criteria_rating::find($id);
+
+        if (!$criteria) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Criteria not found.'
+            ], 404);
+        }
+
+        $criteria->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Criteria deleted successfully.'
+        ]);
+    }
+
+
+
+      // this is for view criteria on admin to view the criteria of the job post 
+    public function view_criteria($job_batches_rsp_id)
+    {
+        // Find the criteria_rating record for this job_batches_rsp_id
+        $criteria = criteria_rating::with([
+            'educations',
+            'experiences',
+            'trainings',
+            'performances',
+            'behaviorals'
+        ])->where('job_batches_rsp_id', $job_batches_rsp_id)->first();
+
+        if (!$criteria) {
+            return response()->json(['message' => 'No criteria found for this job'], 404);
+        }
+
+        return response()->json([
+            'education'   => $criteria->educations,
+            'experience'  => $criteria->experiences,
+            'training'    => $criteria->trainings,
+            'performance' => $criteria->performances,
+            'behavioral'  => $criteria->behaviorals,
         ]);
     }
 }

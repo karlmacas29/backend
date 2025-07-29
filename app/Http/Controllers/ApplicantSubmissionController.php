@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Models\nPersonal_info;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Imports\ApplicantFormImport;
+use App\Models\excel\nPersonal_info;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
@@ -54,42 +55,49 @@ class ApplicantSubmissionController extends Controller
 
 
 
-    // get the image value..
-    // public function read_excel()
-    // {
-    //     $excel_file = base_path($fileName);
+    //get the image value..
+    public function read_excel()
+    {
+        $excel_file = base_path('/storage/app/public/excels/1753403079_A8I3JDuD.xlsx');
 
-    //     $reader = new Xlsx();
-    //     $spreadsheet = $reader->load($excel_file);
-    //     $sheet = $spreadsheet->getActiveSheet();
+        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+        $spreadsheet = $reader->load($excel_file);
+        $sheet = $spreadsheet->getActiveSheet();
 
-    //     $drawings = $sheet->getDrawingCollection();
+        $drawings = $sheet->getDrawingCollection();
 
-    //     foreach ($drawings as $index => $drawing) {
-    //         $coordinates = $drawing->getCoordinates();
-    //         $drawing_path = $drawing->getPath(); // This is a "zip://" path
-    //         $extension = pathinfo($drawing_path, PATHINFO_EXTENSION);
+        foreach ($drawings as $index => $drawing) {
+            $coordinates = $drawing->getCoordinates();
 
-    //         // Ensure images directory exists
-    //         $image_dir = public_path('storage/images');
-    //         if (!file_exists($image_dir)) {
-    //             mkdir($image_dir, 0777, true);
-    //         }
+            // Check if it's a file-based drawing or memory-based
+            if (method_exists($drawing, 'getPath')) {
+                $drawing_path = $drawing->getPath(); // "zip://" path
+                $extension = pathinfo($drawing_path, PATHINFO_EXTENSION);
 
-    //         // Create a unique name for the image
-    //         $filename = $coordinates . '_' . $index . '.' . $extension;
-    //         $save_path = $image_dir . '/' . $filename;
+                // Ensure images directory exists
+                $image_dir = public_path('storage/images');
+                if (!file_exists($image_dir)) {
+                    mkdir($image_dir, 0777, true);
+                }
 
-    //         // Save image to public storage path
-    //         $contents = file_get_contents($drawing_path);
-    //         file_put_contents($save_path, $contents);
+                $filename = $coordinates . '_' . $index . '.' . $extension;
+                $save_path = $image_dir . '/' . $filename;
 
-    //         // Display image
-    //         $public_url = asset('storage/images/' . $filename);
+                $contents = file_get_contents($drawing_path);
+                file_put_contents($save_path, $contents);
 
+                $public_url = asset('storage/images/' . $filename);
 
-    //     }
-    // }
+                // ✅ Properly echo coordinates and path
+                echo "<p>Coordinate: <strong>{$coordinates}</strong></p>";
+                echo "<p>Drawing Path: <code>{$drawing_path}</code></p>";
+                echo "<img src='{$public_url}' style='max-width:200px'><br><br>";
+            } else {
+                echo "<p>Drawing at {$coordinates} is not file-based (probably MemoryDrawing).</p>";
+            }
+        }
+    }
+
 
     // public function store(Request $request)
     // {

@@ -11,18 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('on_criteria_job', function (Blueprint $table) {
-            $table->string('ItemNo')->nullable()->after('PositionID');
+        Schema::table('c_performance', function (Blueprint $table) {
+            $table->string('Title')->nullable()->after('Rate'); // You can change the position if needed
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('on_criteria_job', function (Blueprint $table) {
-            $table->dropColumn('ItemNo');
+        Schema::table('c_performance', function (Blueprint $table) {
+            $table->dropColumn('Title');
         });
     }
 };

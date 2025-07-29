@@ -13,8 +13,16 @@ class c_behavioral_bei extends Model
     protected $fillable =[
         'criteria_rating_id',
         'Rate',
-        'Title',
-        'Description',
+        'description'
 
     ];
+    // This will automatically convert JSON <-> array
+    protected $casts = [
+        'description' => 'array',
+    ];
+
+    public function criteriaRating()
+    {
+        return $this->belongsTo(criteria_rating::class, 'criteria_rating_id');
+    }
 }

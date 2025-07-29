@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\criteria\criteria_rating;
 use App\Models\excel\nPersonal_info;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -47,5 +48,9 @@ class JobBatchesRsp extends Model
     {
         return $this->belongsToMany(nPersonal_info::class, 'submission', 'job_batches_rsp_id', 'nPersonalInfo_id')
             ->withTimestamps();
+    }
+    public function criteriaRatings()
+    {
+        return $this->hasMany(criteria_rating::class, 'job_batches_rsp_id');
     }
 }
