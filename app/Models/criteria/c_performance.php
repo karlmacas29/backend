@@ -13,10 +13,16 @@ class c_performance extends Model
     protected $fillable = [
         'criteria_rating_id',
         'Rate',
-        'Title',
-        'Outstanding_rating',
-        'Very_Satisfactory',
-        'Below_rating',
+        'description'
 
     ];
+    // This will automatically convert JSON <-> array
+    protected $casts = [
+        'description' => 'array',
+    ];
+
+    public function criteriaRating()
+    {
+        return $this->belongsTo(criteria_rating::class, 'criteria_rating_id');
+    }
 }

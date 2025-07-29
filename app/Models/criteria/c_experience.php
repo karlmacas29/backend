@@ -12,10 +12,16 @@ class c_experience extends Model
     protected $fillable = [
         'criteria_rating_id',
         'Rate',
-        'Min_qualification',
-        'Title',
-        'With_experience',
-        'Without_experience',
+        'description'
 
     ];
+    // This will automatically convert JSON <-> array
+    protected $casts = [
+        'description' => 'array',
+    ];
+
+    public function criteriaRating()
+    {
+        return $this->belongsTo(criteria_rating::class, 'criteria_rating_id');
+    }
 }
