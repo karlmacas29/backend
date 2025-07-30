@@ -14,10 +14,18 @@ class PlantillaController extends Controller
     public function test()
     {
         // Fetch data for COMPUTER PROGRAMMER II, showing office and funded status
-        $data = vwplantillastructure::where('PageNo', '111')
-            ->select('office', 'funded', 'position','Name1')
+        $plantilla = vwplantillastructure::select([
+            'vwplantillaStructure.ControlNo',
+            'vwplantillaStructure.ID',
+            'vwplantillaStructure.office',
+            'vwActive.BirthDate',
+            'vwActive.Designation',
+        ])
+            ->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')
             ->get();
-        return response()->json($data);
+
+
+        return response()->json($plantilla);
     }
 
     public function index()
@@ -71,6 +79,8 @@ class PlantillaController extends Controller
             ->get();
         return response()->json($data);
     }
+
+
 
     public function vwActiveGet()
     {

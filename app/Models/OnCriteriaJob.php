@@ -23,4 +23,5 @@ class OnCriteriaJob extends Model
         'Experience',
         'ItemNo'
     ];
+    
 }

@@ -19,16 +19,17 @@ use Illuminate\Support\Facades\Cookie;
 class AuthController extends Controller
 
 {
-    public function get_role(){
+    public function get_role()
+    {
         $data = Role::all();
         return response()->json([
             'status' => true,
             'message' => 'Roles retrieved successfully',
             'data' => $data
         ]);
-      }
+    }
 
-    
+
     // public function fetch_rater_assign()
     // {
     //     $raterId = 40043;
@@ -86,7 +87,7 @@ class AuthController extends Controller
                 'position' => $validatedData['position'],
                 'active' => $validatedData['active'],
                 'role_id' => 1,
-                'remember_token' =>Str::random(32)
+                'remember_token' => Str::random(32)
             ]);
 
             if ($request->has('permissions')) {
@@ -216,28 +217,6 @@ class AuthController extends Controller
         ])->withCookie($cookie);
     }
 
-
-    public function Rater_logout(Request $request)
-    {
-        $user = Auth::user();
-
-        if ($user) {
-            $user->tokens()->delete();
-        }
-
-        $cookie = cookie()->forget('rater_token');
-
-        return response([
-            'status' => true,
-            'message' => 'Logout Successfully',
-        ])->withCookie($cookie);
-    }
-
-
-
-
-    // logout
-
     // Get all users (User Management) with rspControl data
     public function getAllUsers()
     {
@@ -260,13 +239,6 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
-
-
-
-
-
-
 
     // Get a specific user by ID with rspControl data
     public function getUserById($id)
@@ -434,7 +406,4 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
-
-
 }

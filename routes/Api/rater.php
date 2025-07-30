@@ -21,7 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 Route::get('/rater/criteria/applicant/{id}', [rater_controller::class, 'get_criteria_applicant']);
-Route::post('rating/score', [SubmissionController::class, 'store_score']);
+Route::post('rating/score', [rater_controller::class, 'store_score']);
 
 Route::get('rating/index', [SubmissionController::class, 'index']);
 Route::delete('rating/delete/{id}', [SubmissionController::class, 'delete']);

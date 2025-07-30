@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 class RaterAuthController extends Controller
 {
 
-      //create account and register rater account
+    //create account and register rater account
     public function Raters_register(Request $request)
     {
         $validated = $request->validate([
@@ -48,7 +48,7 @@ class RaterAuthController extends Controller
         ], 201);
     }
 
-    //edit rater where his assign
+    // edit rater where his assign
     public function editRater(Request $request, $id)
     {
         $validated = $request->validate([
@@ -77,7 +77,7 @@ class RaterAuthController extends Controller
     }
 
 
-    // login
+    // login function for rater
     public function Raters_Login(Request $request)
     {
         // First check if username and password are provided
@@ -158,42 +158,43 @@ class RaterAuthController extends Controller
         ])->withCookie($cookie);
     }
 
+    // change password for the rater
+    public function change_password(Request $request)
+    {
+        // Validate request
+        $validator = Validator::make($request->all(), [
+            'old_password' => 'required',
+            'new_password' => 'required|min:8|confirmed',
+        ]);
 
-public function change_password(Request $request)
-{
-    // Validate request
-    $validator = Validator::make($request->all(), [
-        'old_password' => 'required',
-        'new_password' => 'required|min:8|confirmed',
-    ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
-    if ($validator->fails()) {
+        // Get authenticated rater
+        $rater = $request->user();
+
+        // Verify old password
+        if (!Hash::check($request->old_password, $rater->password)) {
+            return response()->json([
+                'status' => false,
+                'errors' => ['old_password' => ['The current password is incorrect']]
+            ], 422);
+        }
+
+        // Update password
+        $rater->password = Hash::make($request->new_password);
+        $rater->save();
+
         return response()->json([
-            'status' => false,
-            'errors' => $validator->errors()
-        ], 422);
+            'status' => true,
+            'message' => 'Password changed successfully'
+        ]);
     }
 
-    // Get authenticated rater
-    $rater = $request->user();
-
-    // Verify old password
-    if (!Hash::check($request->old_password, $rater->password)) {
-        return response()->json([
-            'status' => false,
-            'errors' => ['old_password' => ['The current password is incorrect']]
-        ], 422);
-    }
-
-    // Update password
-    $rater->password = Hash::make($request->new_password);
-    $rater->save();
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Password changed successfully'
-    ]);
-}
 
     // Delete a user and associated rspControl data
     public function deleteUser($id)
@@ -241,7 +242,23 @@ public function change_password(Request $request)
         }
     }
 
-    // Get all users (User Management) with rspControl data
+    // this is logout  function for rater
+    public function Rater_logout(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($user) {
+            $user->tokens()->delete();
+        }
+
+        $cookie = cookie()->forget('rater_token');
+
+        return response([
+            'status' => true,
+            'message' => 'Logout Successfully',
+        ])->withCookie($cookie);
+    }
+
 
 
 }

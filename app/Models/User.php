@@ -53,7 +53,8 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(
             JobBatchesRsp::class,
-            'job_batches_user',       // pivot table
+            'job_batches_user',
+            // 'job_batches_rsp_user',   // correct pivot table name
             'user_id',                // foreign key sa User
             'job_batches_rsp_id'      // foreign key sa JobBatchesRsp
         )->withTimestamps();
