@@ -72,6 +72,6 @@ class OnCriteriaJobController extends Controller
         $criteria = OnCriteriaJob::findOrFail($id);
         $criteria->delete();
 
-        return response()->json(null, 204);
+        return response()->json(['criteria'=>$criteria], 204);
     }
 }

@@ -2,57 +2,49 @@
 
 namespace App\Http\Controllers\rater;
 
-use criteria;
+
 use App\Models\User;
 use App\Models\Submission;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Models\criteria\criteria_rating;
 use Illuminate\Support\Facades\Auth;
+use App\Models\criteria\criteria_rating;
+use Illuminate\Support\Facades\Validator;
 
 class rater_controller extends Controller
 {
 
-     // fetch  the job post on the table of rater 
+    // fetch the job post on the table of rater only will fetch the assign job_post
     public function getAssignedJobs()
     {
         $user = Auth::user();
-        // Get only the assigned job batches for the authenticated user
-        $assignedJobs = $user->job_batches_rsp()->get();
+
+        // Get job batch IDs for this user from pivot table
+        $jobBatchIds = DB::table('job_batches_user')
+            ->where('user_id', $user->id)
+            ->pluck('job_batches_rsp_id');
+
+        // Get the actual job batches
+        $assignedJobs = \App\Models\JobBatchesRsp::whereIn('id', $jobBatchIds)->get();
+
         return response()->json([
             'status' => true,
             'assigned_jobs' => $assignedJobs,
         ]);
     }
-
-
-    // public function get_criteria_applicant($id)
+    // public function getAssignedJobs()
     // {
-    //     // ✅ Get criteria for the selected job post, with related fields
-    //     $criteria = criteria_rating::with(['educations', 'experiences', 'trainings', 'performances', 'behaviorals']) // add more if needed
-    //         ->where('job_batches_rsp_id', $id)
-    //         ->get(); // Assuming one criteria per job post
-
-    //     // ✅ Get applicants who submitted to the job post
-    //     $submissions = Submission::with('nPersonalInfo')
-    //         ->where('job_batches_rsp_id', $id)
-    //         ->get();
-
-    //     // ✅ Format applicants
-    //     $applicants = $submissions->map(function ($submission) {
-    //         return [
-    //             'id' => $submission->id,
-    //             'firstname' => $submission->nPersonalInfo->firstname ?? '',
-    //             'lastname' => $submission->nPersonalInfo->lastname ?? '',
-    //         ];
-    //     });
-
+    //     $user = Auth::user();
+    //     // Get only the assigned job batches for the authenticated user
+    //     $assignedJobs = $user->job_batches_rsp()->get();
     //     return response()->json([
     //         'status' => true,
-    //         'criteria' => $criteria, // Include all related criteria here
-    //         'applicants' => $applicants,
+    //         'assigned_jobs' => $assignedJobs,
     //     ]);
+    // }
 
-     // rater criteria
+    // rater criteria - fetching the applicant information   and criteria of the job_post
     public function get_criteria_applicant($id)
     {
         // Get criteria for the selected job post
@@ -131,7 +123,7 @@ class rater_controller extends Controller
         ]);
     }
 
-
+    // fetching the all rater on the admin table only will be fetch have role rater
     public function get_all_raters()
     {
         try {
@@ -164,87 +156,7 @@ class rater_controller extends Controller
         }
     }
 
-
-// public function get_criteria_applicant($id)
-// {
-//     // Get criteria for the selected job post, with related fields
-//     $criteria = criteria_rating::with(['educations', 'experiences', 'trainings', 'performances', 'behaviorals'])
-//         ->where('job_batches_rsp_id', $id)
-//         ->get();
-
-//     // Get applicants who submitted to the job post with their detailed information
-//     $submissions = Submission::with([
-//         'nPersonalInfo',
-//         'nPersonalInfo.education',
-//             'nPersonalInfo.work_experience',
-//             'nPersonalInfo.training',
-//             'nPersonalInfo.eligibity'
-//     ])
-//         ->where('job_batches_rsp_id', $id)
-//         ->get();
-
-//     // Format applicants with detailed information
-//     $applicants = $submissions->map(function ($submission) {
-//         $personalInfo = $submission->nPersonalInfo;
-
-//         return [
-//             'id' => $submission->id,
-//             'firstname' => $personalInfo->firstname ?? '',
-//             'lastname' => $personalInfo->lastname ?? '',
-//             'education' => $personalInfo->nEducations ? $personalInfo->nEducations->map(function($edu) {
-//                 return [
-//                     'school_name' => $edu->school_name,
-//                     'degree' => $edu->degree,
-//                     'attendance_from' => $edu->attendance_from,
-//                     'attendance_to' => $edu->attendance_to,
-//                     'year_graduated' => $edu->year_graduated,
-//                     'scholarship' => $edu->scholarship,
-//                     'level' => $edu->level
-//                 ];
-//             })->toArray() : [],
-//             'work_experience' => $personalInfo->nWorkExperiences ? $personalInfo->nWorkExperiences->map(function($work) {
-//                 return [
-//                     'position_title' => $work->position_title,
-//                     'department' => $work->department,
-//                     'work_date_from' => $work->work_date_from,
-//                     'work_date_to' => $work->work_date_to,
-//                     'monthly_salary' => $work->monthly_salary,
-//                     'status_of_appointment' => $work->status_of_appointment,
-//                     'government_service' => $work->government_service
-//                 ];
-//             })->toArray() : [],
-//             'training' => $personalInfo->nTrainings ? $personalInfo->nTrainings->map(function($training) {
-//                 return [
-//                     'training_title' => $training->training_title,
-//                     'inclusive_date_from' => $training->inclusive_date_from,
-//                     'inclusive_date_to' => $training->inclusive_date_to,
-//                     'number_of_hours' => $training->number_of_hours,
-//                     'type' => $training->type,
-//                     'conducted_by' => $training->conducted_by
-//                 ];
-//             })->toArray() : [],
-//             'eligibity' => $personalInfo->nEligibilities ? $personalInfo->nEligibilities->map(function($eligibility) {
-//                 return [
-//                     'eligibility' => $eligibility->eligibility,
-//                     'rating' => $eligibility->rating,
-//                     'date_of_examination' => $eligibility->date_of_examination,
-//                     'place_of_examination' => $eligibility->place_of_examination,
-//                     'license_number' => $eligibility->license_number,
-//                     'date_of_validity' => $eligibility->date_of_validity
-//                 ];
-//             })->toArray() : []
-//         ];
-//     });
-
-//     return response()->json([
-//         'status' => true,
-//         'criteria' => $criteria,
-//         'applicants' => $applicants,
-//     ]);
-// }
-
-
-    // fetch  user rating
+    // this function will fetch all rater username on the login page
     public function get_rater_usernames()
     {
         try {
@@ -271,5 +183,111 @@ class rater_controller extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+
+    // // submit rating score of the applicant
+    // public function store_score(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'nPersonalInfo_id' => 'required|exists:nPersonalInfo,id',
+    //         'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+    //         'education_score' => 'required|integer',
+    //         'experience_score' => 'required|integer',
+    //         'training_score' => 'required|integer',
+    //         'performance_score' => 'required|integer',
+    //         'behavioral_score' => 'required|integer',
+    //         'total_qs' => 'required|integer',
+    //         'grand_total' => 'required|integer',
+    //         'ranking' => 'required|integer',
+    //         'status' => 'required',
+    //     ]);
+
+    //     $submission = Submission::updateOrCreate(
+    //         [
+    //             'nPersonalInfo_id' => $validated['nPersonalInfo_id'],
+    //         ],
+    //         [
+    //             'job_batches_rsp_id' => $validated['job_batches_rsp_id'],
+    //             'education_score' => $validated['education_score'],
+    //             'experience_score' => $validated['experience_score'],
+    //             'training_score' => $validated['training_score'],
+    //             'performance_score' => $validated['performance_score'],
+    //             'behavioral_score' => $validated['behavioral_score'],
+    //             'total_qs' => $validated['total_qs'],
+    //             'grand_total' => $validated['grand_total'],
+    //             'ranking' => $validated['ranking'],
+    //             'status' => $validated['status'],
+    //         ]
+    //     );
+
+    //     return response()->json([
+    //         'message' => 'Successfully created or updated',
+    //         'data' => $submission
+    //     ]);
+    // }
+
+
+
+    public function store_score(Request $request)
+    {
+        $data = $request->all();
+
+        // Check if data is an array
+        if (!is_array($data)) {
+            return response()->json([
+                'message' => 'Invalid data format. Expected an array of submissions.'
+            ], 422);
+        }
+
+        $results = [];
+
+        foreach ($data as $index => $item) {
+            $validator = Validator::make($item, [
+                'nPersonalInfo_id' => 'required|exists:nPersonalInfo,id',
+                'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+                'education_score' => 'required',
+                'experience_score' => 'required',
+                'training_score' => 'required',
+                'performance_score' => 'required',
+                'behavioral_score' => 'required',
+                'total_qs' => 'required',
+                'grand_total' => 'required',
+                'ranking' => 'required ',
+                'status' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => "Validation failed for item at index {$index}",
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $validated = $validator->validated();
+
+            $submission = Submission::updateOrCreate(
+                ['nPersonalInfo_id' => $validated['nPersonalInfo_id']],
+                [
+                    'job_batches_rsp_id' => $validated['job_batches_rsp_id'],
+                    'education_score' => $validated['education_score'],
+                    'experience_score' => $validated['experience_score'],
+                    'training_score' => $validated['training_score'],
+                    'performance_score' => $validated['performance_score'],
+                    'behavioral_score' => $validated['behavioral_score'],
+                    'total_qs' => $validated['total_qs'],
+                    'grand_total' => $validated['grand_total'],
+                    'ranking' => $validated['ranking'],
+                    'status' => $validated['status'],
+                ]
+            );
+
+            $results[] = $submission;
+        }
+
+        return response()->json([
+            'message' => 'Successfully stored or updated all records.',
+            'data' => $results
+        ]);
     }
 }

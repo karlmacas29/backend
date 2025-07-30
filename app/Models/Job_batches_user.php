@@ -5,11 +5,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
-class Job_batches_rsp_user extends Pivot
+class Job_batches_user extends Pivot
 {
     //
 
-    protected $table = 'job_batches_rsp_user';
+     // this table is pivot
+    protected $table = 'job_batches_user';
 
     protected $fillable = [
         'user_id',
@@ -17,4 +18,6 @@ class Job_batches_rsp_user extends Pivot
         'created_at',
         'updated_at',
     ];
+
+
 }

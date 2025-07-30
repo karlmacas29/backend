@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Response;
 
 class xPDSController extends Controller
 {
+
+    //this function is getting the pds of employee on the database for regular
     public function getPersonalDataSheet(Request $request)
     {
         // Validate the request
@@ -16,7 +18,6 @@ class xPDSController extends Controller
         ]);
 
         $controlNo = $request->input('controlno');
-
         try {
             // Fetch data from all related tables
             $data = [

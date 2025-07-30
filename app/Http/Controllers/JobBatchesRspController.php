@@ -47,12 +47,12 @@ class JobBatchesRspController extends Controller
     //     return response()->json($jobsWithDetails);
     // }
 
-    // public function office()
-    // {
-    //     // Only fetch jobs where end_post is today or later (still active)
-    //    $data = JobBatchesRsp::select('Office','Position','SalaryGrade','ItemNo','id')->get();
-    //    return response()->json($data);
-    // }
+    public function office()
+    {
+        // Only fetch jobs where end_post is today or later (still active)
+       $data = JobBatchesRsp::select('Office','Position','SalaryGrade','ItemNo','id')->get();
+       return response()->json($data);
+    }
 
     // Create
     public function store(Request $request)
@@ -98,34 +98,54 @@ class JobBatchesRspController extends Controller
     }
 
     // Update
+    // Update only post_date and end_date
     public function update(Request $request, $id)
     {
-        $jobBatch = JobBatchesRsp::findOrFail($id);
-
         $validated = $request->validate([
-            'Office' => 'nullable|string',
-            'Office2' => 'nullable|string',
-            'Group' => 'nullable|string',
-            'Division' => 'nullable|string',
-            'Section' => 'nullable|string',
-            'Unit' => 'nullable|string',
-            'Position' => 'sometimes|required|string',
-            'PositionID' => 'nullable|integer',
-            'isOpen' => 'boolean',
-            'post_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
-            'PageNo' => 'nullable|string',
-            'ItemNo' => 'nullable|string',
-            'SalaryGrade' => 'nullable|string',
-            'salaryMin' => 'nullable|string',
-            'salaryMax' => 'nullable|string',
-            'level' => 'nullable|string', // Changed to string
+            'post_date' => 'required|date',
+            'end_date' => 'required|date',
         ]);
 
-        $jobBatch->update($validated);
+        $jobPost = JobBatchesRsp::findOrFail($id);
+        $jobPost->update([
+            'post_date' => $validated['post_date'],
+            'end_date' => $validated['end_date'],
+        ]);
 
-        return response()->json($jobBatch);
+        return response()->json([
+            'message' => 'Dates updated successfully.',
+            'data' => $jobPost,
+        ]);
     }
+
+    // public function update(Request $request, $id)
+    // {
+    //     $jobBatch = JobBatchesRsp::findOrFail($id);
+
+    //     $validated = $request->validate([
+    //         'Office' => 'nullable|string',
+    //         'Office2' => 'nullable|string',
+    //         'Group' => 'nullable|string',
+    //         'Division' => 'nullable|string',
+    //         'Section' => 'nullable|string',
+    //         'Unit' => 'nullable|string',
+    //         'Position' => 'sometimes|required|string',
+    //         'PositionID' => 'nullable|integer',
+    //         'isOpen' => 'boolean',
+    //         'post_date' => 'nullable|date',
+    //         'end_date' => 'nullable|date',
+    //         'PageNo' => 'nullable|string',
+    //         'ItemNo' => 'nullable|string',
+    //         'SalaryGrade' => 'nullable|string',
+    //         'salaryMin' => 'nullable|string',
+    //         'salaryMax' => 'nullable|string',
+    //         'level' => 'nullable|string', // Changed to string
+    //     ]);
+
+    //     $jobBatch->update($validated);
+
+    //     return response()->json($jobBatch);
+    // }
 
     // Delete
     public function destroy($id)
@@ -138,6 +158,7 @@ class JobBatchesRspController extends Controller
             'jobBatch' => $jobBatch,
         ]);
     }
+
     public function get_applicant($id)
     {
         // Fetch applicants for the given job post

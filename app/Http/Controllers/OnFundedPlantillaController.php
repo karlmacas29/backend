@@ -102,6 +102,7 @@ class OnFundedPlantillaController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [

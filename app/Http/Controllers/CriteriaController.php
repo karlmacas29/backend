@@ -2,110 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\criteria\c_behavioral_bei;
-use App\Models\criteria\c_education;
-use App\Models\criteria\c_experience;
-use App\Models\criteria\c_performance;
-use App\Models\criteria\c_training;
+
 use App\Models\criteria\criteria_rating;
 use Illuminate\Http\Request;
 
 class CriteriaController extends Controller
 {
-    // //
-    // protected $criteria;
 
-    // public function __construct($criteria)
-    // {
-    //     $this->criteria = $criteria;
-    // }
-
-    // public function store_criteria(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         // 'job_batches_rsp_id' => 'required|integer',
-    //         'job_batches_rsp_id' => 'required|array',
-    //         'job_batches_rsp_id.*' => 'exists:job_batches_rsp,id',
-
-    //         'education.Rate' => 'required|string',
-    //         'education.description' => 'required|array',
-    //         'education.description.*' => 'required|string',
-
-    //         'experience.Rate' => 'required|string',
-    //         'experience.description' => 'required|array',
-    //         'experience.description.*' => 'required|string',
-
-    //         'training.Rate' => 'required|string',
-    //         'training.description' => 'required|array',
-    //         'training.description.*' => 'required|string',
-
-    //         'performance.Rate' => 'required|string',
-    //         'performance.description' => 'required|array',
-    //         'performance.description.*' => 'required|string',
-
-    //         'behavioral.Rate' => 'required|string',
-    //         'behavioral.description' => 'required|array',
-    //         'behavioral.description.*' => 'required|string',
-    //     ]);
-
-
-    //     // Find or create the main criteria_rating
-    //     $criteria = criteria_rating::firstOrCreate(
-    //         ['job_batches_rsp_id' => $validated['job_batches_rsp_id']]
-    //     );
-
-    //     // Now update or create education
-
-    //     $criteria->educations()->updateOrCreate(
-    //         ['criteria_rating_id' => $criteria->id],
-    //         [
-    //             'Rate' => $request->education['Rate'],
-    //             'description' => implode(', ', $request->education['description']),
-    //         ]
-    //     );
-
-    //     $criteria->experiences()->updateOrCreate(
-    //         ['criteria_rating_id' => $criteria->id],
-    //         [
-    //             'Rate' => $request->experience['Rate'],
-    //             'description' => implode(', ', $request->experience['description']),
-    //         ]
-    //     );
-    //     $criteria->trainings()->updateOrCreate(
-    //         ['criteria_rating_id' => $criteria->id],
-    //         [
-    //             'Rate' => $request->training['Rate'],
-    //             'description' => implode(', ', $request->training['description']),
-    //         ]
-    //     );
-    //     $criteria->performances()->updateOrCreate(
-    //         ['criteria_rating_id' => $criteria->id],
-    //         [
-    //             'Rate' => $request->performance['Rate'],
-    //             'description' => implode(', ', $request->performance['description']),
-    //         ]
-    //     );
-    //     $criteria->behaviorals()->updateOrCreate(
-    //         ['criteria_rating_id' => $criteria->id],
-    //         [
-    //             'Rate' => $request->behavioral['Rate'],
-    //             'description' => implode(', ', $request->behavioral['description']),
-    //         ]
-    //     );
-
-
-    //     return response()->json([
-    //         'message' => $criteria->wasRecentlyCreated ? 'Created new criteria' : 'Updated existing criteria',
-    //         'criteria' => $criteria->load([
-    //             'educations',
-    //             'experiences',
-    //             'trainings',
-    //             'performances',
-    //             'behaviorals',
-    //         ]),
-    //     ]);
-    // }
-
+     // creating a criteria per job post and if the job post already have criteria then try to create a new one criteria for that post it will be update the old criteria
     public function store_criteria(Request $request)
     {
         $validated = $request->validate([
@@ -199,7 +103,7 @@ class CriteriaController extends Controller
     }
 
 
-
+    // deleting the criteria of job_post
     public function delete($id)
     {
         $criteria = criteria_rating::find($id);
@@ -221,7 +125,7 @@ class CriteriaController extends Controller
 
 
 
-      // this is for view criteria on admin to view the criteria of the job post 
+      // this is for view criteria on admin to view the criteria of the job post
     public function view_criteria($job_batches_rsp_id)
     {
         // Find the criteria_rating record for this job_batches_rsp_id

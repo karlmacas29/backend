@@ -9,7 +9,8 @@ use App\Http\Controllers\StructureDetailController;
 Route::get('/plantilla/test', [PlantillaController::class, 'test']);
 
 Route::get('/plantilla', [PlantillaController::class, 'index']);
-Route::get('/plantilla/office/rater', [PlantillaController::class, 'fetch_office_rater']);
+Route::get('/plantilla/office/rater', [PlantillaController::class, 'fetch_office_rater']); // this is for the modal fetching  fetching the employye
+
 Route::get('/plantillaData', [PlantillaController::class, 'vwActiveGet']);
 Route::post('/plantillaData/qs', [DesignationQSController::class, 'getDesignation']);
 

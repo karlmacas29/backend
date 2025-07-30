@@ -6,7 +6,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 use App\Imports\ApplicantFormImport;
 use App\Models\excel\nPersonal_info;
 use Maatwebsite\Excel\Facades\Excel;
@@ -15,8 +15,8 @@ use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 
 class ApplicantSubmissionController extends Controller
 {
-    //
 
+    // this function saving a information of applicant using excel  and get the job_post_id the will be save on submission  pivot table
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -98,7 +98,6 @@ class ApplicantSubmissionController extends Controller
         }
     }
 
-
     // public function store(Request $request)
     // {
     //     $request->validate([
@@ -150,6 +149,7 @@ class ApplicantSubmissionController extends Controller
     //     }
     // }
 
+    // this function is to delete all applicant on the excel
     public function deleteAllUsers()
     {
         try {

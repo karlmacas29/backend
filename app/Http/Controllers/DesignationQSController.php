@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class DesignationQSController extends Controller
 {
+    
     public function getDesignation(Request $request)
     {
         $positionId = $request->input('PositionID');
