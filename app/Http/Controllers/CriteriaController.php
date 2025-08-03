@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Http\Requests\CriteriaRequest;
 use App\Models\criteria\criteria_rating;
 use Illuminate\Http\Request;
 
@@ -10,33 +10,9 @@ class CriteriaController extends Controller
 {
 
      // creating a criteria per job post and if the job post already have criteria then try to create a new one criteria for that post it will be update the old criteria
-    public function store_criteria(Request $request)
+    public function store_criteria(CriteriaRequest $request)
     {
-        $validated = $request->validate([
-            'job_batches_rsp_id' => 'required|array',
-            'job_batches_rsp_id.*' => 'exists:job_batches_rsp,id',
-
-            'education.Rate' => 'required|string',
-            'education.description' => 'required|array',
-            'education.description.*' => 'required|string',
-
-            'experience.Rate' => 'required|string',
-            'experience.description' => 'required|array',
-            'experience.description.*' => 'required|string',
-
-            'training.Rate' => 'required|string',
-            'training.description' => 'required|array',
-            'training.description.*' => 'required|string',
-
-            'performance.Rate' => 'required|string',
-            'performance.description' => 'required|array',
-            'performance.description.*' => 'required|string',
-
-            'behavioral.Rate' => 'required|string',
-            'behavioral.description' => 'required|array',
-            'behavioral.description.*' => 'required|string',
-        ]);
-
+        $validated = $request->validated();
         $results = [];
 
         foreach ($validated['job_batches_rsp_id'] as $jobId) {
@@ -140,7 +116,6 @@ class CriteriaController extends Controller
         if (!$criteria) {
             return response()->json(['message' => 'No criteria found for this job'], 404);
         }
-
         return response()->json([
             'education'   => $criteria->educations,
             'experience'  => $criteria->experiences,

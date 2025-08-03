@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
-
 use Carbon\Carbon;
 use App\Models\Submission;
 use Illuminate\Http\Request;
 use App\Models\JobBatchesRsp;
+use App\Models\OnCriteriaJob;
+use Illuminate\Http\JsonResponse;
+
 
 class JobBatchesRspController extends Controller
 {
-    // List all
-    public function index()
+    public function index() //  this function fetching the only didnit meet the end_date
     {
         // Only fetch jobs where end_post is today or later (still active)
         $today = Carbon::today();
@@ -22,30 +23,45 @@ class JobBatchesRspController extends Controller
         return response()->json($activeJobs);
     }
 
-    public function job_list()
+    public function job_post()
     {
         // Only fetch jobs where end_post is today or later (still active)
+        // $activeJobs = JobBatchesRsp::all();
+        // return response()->json($activeJobs);
+        $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date','Office', 'PositionID','ItemNo',)
+            ->withCount([
+                'applicants as total_applicants',
+                'applicants as qualified_count' => function ($query) {
+                    $query->where('status', 'qualified');
+                },
+                'applicants as unqualified_count' => function ($query) {
+                    $query->where('status', 'unqualified');
+                },
+                'applicants as pending_count' => function ($query) {
+                    $query->where('status', 'pending');
+                },
+            ])
+            ->get();
 
-        $activeJobs = JobBatchesRsp::all();
-        return response()->json($activeJobs);
+        return response()->json($jobPosts);
     }
 
-    // public function job_list()
-    // {
-    //     // Get all job posts with criteria and assigned raters
-    //     $jobs = JobBatchesRsp::with(['criteriaRatings', 'users:id,name'])->select('id','office','isOpen','Position') // Include only user id and name
-    //         ->get();
+    public function job_list()
+    {
+        // Get all job posts with criteria and assigned raters
+        $jobs = JobBatchesRsp::with(['criteriaRatings', 'users:id,name'])->select('id','office','isOpen','Position') // Include only user id and name
+            ->get();
 
-    //     // Add 'status' and 'assigned_raters' to each job
-    //     $jobsWithDetails = $jobs->map(function ($job) {
-    //         $job->status = $job->criteriaRatings->isNotEmpty() ? 'created' : 'no criteria';
-    //         $job->assigned_raters = $job->users; // Include users as assigned raters
-    //         unset($job->users); // Optionally remove the original 'users' relation if not needed directly
-    //         return $job;
-    //     });
+        // Add 'status' and 'assigned_raters' to each job
+        $jobsWithDetails = $jobs->map(function ($job) {
+            $job->status = $job->criteriaRatings->isNotEmpty() ? 'created' : 'no criteria';
+            $job->assigned_raters = $job->users; // Include users as assigned raters
+            unset($job->users); // Optionally remove the original 'users' relation if not needed directly
+            return $job;
+        });
 
-    //     return response()->json($jobsWithDetails);
-    // }
+        return response()->json($jobsWithDetails);
+    }
 
     public function office()
     {
@@ -54,6 +70,8 @@ class JobBatchesRspController extends Controller
        return response()->json($data);
     }
 
+
+    // Create
     // Create
     public function store(Request $request)
     {
@@ -84,20 +102,52 @@ class JobBatchesRspController extends Controller
     }
 
     // Read single by PositionID and ItemNo
-    public function show($PositionID, $ItemNo)
-    {
-        // Ensure you have `use Illuminate\Support\Facades\DB;` at the top of your file.
-        $jobBatches = \Illuminate\Support\Facades\DB::select('SELECT * FROM job_batches_rsp WHERE PositionID = ? AND ItemNo = ?', [$PositionID, $ItemNo]);
+    // public function show($PositionID, $ItemNo)
+    // {
+    //     // Ensure you have `use Illuminate\Support\Facades\DB;` at the top of your file.
+    //     $jobBatches = \Illuminate\Support\Facades\DB::select('SELECT * FROM job_batches_rsp WHERE PositionID = ? AND ItemNo = ?', [$PositionID, $ItemNo]);
 
-        if (empty($jobBatches)) {
+    //     if (empty($jobBatches)) {
+    //         return response()->json(['error' => 'No matching record found'], 404);
+    //     }
+
+    //     // DB::select returns an array of objects, so we take the first one.
+    //     return response()->json($jobBatches[0]);
+    // }
+
+    public function show($positionId, $itemNo): JsonResponse
+    {
+        $jobBatch = JobBatchesRsp::where('PositionID', $positionId)
+            ->where('ItemNo', $itemNo)
+            ->first();
+
+        if (!$jobBatch) {
             return response()->json(['error' => 'No matching record found'], 404);
         }
 
-        // DB::select returns an array of objects, so we take the first one.
-        return response()->json($jobBatches[0]);
+        return response()->json($jobBatch);
     }
 
-    // Update
+    // public function show($positionId, $itemNo): JsonResponse
+    // {
+    //     $jobBatch = JobBatchesRsp::where('PositionID', $positionId)
+    //         ->where('ItemNo', $itemNo)
+    //         ->first();
+
+    //     if (!$jobBatch) {
+    //         return response()->json(['error' => 'No matching job batch found'], 404);
+    //     }
+
+    //     $criteria = OnCriteriaJob::where('PositionID', $positionId)
+    //         ->where('ItemNo', $itemNo)
+    //         ->get(); // use `get()` if multiple criteria per job batch
+
+    //     return response()->json([
+    //         'job_batch' => $jobBatch,
+    //         'criteria' => $criteria
+    //     ]);
+    // }
+
     // Update only post_date and end_date
     public function update(Request $request, $id)
     {
@@ -159,29 +209,72 @@ class JobBatchesRspController extends Controller
         ]);
     }
 
+
+    // public function get_applicant($id)
+    // {
+    //     // Fetch applicants for the given job post with only needed fields
+    //     $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
+    //         ->with(['nPersonalInfo:id,firstname,lastname,name_extension']) // Eager load only firstname and lastname
+    //         ->get(['id', 'job_batches_rsp_id', 'status', 'nPersonalInfo_id', 'created_at', 'ranking']); // Include rank and created_at if they exist in submissions table
+
+    //     $applicants = $qualifiedApplicants->map(function ($submission) {
+    //         return [
+    //             'id' => $submission->nPersonalInfo->id ?? null,
+    //             'firstname' => $submission->nPersonalInfo->firstname ?? null,
+    //             'lastname' => $submission->nPersonalInfo->lastname ?? null,
+    //             'name_extension' => $submission->nPersonalInfo->name_extension ?? null,
+    //             'application_date' => $submission->created_at->toDateString(), // or ->format('Y-m-d H:i:s') if needed
+    //             'status' => $submission->status,
+    //             'ranking' => $submission->ranking,
+    //         ];
+    //     });
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'applicants' => $applicants,
+    //     ]);
+    // }
     public function get_applicant($id)
     {
-        // Fetch applicants for the given job post
         $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
             ->with([
-            'nPersonalInfo.education',
-            'nPersonalInfo.work_experience',
-            'nPersonalInfo.training',
-            'nPersonalInfo.eligibity',
-            'nPersonalInfo.family',
-            'nPersonalInfo.children',
-            'nPersonalInfo.personal_declarations',
-            'nPersonalInfo.skills',
-            'nPersonalInfo.voluntary_work',
+                'nPersonalInfo.education',
+                'nPersonalInfo.work_experience',
+                'nPersonalInfo.training',
+                'nPersonalInfo.eligibity',
+                'nPersonalInfo.family',
+                'nPersonalInfo.children',
+                'nPersonalInfo.personal_declarations',
+                'nPersonalInfo.skills',
+                'nPersonalInfo.voluntary_work',
             ])
             ->get();
 
         $applicants = $qualifiedApplicants->map(function ($submission) {
+            $info = $submission->nPersonalInfo;
+
             return [
                 'id' => $submission->id,
+                'nPersonalInfo_id' => $submission->nPersonalInfo_id,
                 'job_batches_rsp_id' => $submission->job_batches_rsp_id,
                 'status' => $submission->status,
-                'n_personal_info' => $submission->nPersonalInfo,
+                'controlno' => $info->controlno ?? null,
+                'firstname' => $info->firstname ?? '',
+                'lastname' => $info->lastname ?? '',
+                'name_extension' => $info->name_extension ?? '',
+                'image_path' => $info->image_path ?? null,
+                'application_date' => $info->created_at ? $info->created_at->toDateString() : null,
+
+                // Add all related applicant details
+                'education' => $info->education ?? [],
+                'work_experience' => $info->work_experience ?? [],
+                'training' => $info->training ?? [],
+                'eligibity' => $info->eligibity ?? [],
+                'family' => $info->family ?? [],
+                'children' => $info->children ?? [],
+                'personal_declarations' => $info->personal_declarations ?? [],
+                'skills' => $info->skills ?? [],
+                'voluntary_work' => $info->voluntary_work ?? [],
             ];
         });
 

@@ -22,8 +22,14 @@ class OnFundedPlantilla extends Model
      * @var array
      */
     protected $fillable = [
+        'job_batches_rsp_id',
         'fileUpload',
         'PositionID',
         'ItemNo'
     ];
+
+    public function jobBatch()
+    {
+        return $this->belongsTo(JobBatchesRsp::class, 'job_batches_rsp_id');
+    }
 }

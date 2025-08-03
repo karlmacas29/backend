@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\OnFundedPlantilla;
 use Illuminate\Http\Request;
+use App\Models\OnFundedPlantilla;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -23,15 +24,11 @@ class OnFundedPlantillaController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
+ 
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            // 'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
             'PositionID' => 'required|string',
             'ItemNo' => 'nullable|string', // Added ItemNo validation
             'fileUpload' => 'nullable|mimes:pdf|max:5120' // 5MB max size. Changed 'file' to 'fileUpload'
@@ -102,7 +99,7 @@ class OnFundedPlantillaController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    
+
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
@@ -220,5 +217,40 @@ class OnFundedPlantillaController extends Controller
             'status' => 'success',
             'data' => $plantilla
         ]);
+    }
+
+    public function deleteAllPlantillas()
+    {
+        try {
+            DB::beginTransaction();
+
+            $plantillas = OnFundedPlantilla::all();
+
+            foreach ($plantillas as $plantilla) {
+                // Delete file if it exists
+                if ($plantilla->fileUpload && Storage::disk('public')->exists($plantilla->fileUpload)) {
+                    Storage::disk('public')->delete($plantilla->fileUpload);
+                }
+
+                // Delete related models here if needed (example: $plantilla->positions()->delete();)
+
+                $plantilla->delete();
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'All Plantilla records and associated files deleted successfully',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to delete Plantilla records',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

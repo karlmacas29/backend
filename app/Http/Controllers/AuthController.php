@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UserAdminRegisterRequest;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Employee;
@@ -60,35 +61,35 @@ class AuthController extends Controller
     // create raters account
 
     // create account
-    public function Token_Register(Request $request)
+    public function Token_Register(UserAdminRegisterRequest $request)
     {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'username' => 'required|string|unique:users|max:255',
-            'password' => 'required|string|min:3',
-            'position' => 'required|string|max:255',
-            'active' => 'required|boolean',
+        // $validatedData = $request->validate([
+        //     // 'name' => 'required|string|max:255',
+        //     // 'username' => 'required|string|unique:users|max:255',
+        //     // 'password' => 'required|string|min:3',
+        //     // 'position' => 'required|string|max:255',
+        //     // 'active' => 'required|boolean',
 
-            // Optional permission flags
-            'permissions.isFunded' => 'boolean',
-            'permissions.isUserM' => 'boolean',
-            'permissions.isRaterM' => 'boolean',
-            'permissions.isCriteria' => 'boolean',
-            'permissions.isDashboardStat' => 'boolean',
-        ]);
+        //     // // Optional permission flags
+        //     // 'permissions.isFunded' => 'boolean',
+        //     // 'permissions.isUserM' => 'boolean',
+        //     // 'permissions.isRaterM' => 'boolean',
+        //     // 'permissions.isCriteria' => 'boolean',
+        //     // 'permissions.isDashboardStat' => 'boolean',
+        // ]);
 
         try {
             DB::beginTransaction();
 
             $user = User::create([
-                'name' => $validatedData['name'],
-                'username' => $validatedData['username'],
-                'password' => Hash::make($validatedData['password']),
-                'position' => $validatedData['position'],
-                'active' => $validatedData['active'],
-                'role_id' => 1,
-                'remember_token' => Str::random(32)
-            ]);
+            'name' => $request->name,
+            'username' => $request->username,
+            'password' => Hash::make($request->password), // Don't forget to hash!
+            'position' => $request->position,
+            'active' => $request->active,
+            'role_id' => 1, // Set appropriate role
+            'remember_token' => Str::random(32)
+           ]);
 
             if ($request->has('permissions')) {
                 $user->rspControl()->create([

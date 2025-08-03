@@ -7,16 +7,17 @@ use Illuminate\Http\Request;
 
 class OnCriteriaJobController extends Controller
 {
-    // List all
-    // public function index()
-    // {
-    //     return response()->json(OnCriteriaJob::all());
-    // }
+
+    public function index()
+    {
+        return response()->json(OnCriteriaJob::all());
+    }
 
     // Create
     public function store(Request $request)
     {
         $validated = $request->validate([
+            // 'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
             'PositionID' => 'nullable|integer',
             'ItemNo' => 'nullable|integer', // Added ItemNo validation
             'EduPercent' => 'nullable|string',
@@ -34,7 +35,7 @@ class OnCriteriaJobController extends Controller
         return response()->json($criteria, 201);
     }
 
-    // Read single
+    // // Read single
     public function show($PositionID, $ItemNo)
     {
         $criteria = OnCriteriaJob::where('PositionID', $PositionID)
@@ -72,6 +73,10 @@ class OnCriteriaJobController extends Controller
         $criteria = OnCriteriaJob::findOrFail($id);
         $criteria->delete();
 
-        return response()->json(['criteria'=>$criteria], 204);
+        return response()->json([
+            'criteria'=>$criteria,
+            'Delete' => 'Successfuly'
+
+        ], 204);
     }
 }

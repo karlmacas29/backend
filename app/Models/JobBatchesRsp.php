@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
-use App\Models\criteria\criteria_rating;
+use App\Models\OnFundedPlantilla;
 use App\Models\excel\nPersonal_info;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use App\Models\criteria\criteria_rating;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class JobBatchesRsp extends Model
 {
@@ -31,14 +33,45 @@ class JobBatchesRsp extends Model
         'salaryMin',
         'salaryMax',
         'level',
+        'Education',
+        'Eligibility',
+        'Training',
+        'Experience',
+        'fileUpload'
+
+
+
+
     ];
 
     protected static function booted()
     {
         static::deleting(function ($jobPost) {
-            $jobPost->criteriaJobs()->delete();
+            // Delete related criteria jobs
+            OnCriteriaJob::where('PositionID', $jobPost->PositionID)
+                ->where('ItemNo', $jobPost->ItemNo)
+                ->delete();
+
+            // Delete related funded plantilla and its file
+            $plantillas = OnFundedPlantilla::where('PositionID', $jobPost->PositionID)
+                ->where('ItemNo', $jobPost->ItemNo)
+                ->get();
+
+            foreach ($plantillas as $plantilla) {
+                if ($plantilla->fileUpload && Storage::disk('public')->exists($plantilla->fileUpload)) {
+                    Storage::disk('public')->delete($plantilla->fileUpload);
+                }
+                $plantilla->delete();
+            }
+        });
+        static::creating(function ($submission) {
+            if (is_null($submission->status)) {
+                $submission->status = 'pending';
+            }
         });
     }
+
+
     public function users()
     {
         return $this->belongsToMany(User::class, 'job_batches_user', 'job_batches_rsp_id', 'user_id')->withTimestamps();
@@ -59,8 +92,19 @@ class JobBatchesRsp extends Model
         return $this->belongsToMany(nPersonal_info::class, 'submission', 'job_batches_rsp_id', 'nPersonalInfo_id')
             ->withTimestamps();
     }
-    public function criteriaJobs()
-    {
-        return $this->hasMany(OnCriteriaJob::class, 'PositionID', 'PositionID');
+
+    public function onCriteriaJobs(){
+
+        return $this->hasMany(OnCriteriaJob::class, 'job_batches_rsp_id');
     }
+
+    public function  funded_plantill()
+    {
+
+        return $this->hasMany(OnFundedPlantilla::class, 'job_batches_rsp_id');
+    }
+    // public function funded()
+    // {
+    //     return $this->hasMany(OnFundedPlantilla::class, 'PositionID', 'PositionID');
+    // }
 }
