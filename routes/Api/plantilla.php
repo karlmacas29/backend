@@ -22,3 +22,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/structure-details/update-funded', [StructureDetailController::class, 'updateFunded']);
     Route::post('/structure-details/update-pageno', [StructureDetailController::class, 'updatePageNo']);
 });
+// Route::delete('/plantilla/delete/{id}', [OnFundedPlantillaController::class, 'destroy']);
+
+Route::delete('/plantilla/delete/all', [OnFundedPlantillaController::class, 'deleteAllPlantillas']);

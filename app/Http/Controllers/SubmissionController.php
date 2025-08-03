@@ -11,25 +11,23 @@ class SubmissionController extends Controller
 
 
     // updating the status of the applicant if this applicant are qualified to rate
-    public function update_status(Request $request, $applicant_id)
+    //submit evaluation
+    public function evaluation(Request $request, $id)
     {
+        // Validate the incoming request
         $validated = $request->validate([
             'status' => 'required|string',
         ]);
 
-        // Correct field: nPersonalInfo_id
-        $submission = Submission::where('nPersonalInfo_id', $applicant_id)->first();
+        // Find the submission record by ID
+        $submission = Submission::findOrFail($id); 
 
-        if (!$submission) {
-            return response()->json([
-                'message' => 'Submission not found.',
-            ], 404);
-        }
+        // Update the status
         $submission->status = $validated['status'];
         $submission->save();
 
         return response()->json([
-            'message' => 'Status successfully updated.',
+            'message' => 'Evaluation successfully sent.',
             'data' => $submission
         ]);
     }

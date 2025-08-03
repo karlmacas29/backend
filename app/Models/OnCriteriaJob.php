@@ -12,6 +12,7 @@ class OnCriteriaJob extends Model
     protected $table = 'on_criteria_job';
 
     protected $fillable = [
+        'job_batches_rsp_id',
         'PositionID',
         'EduPercent',
         'EliPercent',
@@ -23,5 +24,8 @@ class OnCriteriaJob extends Model
         'Experience',
         'ItemNo'
     ];
-    
+    public function jobBatch()
+    {
+        return $this->belongsTo(JobBatchesRsp::class, 'job_batches_rsp_id');
+    }
 }

@@ -9,7 +9,7 @@ use App\Http\Controllers\RaterAuthController;
 //Admin Registration -- this is for admin
 Route::post('/login', [AuthController::class, 'Token_Login']);
 Route::get('/role', [AuthController::class, 'get_role']);
-
+Route::post('/registration', [AuthController::class, 'Token_Register']);
 Route::middleware('auth:sanctum')->group(function () {
 
     //get
@@ -19,7 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::get('/users', [AuthController::class, 'getAllUsers']);
 
     //post
-    Route::post('/registration', [AuthController::class, 'Token_Register']);
+    // Route::post('/registration', [AuthController::class, 'Token_Register']);
     Route::post('/logout', [AuthController::class, 'Token_Logout']);
     Route::post('/rater/register', [RaterAuthController::class, 'Raters_Register']);
 

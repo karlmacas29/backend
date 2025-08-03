@@ -15,9 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('criteria_rating_id')->nullable()->constrained('criteria_rating')->onDelete('cascade');
             $table->string('Rate')->nullable();
-            $table->string('Min_qualification')->nullable();
-            $table->string('Title')->nullable();
-            $table->string('Description')->nullable();
+            $table->json('description')->nullable();
             $table->timestamps();
         });
     }

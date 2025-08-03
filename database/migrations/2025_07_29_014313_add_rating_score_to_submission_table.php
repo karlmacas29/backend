@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('total_qs')->nullable()->after('behavioral_score');
             $table->decimal('grand_total')->nullable()->after('total_qs');
             $table->decimal('ranking')->nullable()->after('grand_total');
-            $table->string('status')->nullable()->after('ranking');
+            $table->string('status')->default('pending')->after('ranking');
         });
     }
 
@@ -36,9 +36,10 @@ return new class extends Migration
             $table->dropColumn('performance_score');
             $table->dropColumn('behavioral_score');
             $table->dropColumn('total_qs');
+            $table->dropColumn('grand_total');
             $table->dropColumn('ranking');
             $table->dropColumn('status');
-     
+
         });
     }
 };

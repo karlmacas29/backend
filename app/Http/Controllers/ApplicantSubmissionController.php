@@ -22,6 +22,7 @@ class ApplicantSubmissionController extends Controller
         $validated = $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,xls,csv',
             'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+            
         ]);
 
         $file = $request->file('excel_file');

@@ -176,7 +176,10 @@ class PersonalInformationSheet implements WithEvents
             $personalInfo = nPersonal_info::create($data);
 
             // Attach job batch after creating personal info
-            $personalInfo->job_batches_rsp()->attach($event->getConcernable()->jobBatchId);
+            // $personalInfo->job_batches_rsp()->attach($event->getConcernable()->jobBatchId);
+            $personalInfo->job_batches_rsp()->attach($event->getConcernable()->jobBatchId, [
+                'status' => 'pending'
+            ]);
             $event->getConcernable()->importer->setPersonalInfoId($personalInfo->id);
 
             DB::commit();
