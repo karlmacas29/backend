@@ -7,6 +7,7 @@ use App\Models\Submission;
 use Illuminate\Http\Request;
 use App\Models\JobBatchesRsp;
 use App\Models\OnCriteriaJob;
+use App\Models\rating_score;
 use Illuminate\Http\JsonResponse;
 
 
@@ -250,14 +251,25 @@ class JobBatchesRspController extends Controller
             ])
             ->get();
 
-        $applicants = $qualifiedApplicants->map(function ($submission) {
+        // $applicants = $qualifiedApplicants->map(function ($submission) {
+        //     $info = $submission->nPersonalInfo;
+
+        $applicants = $qualifiedApplicants->map(function ($submission) use ($id) {
             $info = $submission->nPersonalInfo;
+            // Fetch ranking from rating_score
+            $rating = rating_score::where('nPersonalInfo_id', $submission->nPersonalInfo_id)
+                ->where('job_batches_rsp_id', $id)
+                ->first();
 
             return [
                 'id' => $submission->id,
                 'nPersonalInfo_id' => $submission->nPersonalInfo_id,
                 'job_batches_rsp_id' => $submission->job_batches_rsp_id,
                 'status' => $submission->status,
+                'education_remark' => $submission->education_remark,
+                'experience_remark' => $submission->experience_remark,
+                'training_remark' => $submission->training_remark,
+                'eligibilty_remark' => $submission->eligibilty_remark,
                 'controlno' => $info->controlno ?? null,
                 'firstname' => $info->firstname ?? '',
                 'lastname' => $info->lastname ?? '',
@@ -275,6 +287,8 @@ class JobBatchesRspController extends Controller
                 'personal_declarations' => $info->personal_declarations ?? [],
                 'skills' => $info->skills ?? [],
                 'voluntary_work' => $info->voluntary_work ?? [],
+                // Add rank from rating_score
+                'ranking' => $rating->ranking ?? null,
             ];
         });
 

@@ -17,13 +17,21 @@ class SubmissionController extends Controller
         // Validate the incoming request
         $validated = $request->validate([
             'status' => 'required|string',
+            'education_remark' => 'required|nullable|string',
+            'experience_remark' => 'required|nullable|string',
+            'training_remark' => 'required|nullable|string',
+            'eligibility_remark' => 'required|nullable|string',
         ]);
-
+ 
         // Find the submission record by ID
-        $submission = Submission::findOrFail($id); 
+        $submission = Submission::findOrFail($id);
 
-        // Update the status
+        // Update the submission fields
         $submission->status = $validated['status'];
+        $submission->education_remark = $validated['education_remark'] ?? 'N/A';
+        $submission->experience_remark = $validated['experience_remark'] ??  'N/A';
+        $submission->training_remark = $validated['training_remark'] ??  'N/A';
+        $submission->eligibility_remark = $validated['eligibility_remark'] ??  'N/A';
         $submission->save();
 
         return response()->json([
@@ -31,6 +39,7 @@ class SubmissionController extends Controller
             'data' => $submission
         ]);
     }
+
 
     // fetching the all data on submission table
     public function index()

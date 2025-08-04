@@ -16,10 +16,6 @@ return new class extends Migration
             // $table->foreignId('job_batches_rsp_id')->nullable()->constrained('job_batches_rsp')->onDelete('cascade');
             $table->integer('PositionID')->nullable();
             $table->integer('ItemNo')->nullable();
-            // $table->text('EduPercent')->nullable();
-            // $table->text('EliPercent')->nullable();
-            // $table->text('TrainPercent')->nullable();
-            // $table->text('ExperiencePercent')->nullable();
             $table->text('Education')->nullable();
             $table->text('Eligibility')->nullable();
             $table->text('Training')->nullable();
