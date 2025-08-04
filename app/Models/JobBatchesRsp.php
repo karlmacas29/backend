@@ -64,11 +64,11 @@ class JobBatchesRsp extends Model
                 $plantilla->delete();
             }
         });
-        static::creating(function ($submission) {
-            if (is_null($submission->status)) {
-                $submission->status = 'pending';
-            }
-        });
+        // static::creating(function ($submission) {
+        //     if (is_null($submission->status)) {
+        //         $submission->status = 'pending';
+        //     }
+        // });
     }
 
 
