@@ -59,7 +59,8 @@ class rater_controller extends Controller
             'nPersonalInfo.education',
             'nPersonalInfo.work_experience',
             'nPersonalInfo.training',
-            'nPersonalInfo.eligibity'
+            'nPersonalInfo.eligibity',
+            'nPersonalInfo.rating_score', // <-- Add this line
         ])
             ->where('job_batches_rsp_id', $id)
             ->where('status', 'qualified') // Only qualified applicants
@@ -71,8 +72,20 @@ class rater_controller extends Controller
 
             return [
                 'id' => $submission->id,
+                'nPersonalInfo_id' => $submission->nPersonalInfo_id,
                 'firstname' => $info->firstname ?? '',
                 'lastname' => $info->lastname ?? '',
+                // Rating score
+                'rating_score' => [
+                    'education_score' => $info->rating_score->education_score ?? null,
+                    'experience_score' => $info->rating_score->experience_score ?? null,
+                    'training_score' => $info->rating_score->training_score ?? null,
+                    'performance_score' => $info->rating_score->performance_score ?? null,
+                    'behavioral_score' => $info->rating_score->behavioral_score ?? null,
+                    'total_qs' => $info->rating_score->total_qs ?? null,
+                    'grand_total' => $info->rating_score->grand_total ?? null,
+                    'ranking' => $info->rating_score->ranking ?? null,
+                ],
                 'education' => $info->education->map(function ($edu) {
                     return [
                         'school_name' => $edu->school_name,
@@ -320,7 +333,7 @@ class rater_controller extends Controller
                 }
                 $validator = Validator::make($item, [
                       'nPersonalInfo_id' => 'required|exists:nPersonalInfo,id',
-        'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+                      'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
                     'education_score' => 'required|numeric|min:0|max:100',
                     'experience_score' => 'required|numeric|min:0|max:100',
                     'training_score' => 'required|numeric|min:0|max:100',

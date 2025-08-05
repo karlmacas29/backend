@@ -4,6 +4,7 @@ namespace App\Models\excel;
 
 
 use App\Models\JobBatchesRsp;
+use App\Models\rating_score;
 use App\Models\Submission;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -117,6 +118,10 @@ class nPersonal_info extends Model
     public function submission()
     {
         return $this->belongsTo(Submission::class, 'submission_id');
+    }
+    public function rating_score()
+    {
+        return $this->hasOne(rating_score::class, 'nPersonalInfo_id', 'id');
     }
 }
     // public function upload_file_image()
