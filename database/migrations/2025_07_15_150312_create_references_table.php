@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('full_name')->nullable();
             $table->string('address')->nullable();
             $table->string('contact_number')->nullable();
-
             $table->timestamps();
         });
     }

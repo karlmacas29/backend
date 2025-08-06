@@ -28,6 +28,9 @@ class vwplantillastructure extends Model
         'Status',
     ];
     // relationship  one is to one oh vwActive
+    protected $casts = [
+        'ControlNo' => 'string',
+    ];
     public function vwActive()
     {
         return $this->hasOne(vwActive::class, 'ControlNo', 'ControlNo');

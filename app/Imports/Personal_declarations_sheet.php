@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\excel\Personal_declarations;
+use App\Models\excel\references;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Illuminate\Support\Facades\Validator;
@@ -328,6 +329,30 @@ class Personal_declarations_sheet implements  WithEvents
             $personal = Personal_declarations::create($data);
             $event->getConcernable()->importer->setPersonalInfoId($personal->id);
 
+            // References import logic (example: rows 41 to 50, skipping row 40)
+            // After creating $personal
+            for ($row = 43; $row <= 50; $row++) {
+
+
+                // Adjust columns if needed!
+                $full_name = $sheet->getCell('A' . $row)->getValue();
+                $address = $sheet->getCell('F' . $row)->getValue();
+                $contact_number = $sheet->getCell('I' . $row)->getValue();
+
+                // Debug: Log what's being read
+                error_log("Row $row: " . $full_name . ', ' . $address . ', ' . $contact_number);
+
+                if (empty($full_name) && empty($address) && empty($contact_number)) {
+                    continue;
+                }
+
+                references::create([
+                    'nPersonalInfo_id' => $personal->id, // safer!
+                    'full_name'        => $full_name,
+                    'address'          => $address,
+                    'contact_number'   => $contact_number,
+                ]);
+            }
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
