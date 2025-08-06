@@ -25,3 +25,10 @@ Route::middleware('auth:sanctum')->group(function () {
 // Route::delete('/plantilla/delete/{id}', [OnFundedPlantillaController::class, 'destroy']);
 
 Route::delete('/plantilla/delete/all', [OnFundedPlantillaController::class, 'deleteAllPlantillas']);
+// Route::get('/plantilla/service/{ControlNo}', [PlantillaController::class, 'getAllData']);
+
+
+Route::prefix('plantilla')->group(function() {
+    Route::get('/appointment/{ControlNo}', [PlantillaController::class, 'getAllData']);
+
+});
