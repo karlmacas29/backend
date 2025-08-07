@@ -99,6 +99,8 @@ class JobBatchesRspController extends Controller
             ])
             ->get();
 
+            
+
         return response()->json($jobPosts);
     }
 
