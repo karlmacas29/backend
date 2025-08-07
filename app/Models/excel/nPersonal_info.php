@@ -6,6 +6,7 @@ namespace App\Models\excel;
 use App\Models\JobBatchesRsp;
 use App\Models\rating_score;
 use App\Models\Submission;
+use App\Models\excel\references;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -122,6 +123,10 @@ class nPersonal_info extends Model
     public function rating_score()
     {
         return $this->hasOne(rating_score::class, 'nPersonalInfo_id', 'id');
+    }
+    public function reference()
+    {
+        return $this->hasMany(references::class, 'nPersonalInfo_id');
     }
 }
     // public function upload_file_image()
