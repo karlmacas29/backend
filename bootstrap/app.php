@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(Cors::class);
         $middleware->append(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
     $middleware->alias([
-        'role' => CheckRole::class,
+        // 'role' => CheckRole::class,
     ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
