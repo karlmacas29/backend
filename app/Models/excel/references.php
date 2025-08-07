@@ -16,4 +16,9 @@ class references extends Model
         'address',
         'contact_number',
     ];
+     // Relationship to nPersonalInfo
+     public function personalInfo()
+     {
+         return $this->belongsTo(nPersonal_info::class, 'nPersonalInfo_id');
+     }
 }

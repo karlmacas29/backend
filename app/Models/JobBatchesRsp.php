@@ -37,9 +37,8 @@ class JobBatchesRsp extends Model
         'Eligibility',
         'Training',
         'Experience',
-        'fileUpload'
-
-
+        'fileUpload',
+        'status'
 
 
     ];
