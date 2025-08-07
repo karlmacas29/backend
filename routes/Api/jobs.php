@@ -27,7 +27,10 @@ Route::post('/job-batches-rsp/get/view/', [JobBatchesRspController::class, 'get_
 
 // Route::get('/job-batches-rsp/office', [JobBatchesRspController::class, 'office']);
 
+// Route::middleware(['auth:sanctum', 'role:1', 'prefix' => ])->group(function () {
+//     // Admin-only routes
 
+// });
 
 
 Route::get('/job-batches-rsp/list', [JobBatchesRspController::class, 'job_list']);// fetching the all job post on the admin

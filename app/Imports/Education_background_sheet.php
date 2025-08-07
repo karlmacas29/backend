@@ -56,6 +56,7 @@ class Education_background_sheet implements ToCollection, WithStartRow
                 $skipped++;
             }
         }
+        error_log('Attempting to insert reference with nPersonalInfo_id education = ' . $this->importer->getPersonalInfoId());
 
         Log::info("Education import completed: {$saved} saved, {$skipped} skipped.");
     }

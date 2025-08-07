@@ -327,7 +327,9 @@ class Personal_declarations_sheet implements  WithEvents
 
             // Create personal info
             $personal = Personal_declarations::create($data);
-            $event->getConcernable()->importer->setPersonalInfoId($personal->id);
+            // $event->getConcernable()->importer->setPersonalInfoId($personal->id);
+            // $personalInfoId = $personal->id;
+            // $event->getConcernable()->importer->setPersonalInfoId($personalInfoId);
 
             // References import logic (example: rows 41 to 50, skipping row 40)
             // After creating $personal
@@ -341,17 +343,18 @@ class Personal_declarations_sheet implements  WithEvents
 
                 // Debug: Log what's being read
                 error_log("Row $row: " . $full_name . ', ' . $address . ', ' . $contact_number);
-
+                error_log('Attempting to insert reference with nPersonalInfo_id = ' . $event->getConcernable()->importer->getPersonalInfoId());
                 if (empty($full_name) && empty($address) && empty($contact_number)) {
                     continue;
                 }
 
                 references::create([
-                    'nPersonalInfo_id' => $personal->id, // safer!
+                    'nPersonalInfo_id' => $event->getConcernable()->importer->getPersonalInfoId(),
                     'full_name'        => $full_name,
                     'address'          => $address,
                     'contact_number'   => $contact_number,
                 ]);
+
             }
             DB::commit();
         } catch (\Exception $e) {
