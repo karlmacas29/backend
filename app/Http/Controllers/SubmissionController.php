@@ -17,12 +17,12 @@ class SubmissionController extends Controller
         // Validate the incoming request
         $validated = $request->validate([
             'status' => 'required|string',
-            'education_remark' => 'required|nullable|string',
-            'experience_remark' => 'required|nullable|string',
-            'training_remark' => 'required|nullable|string',
-            'eligibility_remark' => 'required|nullable|string',
+            'education_remark' => 'nullable|string',
+            'experience_remark' => 'nullable|string',
+            'training_remark' => 'nullable|string',
+            'eligibility_remark' => 'nullable|string',
         ]);
- 
+
         // Find the submission record by ID
         $submission = Submission::findOrFail($id);
 
