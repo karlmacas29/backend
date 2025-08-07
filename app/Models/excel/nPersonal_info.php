@@ -106,6 +106,10 @@ class nPersonal_info extends Model
     {
         return $this->hasMany(skill_non_academic::class, 'nPersonalInfo_id');
     }
+    public function references()
+    {
+        return $this->hasMany(references::class, 'nPersonalInfo_id');
+    }
     public function job_batches_rsp()
     {
         return $this->belongsToMany(
