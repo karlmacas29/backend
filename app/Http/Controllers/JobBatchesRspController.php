@@ -99,38 +99,54 @@ class JobBatchesRspController extends Controller
             ])
             ->get();
 
-            
+
 
         return response()->json($jobPosts);
     }
-
     public function job_list()
     {
         // Get all job posts with criteria and assigned raters
-        $jobs = JobBatchesRsp::with([
-            'criteriaRatings:id,job_batches_rsp_id,status', // only fetch needed fields
-            'users:id,name'
-        ])
-            ->select('id', 'office', 'isOpen', 'Position')
+        $jobs = JobBatchesRsp::with(['criteriaRatings', 'users:id,name'])->select('id','office','isOpen','Position') // Include only user id and name
             ->get();
 
+        // Add 'status' and 'assigned_raters' to each job
         $jobsWithDetails = $jobs->map(function ($job) {
-            // Use the first criteria (if there), or set status to "no criteria"
-            if ($job->criteriaRatings->isNotEmpty()) {
-                // If you allow only one criteria per job, just use first
-                $criteria = $job->criteriaRatings->first();
-                $job->status = $criteria->status ?? 'created';
-            } else {
-                $job->status = 'no criteria';
-            }
-            $job->assigned_raters = $job->users; // keep assigned raters
-            unset($job->users); // optional: remove users relation from output
-            unset($job->criteriaRatings); // optional: hide raw criteriaRatings
+            $job->status = $job->criteriaRatings->isNotEmpty() ? 'created' : 'no criteria';
+            $job->assigned_raters = $job->users; // Include users as assigned raters
+            unset($job->users); // Optionally remove the original 'users' relation if not needed directly
             return $job;
         });
 
         return response()->json($jobsWithDetails);
     }
+
+    // public function job_list()
+    // {
+    //     // Get all job posts with criteria and assigned raters
+    //     $jobs = JobBatchesRsp::with([
+    //         'criteriaRatings:id,job_batches_rsp_id,status', // only fetch needed fields
+    //         'users:id,name'
+    //     ])
+    //         ->select('id', 'office', 'isOpen', 'Position')
+    //         ->get();
+
+    //     $jobsWithDetails = $jobs->map(function ($job) {
+    //         // Use the first criteria (if there), or set status to "no criteria"
+    //         if ($job->criteriaRatings->isNotEmpty()) {
+    //             // If you allow only one criteria per job, just use first
+    //             $criteria = $job->criteriaRatings->first();
+    //             $job->status = $criteria->status ?? 'created';
+    //         } else {
+    //             $job->status = 'no criteria';
+    //         }
+    //         $job->assigned_raters = $job->users; // keep assigned raters
+    //         unset($job->users); // optional: remove users relation from output
+    //         unset($job->criteriaRatings); // optional: hide raw criteriaRatings
+    //         return $job;
+    //     });
+
+    //     return response()->json($jobsWithDetails);
+    // }
 
     // public function job_list()
     // {

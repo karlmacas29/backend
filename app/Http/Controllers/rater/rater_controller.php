@@ -12,6 +12,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\criteria\criteria_rating;
 use App\Models\rating_score;
+use App\Models\draft_score;
+use App\Models\JobBatchesRsp;
 use Illuminate\Support\Facades\Validator;
 use Exception;
 class rater_controller extends Controller
@@ -200,7 +202,337 @@ class rater_controller extends Controller
         }
     }
 
-    public function store_score(Request $request)
+    // public function store_score(Request $request)
+    // {
+    //     try {
+    //         $data = $request->all();
+    //         // Check if data is an array
+    //         if (!is_array($data)) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Invalid data format. Expected an array of submissions.'
+    //             ], 422);
+    //         }
+
+    //         $results = [];
+    //         $errors = [];
+
+    //         // Use database transaction for data integrity
+    //         DB::beginTransaction();
+    //         foreach ($data as $index => $item) {
+    //             if (!is_array($item)) {
+    //                 $errors[] = [
+    //                     'index' => $index,
+    //                     'errors' => ['Invalid format. Each item must be an object.']
+    //                 ];
+    //                 continue;
+    //             }
+    //             $validator = Validator::make($item, [
+    //                   'nPersonalInfo_id' => 'required|exists:nPersonalInfo,id',
+    //                   'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+    //                 'education_score' => 'required|numeric|min:0|max:100',
+    //                 'experience_score' => 'required|numeric|min:0|max:100',
+    //                 'training_score' => 'required|numeric|min:0|max:100',
+    //                 'performance_score' => 'required|numeric|min:0|max:100',
+    //                 'behavioral_score' => 'required|numeric|min:0|max:100',
+    //                 'total_qs' => 'required|numeric|min:0|max:75',
+    //                 'grand_total' => 'required|numeric|min:0|max:100',
+    //                 'ranking' => 'required|integer',
+    //                 'status' => 'required|string',
+    //                 // '*.rater_id' => 'sometimes|required|exists:users,id' // If tracking raters
+    //             ]);
+
+    //             if ($validator->fails()) {
+    //                 $errors[] = [
+    //                     'index' => $index,
+    //                     'errors' => $validator->errors()
+    //                 ];
+    //                 continue;
+    //             }
+
+    //             $validated = $validator->validated();
+
+    //             // Use updateOrCreate instead of findOrFail for proper upsert functionality
+    //             $submission = rating_score::updateOrCreate(
+    //                 [
+    //                     'nPersonalInfo_id' => $validated['nPersonalInfo_id'],
+    //                     'job_batches_rsp_id' => $validated['job_batches_rsp_id']
+    //                 ],
+    //                 [
+    //                     'education_score' => $validated['education_score'],
+    //                     'experience_score' => $validated['experience_score'],
+    //                     'training_score' => $validated['training_score'],
+    //                     'performance_score' => $validated['performance_score'],
+    //                     'behavioral_score' => $validated['behavioral_score'],
+    //                     'total_qs' => $validated['total_qs'],
+    //                     'grand_total' => $validated['grand_total'],
+    //                     'ranking' => $validated['ranking'],
+    //                     'status' => $validated['status'],
+    //                     'evaluated_at' => now(), // Add timestamp for when evaluation was done
+
+    //                 ]
+    //             );
+
+    //             $results[] = $submission;
+    //         }
+
+    //         // If there are validation errors, rollback and return errors
+    //         if (!empty($errors)) {
+    //             DB::rollBack();
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Validation failed for some items',
+    //                 'errors' => $errors,
+    //                 'processed_count' => count($results)
+    //             ], 422);
+    //         }
+
+    //         // Commit the transaction
+    //         DB::commit();
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Successfully stored or updated all records.',
+    //             'data' => $results,
+    //             'count' => count($results)
+    //         ], 200);
+    //     } catch (Exception $e) {
+    //         DB::rollBack();
+
+    //         // Log the error for debugging
+    //         Log::error('Error storing rating scores: ' . $e->getMessage(), [
+    //             'trace' => $e->getTraceAsString(),
+    //             'request_data' => $request->all()
+    //         ]);
+
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'An error occurred while storing the ratings. Please try again.',
+    //             'error' => config('app.debug') ? $e->getMessage() : null
+    //         ], 500);
+    //     }
+    // }
+
+//     public function store_score(Request $request)
+// {
+//     try {
+//         $data = $request->all();
+
+//         if (!is_array($data)) {
+//             return response()->json([
+//                 'success' => false,
+//                 'message' => 'Invalid data format. Expected an array of submissions.'
+//             ], 422);
+//         }
+
+//         $results = [];
+//         $errors = [];
+
+//         DB::beginTransaction();
+//         foreach ($data as $index => $item) {
+//             if (!is_array($item)) {
+//                 $errors[] = [
+//                     'index' => $index,
+//                     'errors' => ['Invalid format. Each item must be an object.']
+//                 ];
+//                 continue;
+//             }
+
+//             $validator = Validator::make($item, [
+//                 'nPersonalInfo_id' => 'required|exists:nPersonalInfo,id',
+//                 'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+//                 'education_score' => 'required|numeric|min:0|max:100',
+//                 'experience_score' => 'required|numeric|min:0|max:100',
+//                 'training_score' => 'required|numeric|min:0|max:100',
+//                 'performance_score' => 'required|numeric|min:0|max:100',
+//                 'behavioral_score' => 'required|numeric|min:0|max:100',
+//                 'total_qs' => 'required|numeric|min:0|max:75',
+//                 'grand_total' => 'required|numeric|min:0|max:100',
+//                 'ranking' => 'required|integer',
+//             ]);
+
+//             if ($validator->fails()) {
+//                 $errors[] = [
+//                     'index' => $index,
+//                     'errors' => $validator->errors()
+//                 ];
+//                 continue;
+//             }
+
+//             $validated = $validator->validated();
+
+//             // Store or update the score
+//             $submission = rating_score::updateOrCreate(
+//                 [
+//                     'nPersonalInfo_id' => $validated['nPersonalInfo_id'],
+//                     'job_batches_rsp_id' => $validated['job_batches_rsp_id']
+//                 ],
+//                 [
+//                     'education_score' => $validated['education_score'],
+//                     'experience_score' => $validated['experience_score'],
+//                     'training_score' => $validated['training_score'],
+//                     'performance_score' => $validated['performance_score'],
+//                     'behavioral_score' => $validated['behavioral_score'],
+//                     'total_qs' => $validated['total_qs'],
+//                     'grand_total' => $validated['grand_total'],
+//                     'ranking' => $validated['ranking'],
+//                     'evaluated_at' => now(),
+//                 ]
+//             );
+
+//             // ✅ Update the job post status to 'completed'
+
+
+//             $results[] = $submission;
+//         }
+
+//         if (!empty($errors)) {
+//             DB::rollBack();
+//             return response()->json([
+//                 'success' => false,
+//                 'message' => 'Validation failed for some items',
+//                 'errors' => $errors,
+//                 'processed_count' => count($results)
+//             ], 422);
+//         }
+
+//         DB::commit();
+
+//         return response()->json([
+//             'success' => true,
+//             'message' => 'Successfully stored or updated all records and updated job post status.',
+//             'data' => $results,
+//             'count' => count($results)
+//         ], 200);
+//     } catch (Exception $e) {
+//         DB::rollBack();
+//         Log::error('Error storing rating scores: ' . $e->getMessage(), [
+//             'trace' => $e->getTraceAsString(),
+//             'request_data' => $request->all()
+//         ]);
+
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'An error occurred while storing the ratings. Please try again.',
+//             'error' => config('app.debug') ? $e->getMessage() : null
+//         ], 500);
+//     }
+// }
+public function store_score(Request $request)
+{
+    try {
+        $data = $request->all();
+
+        if (!is_array($data)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid data format. Expected an array of submissions.'
+            ], 422);
+        }
+
+        $results = [];
+        $errors = [];
+        $jobBatchIds = []; // Track unique job batch IDs
+
+        DB::beginTransaction();
+        foreach ($data as $index => $item) {
+            if (!is_array($item)) {
+                $errors[] = [
+                    'index' => $index,
+                    'errors' => ['Invalid format. Each item must be an object.']
+                ];
+                continue;
+            }
+
+            $validator = Validator::make($item, [
+                'nPersonalInfo_id' => 'required|exists:nPersonalInfo,id',
+                'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+                'education_score' => 'required|numeric|min:0|max:100',
+                'experience_score' => 'required|numeric|min:0|max:100',
+                'training_score' => 'required|numeric|min:0|max:100',
+                'performance_score' => 'required|numeric|min:0|max:100',
+                'behavioral_score' => 'required|numeric|min:0|max:100',
+                'total_qs' => 'required|numeric|min:0|max:75',
+                'grand_total' => 'required|numeric|min:0|max:100',
+                'ranking' => 'required|integer',
+            ]);
+
+            if ($validator->fails()) {
+                $errors[] = [
+                    'index' => $index,
+                    'errors' => $validator->errors()
+                ];
+                continue;
+            }
+
+            $validated = $validator->validated();
+
+            // Store or update the score
+            $submission = rating_score::updateOrCreate(
+                [
+                    'nPersonalInfo_id' => $validated['nPersonalInfo_id'],
+                    'job_batches_rsp_id' => $validated['job_batches_rsp_id']
+                ],
+                [
+                    'education_score' => $validated['education_score'],
+                    'experience_score' => $validated['experience_score'],
+                    'training_score' => $validated['training_score'],
+                    'performance_score' => $validated['performance_score'],
+                    'behavioral_score' => $validated['behavioral_score'],
+                    'total_qs' => $validated['total_qs'],
+                    'grand_total' => $validated['grand_total'],
+                    'ranking' => $validated['ranking'],
+                    'evaluated_at' => now(),
+                ]
+            );
+
+            // Collect unique job batch IDs
+            $jobBatchIds[] = $validated['job_batches_rsp_id'];
+
+            $results[] = $submission;
+        }
+
+        if (!empty($errors)) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed for some items',
+                'errors' => $errors,
+                'processed_count' => count($results)
+            ], 422);
+        }
+
+        // ✅ Update the job post status to 'completed' for all affected job batches
+        $uniqueJobBatchIds = array_unique($jobBatchIds);
+        JobBatchesRsp::whereIn('id', $uniqueJobBatchIds)
+            ->update(['status' => 'rated']);
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Successfully stored or updated all records and updated job post status.',
+            'data' => $results,
+            'count' => count($results)
+        ], 200);
+    } catch (Exception $e) {
+        DB::rollBack();
+        Log::error('Error storing rating scores: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString(),
+            'request_data' => $request->all()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'An error occurred while storing the ratings. Please try again.',
+            'error' => config('app.debug') ? $e->getMessage() : null
+        ], 500);
+    }
+}
+
+
+
+public function draft_score(Request $request)
     {
         try {
             $data = $request->all();
@@ -236,6 +568,7 @@ class rater_controller extends Controller
                     'total_qs' => 'required|numeric|min:0|max:75',
                     'grand_total' => 'required|numeric|min:0|max:100',
                     'ranking' => 'required|integer',
+
                     // '*.rater_id' => 'sometimes|required|exists:users,id' // If tracking raters
                 ]);
 
@@ -250,7 +583,7 @@ class rater_controller extends Controller
                 $validated = $validator->validated();
 
                 // Use updateOrCreate instead of findOrFail for proper upsert functionality
-                $submission = rating_score::updateOrCreate(
+                $submission = draft_score::updateOrCreate(
                     [
                         'nPersonalInfo_id' => $validated['nPersonalInfo_id'],
                         'job_batches_rsp_id' => $validated['job_batches_rsp_id']
@@ -265,6 +598,7 @@ class rater_controller extends Controller
                         'grand_total' => $validated['grand_total'],
                         'ranking' => $validated['ranking'],
                         'evaluated_at' => now(), // Add timestamp for when evaluation was done
+
                     ]
                 );
 
@@ -307,4 +641,5 @@ class rater_controller extends Controller
             ], 500);
         }
     }
+
 }

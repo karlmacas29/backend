@@ -25,3 +25,4 @@ Route::post('/rating/score', [rater_controller::class, 'store_score']);
 
 Route::get('rating/index', [SubmissionController::class, 'index']);
 Route::delete('rating/delete/{id}', [SubmissionController::class, 'delete']);
+Route::post('/rating/draft', [rater_controller::class, 'draft_score']);
