@@ -70,11 +70,10 @@ class PlantillaController extends Controller
         $data = vwplantillastructure::select([
                 'vwplantillaStructure.ControlNo',
                 'vwplantillaStructure.office',
-                'vwplantillaStructure.Name4',
                 'vwplantillaStructure.OfficeID',
                 'vwActive.BirthDate',
                 'vwActive.Designation',
-                'vwActive.Office',
+                      'vwActive.Name4',
             ])
             ->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')
             ->whereNotNull('vwplantillaStructure.ControlNo')
