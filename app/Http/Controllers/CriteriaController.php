@@ -10,7 +10,7 @@ class CriteriaController extends Controller
 {
 
     // creating a criteria per job post and if the job post already have criteria then try to create a new one criteria for that post it will be update the old criteria
-    public function store_criteria(CriteriaRequest $request)
+    public function store(CriteriaRequest $request)
     {
         $validated = $request->validated();
         $results = [];
