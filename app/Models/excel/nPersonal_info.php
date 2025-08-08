@@ -5,6 +5,7 @@ namespace App\Models\excel;
 
 use App\Models\JobBatchesRsp;
 use App\Models\rating_score;
+use App\Models\draft_score;
 use App\Models\Submission;
 use App\Models\excel\references;
 use Illuminate\Database\Eloquent\Model;
@@ -127,6 +128,10 @@ class nPersonal_info extends Model
     public function rating_score()
     {
         return $this->hasOne(rating_score::class, 'nPersonalInfo_id', 'id');
+    }
+    public function draft_score()
+    {
+        return $this->hasOne(draft_score::class, 'nPersonalInfo_id', 'id');
     }
     public function reference()
     {
