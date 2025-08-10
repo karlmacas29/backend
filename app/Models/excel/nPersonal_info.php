@@ -137,6 +137,21 @@ class nPersonal_info extends Model
     {
         return $this->hasMany(references::class, 'nPersonalInfo_id');
     }
+    public function getImageUrlAttribute()
+    {
+        if ($this->image_path && Storage::disk('public')->exists($this->image_path)) {
+            return Storage::disk('public')->url($this->image_path);
+        }
+        return null;
+    }
+
+    /**
+     * Check if image exists
+     */
+    public function getHasImageAttribute()
+    {
+        return $this->image_path && Storage::disk('public')->exists($this->image_path);
+    }
 }
     // public function upload_file_image()
     // {

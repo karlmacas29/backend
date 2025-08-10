@@ -7,10 +7,8 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::prefix('applicant')->group(function () {
-
     Route::post('/submissions', [ApplicantSubmissionController::class, 'store']);
     Route::delete('/read', [ApplicantSubmissionController::class, 'read_excel']);
     Route::post('/image', [ApplicantSubmissionController::class, 'store_image']);
     Route::delete('/delete', [ApplicantSubmissionController::class, 'deleteAllUsers']);
-
 });

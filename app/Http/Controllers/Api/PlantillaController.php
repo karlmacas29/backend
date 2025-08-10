@@ -74,6 +74,7 @@ class PlantillaController extends Controller
                 'vwActive.BirthDate',
                 'vwActive.Designation',
                       'vwActive.Name4',
+  
             ])
             ->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')
             ->whereNotNull('vwplantillaStructure.ControlNo')

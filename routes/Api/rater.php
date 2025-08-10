@@ -7,8 +7,13 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\RaterAuthController;
 use App\Http\Controllers\SubmissionController;
 
+Route::get('/rater/name', [rater_controller::class, 'get_rater_usernames']);
+Route::post('/rater/login', [RaterAuthController::class, 'Raters_Login']);
+
+
+
 Route::middleware('auth:sanctum')->group(function () {
-   //get
+    //get
     Route::get('/rater', [UsersController::class, 'getAuthenticatedrater']);
     Route::get('rater/users', [AuthController::class, 'getAllUsers']);
     Route::get('/rater/assigned-job-batches', [rater_controller::class, 'getAssignedJobs']);

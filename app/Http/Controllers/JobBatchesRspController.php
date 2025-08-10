@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use Carbon\Carbon;
 use App\Models\Submission;
+use App\Models\rating_score;
 use Illuminate\Http\Request;
 use App\Models\JobBatchesRsp;
 use App\Models\OnCriteriaJob;
-use App\Models\rating_score;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 
 class JobBatchesRspController extends Controller
@@ -403,76 +404,162 @@ class JobBatchesRspController extends Controller
     //     ]);
     // }
 
+    //     public function get_applicant($id)
+    // {
+    //     // All submissions for this job post
+    //     $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
+    //         ->with([
+    //             'nPersonalInfo.education',
+    //             'nPersonalInfo.work_experience',
+    //             'nPersonalInfo.training',
+    //             'nPersonalInfo.eligibity',
+    //             'nPersonalInfo.family',
+    //             'nPersonalInfo.children',
+    //             'nPersonalInfo.personal_declarations',
+    //             'nPersonalInfo.skills',
+    //             'nPersonalInfo.voluntary_work',
+    //             'nPersonalInfo.reference'
+    //         ])
+    //         ->get();
+
+    //     // Count all applicants for this job post
+    //     $totalApplicants = $qualifiedApplicants->count();
+
+    //     // Count applicants with qualified OR unqualified status
+    //     $progressCount = $qualifiedApplicants->whereIn('status', ['qualified', 'unqualified'])->count();
+
+    //     $applicants = $qualifiedApplicants->map(function ($submission) use ($id) {
+    //         $info = $submission->nPersonalInfo;
+    //         // Fetch ranking from rating_score
+    //         $rating = rating_score::where('nPersonalInfo_id', $submission->nPersonalInfo_id)
+    //             ->where('job_batches_rsp_id', $id)
+    //             ->first();
+
+    //         return [
+    //             'id' => $submission->id,
+    //             'nPersonalInfo_id' => $submission->nPersonalInfo_id,
+    //             'job_batches_rsp_id' => $submission->job_batches_rsp_id,
+    //             'status' => $submission->status,
+    //             'education_remark' => $submission->education_remark,
+    //             'experience_remark' => $submission->experience_remark,
+    //             'training_remark' => $submission->training_remark,
+    //             'eligibility_remark' => $submission->eligibility_remark,
+    //             'controlno' => $info->controlno ?? null,
+    //             'firstname' => $info->firstname ?? '',
+    //             'lastname' => $info->lastname ?? '',
+    //             'name_extension' => $info->name_extension ?? '',
+    //             'image_path' => $info->image_path ? asset('storage/' . $info->image_path) : null,
+    //             'application_date' => $info->created_at ? $info->created_at->toDateString() : null,
+    //             // Add all related applicant details
+    //             'nPersonalInfo' => $info ?? [],
+    //             'education' => $info->education ?? [],
+    //             'work_experience' => $info->work_experience ?? [],
+    //             'training' => $info->training ?? [],
+    //             'eligibity' => $info->eligibity ?? [],
+    //             'family' => $info->family ?? [],
+    //             'children' => $info->children ?? [],
+    //             'personal_declarations' => $info->personal_declarations ?? [],
+    //             'reference' => $info->reference ?? [],
+    //             'skills' => $info->skills ?? [],
+    //             'voluntary_work' => $info->voluntary_work ?? [],
+    //             // Add rank from rating_score
+    //             'ranking' => $rating->ranking ?? null,
+    //         ];
+    //     });
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'progress' => $progressCount . '/' . $totalApplicants, // e.g. 1/10
+    //         'progress_count' => $progressCount, // just the number completed
+    //         'total_applicants' => $totalApplicants, // just the total
+    //         'applicants' => $applicants,
+    //     ]);
+    // }
+
     public function get_applicant($id)
-{
-    // All submissions for this job post
-    $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
-        ->with([
-            'nPersonalInfo.education',
-            'nPersonalInfo.work_experience',
-            'nPersonalInfo.training',
-            'nPersonalInfo.eligibity',
-            'nPersonalInfo.family',
-            'nPersonalInfo.children',
-            'nPersonalInfo.personal_declarations',
-            'nPersonalInfo.skills',
-            'nPersonalInfo.voluntary_work',
-            'nPersonalInfo.reference'
-        ])
-        ->get();
+    {
+        // All submissions for this job post
+        $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
+            ->with([
+                'nPersonalInfo.education',
+                'nPersonalInfo.work_experience',
+                'nPersonalInfo.training',
+                'nPersonalInfo.eligibity',
+                'nPersonalInfo.family',
+                'nPersonalInfo.children',
+                'nPersonalInfo.personal_declarations',
+                'nPersonalInfo.skills',
+                'nPersonalInfo.voluntary_work',
+                'nPersonalInfo.reference'
+            ])
+            ->get();
 
-    // Count all applicants for this job post
-    $totalApplicants = $qualifiedApplicants->count();
+        // Count all applicants for this job post
+        $totalApplicants = $qualifiedApplicants->count();
 
-    // Count applicants with qualified OR unqualified status
-    $progressCount = $qualifiedApplicants->whereIn('status', ['qualified', 'unqualified'])->count();
+        // Count applicants with qualified OR unqualified status
+        $progressCount = $qualifiedApplicants->whereIn('status', ['qualified', 'unqualified'])->count();
 
-    $applicants = $qualifiedApplicants->map(function ($submission) use ($id) {
-        $info = $submission->nPersonalInfo;
-        // Fetch ranking from rating_score
-        $rating = rating_score::where('nPersonalInfo_id', $submission->nPersonalInfo_id)
-            ->where('job_batches_rsp_id', $id)
-            ->first();
+        $applicants = $qualifiedApplicants->map(function ($submission) use ($id) {
+            $info = $submission->nPersonalInfo;
 
-        return [
-            'id' => $submission->id,
-            'nPersonalInfo_id' => $submission->nPersonalInfo_id,
-            'job_batches_rsp_id' => $submission->job_batches_rsp_id,
-            'status' => $submission->status,
-            'education_remark' => $submission->education_remark,
-            'experience_remark' => $submission->experience_remark,
-            'training_remark' => $submission->training_remark,
-            'eligibility_remark' => $submission->eligibility_remark,
-            'controlno' => $info->controlno ?? null,
-            'firstname' => $info->firstname ?? '',
-            'lastname' => $info->lastname ?? '',
-            'name_extension' => $info->name_extension ?? '',
-            'image_path' => $info->image_path ?? null,
-            'application_date' => $info->created_at ? $info->created_at->toDateString() : null,
-            // Add all related applicant details
-            'nPersonalInfo' => $info ?? [],
-            'education' => $info->education ?? [],
-            'work_experience' => $info->work_experience ?? [],
-            'training' => $info->training ?? [],
-            'eligibity' => $info->eligibity ?? [],
-            'family' => $info->family ?? [],
-            'children' => $info->children ?? [],
-            'personal_declarations' => $info->personal_declarations ?? [],
-            'reference' => $info->reference ?? [],
-            'skills' => $info->skills ?? [],
-            'voluntary_work' => $info->voluntary_work ?? [],
-            // Add rank from rating_score
-            'ranking' => $rating->ranking ?? null,
-        ];
-    });
+            // Fetch ranking from rating_score
+            $rating = rating_score::where('nPersonalInfo_id', $submission->nPersonalInfo_id)
+                ->where('job_batches_rsp_id', $id)
+                ->first();
 
-    return response()->json([
-        'status' => true,
-        'progress' => $progressCount . '/' . $totalApplicants, // e.g. 1/10
-        'progress_count' => $progressCount, // just the number completed
-        'total_applicants' => $totalApplicants, // just the total
-        'applicants' => $applicants,
-    ]);
-}
+            // Generate image URL
+            // Generate image URL with correct domain
+            $imageUrl = null;
+            if ($info && $info->image_path) {
+                // Check if image exists in storage
+                if (Storage::disk('public')->exists($info->image_path)) {
+                    $baseUrl = config('app.url'); // Get APP_URL from .env
+                    $imageUrl = $baseUrl . '/storage/' . $info->image_path;
+                }
+            }
+
+            return [
+                'id' => $submission->id,
+                'nPersonalInfo_id' => $submission->nPersonalInfo_id,
+                'job_batches_rsp_id' => $submission->job_batches_rsp_id,
+                'status' => $submission->status,
+                'education_remark' => $submission->education_remark,
+                'experience_remark' => $submission->experience_remark,
+                'training_remark' => $submission->training_remark,
+                'eligibility_remark' => $submission->eligibility_remark,
+                'controlno' => $info->controlno ?? null,
+                'firstname' => $info->firstname ?? '',
+                'lastname' => $info->lastname ?? '',
+                'name_extension' => $info->name_extension ?? '',
+                'image_path' => $info->image_path ?? null, // Raw path stored in database
+                'image_path' => $info->image_path ?? null, // Raw path stored in database
+                'image_url' => $imageUrl, // Fixed URL with correct domain
+                'application_date' => $info->created_at ? $info->created_at->toDateString() : null,
+                // Add all related applicant details
+                'nPersonalInfo' => $info ?? [],
+                'education' => $info->education ?? [],
+                'work_experience' => $info->work_experience ?? [],
+                'training' => $info->training ?? [],
+                'eligibity' => $info->eligibity ?? [],
+                'family' => $info->family ?? [],
+                'children' => $info->children ?? [],
+                'personal_declarations' => $info->personal_declarations ?? [],
+                'reference' => $info->reference ?? [],
+                'skills' => $info->skills ?? [],
+                'voluntary_work' => $info->voluntary_work ?? [],
+                // Add rank from rating_score
+                'ranking' => $rating->ranking ?? null,
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'progress' => $progressCount . '/' . $totalApplicants, // e.g. 1/10
+            'progress_count' => $progressCount, // just the number completed
+            'total_applicants' => $totalApplicants, // just the total
+            'applicants' => $applicants,
+        ]);
+    }
 }
 

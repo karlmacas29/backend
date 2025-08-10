@@ -22,7 +22,7 @@ class ApplicantSubmissionController extends Controller
         $validated = $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,xls,csv',
             'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
-            
+
         ]);
 
         $file = $request->file('excel_file');
@@ -59,7 +59,7 @@ class ApplicantSubmissionController extends Controller
     //get the image value..
     public function read_excel()
     {
-        $excel_file = base_path('/storage/app/public/excels/1753403079_A8I3JDuD.xlsx');
+        $excel_file = base_path('/storage/app/public/excels/1754817018_DfVtG272.xlsx');
 
         $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
         $spreadsheet = $reader->load($excel_file);
