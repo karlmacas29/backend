@@ -7,8 +7,6 @@ use App\Models\User;
 
 Route::middleware('auth:sanctum')->group(function (){
     Route::get('/user', [UsersController::class, 'getAuthenticatedUser']);
-
-
 });
 
 // Route::middleware(['auth:sanctum', 'throttle:5,1'])->group(function () {

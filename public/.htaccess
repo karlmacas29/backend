@@ -23,3 +23,11 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+# <IfModule mod_authz_core.c>
+#     Require all granted
+# </IfModule>
+
+# <IfModule !mod_authz_core.c>
+#     Order Allow,Deny
+#     Allow from all
+# </IfModule>

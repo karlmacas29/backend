@@ -6,21 +6,17 @@ use Illuminate\Support\Facades\Route;
 
 
 
+// get
+Route::post('/store/criteria', [CriteriaController::class, 'store_criteria']);
 
-// Admin-only routes
-// Route::middleware(['auth:sanctum', 'prefix' => 'criteria'])->group(function () {
+//post
+Route::get('/view/criteria/{job_batches_rsp_id}', [CriteriaController::class, 'view_criteria']);
 
-//     Route::post('/store', [CriteriaController::class, 'store']);
-//     Route::delete('/{id}', [CriteriaController::class, 'delete']);
-//     Route::delete('/{criteria_id}', [CriteriaController::class, 'delete']);
-//     Route::get('/{job_batches_rsp_id}', [CriteriaController::class, 'show']);
-//     Route::get('/view/{job_batches_rsp_id}', [CriteriaController::class, 'view_criteria']);
+//delete
+Route::delete('/criteria/{id}', [CriteriaController::class, 'delete']);
 
-// });
-Route::prefix('criteria')->middleware(['auth:sanctum'])->group(function () {
-    Route::post('/store', [CriteriaController::class, 'store']);
-    Route::delete('/{id}', [CriteriaController::class, 'delete']);
-    Route::delete('/{criteria_id}', [CriteriaController::class, 'delete']);
-    Route::get('/{job_batches_rsp_id}', [CriteriaController::class, 'show']);
-    Route::get('/view/{job_batches_rsp_id}', [CriteriaController::class, 'view_criteria']);
-});
+
+
+Route::get('/criteria/{job_batches_rsp_id}', [CriteriaController::class, 'show']);
+Route::post('/criteria', [CriteriaController::class, 'store']);
+Route::delete('/criteria/{criteria_id}', [CriteriaController::class, 'delete']);

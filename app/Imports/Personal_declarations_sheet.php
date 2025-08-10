@@ -342,8 +342,8 @@ class Personal_declarations_sheet implements  WithEvents
                 $contact_number = $sheet->getCell('I' . $row)->getValue();
 
                 // Debug: Log what's being read
-                error_log("Row $row: " . $full_name . ', ' . $address . ', ' . $contact_number);
-                error_log('Attempting to insert reference with nPersonalInfo_id = ' . $event->getConcernable()->importer->getPersonalInfoId());
+                // error_log("Row $row: " . $full_name . ', ' . $address . ', ' . $contact_number);
+                // error_log('Attempting to insert reference with nPersonalInfo_id = ' . $event->getConcernable()->importer->getPersonalInfoId());
                 if (empty($full_name) && empty($address) && empty($contact_number)) {
                     continue;
                 }
