@@ -10,6 +10,7 @@ class rating_score extends Model
 
     protected $table = 'rating_score';
     protected $fillable = [
+        'user_id',
         'nPersonalInfo_id',
         'job_batches_rsp_id',
         'education_score',
@@ -20,5 +21,6 @@ class rating_score extends Model
         'total_qs',
         'grand_total',
         'ranking',
+        'submitted',
     ];
 }
