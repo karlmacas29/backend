@@ -22,11 +22,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //delete
     Route::delete('rater/{id}', [RaterAuthController::class, 'deleteUser']);
+    Route::post('/rating/score', [rater_controller::class, 'store_score']);
 });
 
 
 Route::get('/rater/criteria/applicant/{id}', [rater_controller::class, 'get_criteria_applicant']);
-Route::post('/rating/score', [rater_controller::class, 'store_score']);
+Route::delete('/rating/score/{id}', [rater_controller::class, 'delete']);
 
 Route::get('rating/index', [SubmissionController::class, 'index']);
 Route::delete('rating/delete/{id}', [SubmissionController::class, 'delete']);
