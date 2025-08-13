@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\vwplantillastructure;
 use App\Models\TempRegAppointmentReorg;
+use App\Models\vwActive;
+use App\Models\vwofficearrangement;
 use App\Models\xService;
 
 class PlantillaController extends Controller
@@ -30,13 +32,9 @@ class PlantillaController extends Controller
         return response()->json($plantilla);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        // Fetch data from the existing 'plantilla' table in SSMS
-        // $plantilla = DB::table('vwplantillaStructure')->get();
-        // $plantilla = DB::table('vwplantillaStructure')->limit(50)->get();
-        // $plantilla = vwplantillastructure::all();
-        $plantilla = vwplantillastructure::select([
+        $query = vwplantillastructure::select([
             'vwplantillaStructure.ControlNo',
             'vwplantillaStructure.ID',
             'vwplantillaStructure.office',
@@ -55,40 +53,56 @@ class PlantillaController extends Controller
             'vwplantillaStructure.Status',
             'vwplantillaStructure.Name4',
             'vwplantillaStructure.OfficeID',
-            'vwActive.BirthDate', // <-- Add this line
-            'vwActive.Designation', // <-- Add this line
-        ])
-            ->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')
-            ->get();
+            'vwActive.BirthDate',
+            'vwActive.Designation',
+        ])->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo');
+
+        // Filter by office if provided: /plantilla?office=OfficeName
+        if ($office = $request->query('office')) {
+            $query->where('vwplantillaStructure.office', $office);
+        }
+
+        $plantilla = $query->get();
 
         return response()->json($plantilla);
     }
 
     // office and rater on the modal rater mdoule
-    public function fetch_office_rater()
+    // public function fetch_office_rater()
+    // {
+    //     $data = vwplantillastructure::select([
+    //             'vwplantillaStructure.ControlNo',
+    //             'vwplantillaStructure.office',
+    //             'vwplantillaStructure.OfficeID',
+    //             'vwActive.BirthDate',
+    //             'vwActive.Designation',
+    //                   'vwActive.Name4',
+
+    //         ])
+    //         ->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')
+    //         ->whereNotNull('vwplantillaStructure.ControlNo')
+    //         ->get();
+    //     return response()->json($data);
+    // }
+
+
+    public function arrangement()
     {
-        $data = vwplantillastructure::select([
-                'vwplantillaStructure.ControlNo',
-                'vwplantillaStructure.office',
-                'vwplantillaStructure.OfficeID',
-                'vwActive.BirthDate',
-                'vwActive.Designation',
-                      'vwActive.Name4',
-  
-            ])
-            ->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')
-            ->whereNotNull('vwplantillaStructure.ControlNo')
-            ->get();
+        $data = vwofficearrangement::select(['Office'])->get();
         return response()->json($data);
     }
 
 
-
-    public function vwActiveGet()
+    public function vwActiveGet(Request $request)
     {
-        $data = DB::table('vwActive')
-            ->get();
-        return response()->json($data);
+        // Returns employees; if ?office=OfficeName is provided, filter by Office name
+        $query = vwActive::select(['ControlNo', 'Name4', 'Designation', 'BirthDate', 'Office']);
+
+        if ($request->filled('office')) {
+            $query->where('Office', $request->query('office'));
+        }
+
+        return response()->json($query->get());
     }
 
 // public function service($ControlNo)
