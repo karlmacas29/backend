@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamp('created_at')->useCurrent()->setTimezone('Asia/Manila');
             $table->timestamp('updated_at')->useCurrent()->setTimezone('Asia/Manila');
             $table->string('password');
-              $table->foreignId('role_id')
+              $table->foreignId('role_id')// 1 is for admin, 2 is for rater
                 ->nullable() // allow nulls for existing users
                 ->after('active') // place it right after the ID
                 ->constrained()

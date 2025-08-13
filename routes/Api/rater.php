@@ -10,7 +10,9 @@ use App\Http\Controllers\SubmissionController;
 Route::get('/rater/name', [rater_controller::class, 'get_rater_usernames']);
 Route::post('/rater/login', [RaterAuthController::class, 'Raters_Login']);
 
+Route::get('rating/index', [rater_controller::class, 'index']);
 
+Route::get('show', [rater_controller::class, 'showScores']);
 
 Route::middleware('auth:sanctum')->group(function () {
     //get
@@ -29,6 +31,6 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/rater/criteria/applicant/{id}', [rater_controller::class, 'get_criteria_applicant']);
 Route::delete('/rating/score/{id}', [rater_controller::class, 'delete']);
 
-Route::get('rating/index', [SubmissionController::class, 'index']);
+// Route::get('rating/index', [SubmissionController::class, 'index']);
 Route::delete('rating/delete/{id}', [SubmissionController::class, 'delete']);
 Route::post('/rating/draft', [rater_controller::class, 'draft_score']);

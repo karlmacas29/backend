@@ -11,6 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
+
+        //this is pivot table for job_batches_rsp and users
         Schema::create('job_batches_user', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');

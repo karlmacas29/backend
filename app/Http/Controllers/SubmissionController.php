@@ -11,7 +11,7 @@ class SubmissionController extends Controller
 
 
     // updating the status of the applicant if this applicant are qualified to rate
-    //submit evaluation
+    // this function for applicant that qualified to rate or not
     public function evaluation(Request $request, $id)
     {
         // Validate the incoming request
@@ -42,14 +42,14 @@ class SubmissionController extends Controller
 
 
     // fetching the all data on submission table
-    public function index()
-    {
+    // public function index()
+    // {
 
-        $data = Submission::all();
-        return response()->json([
-            'data' => $data
-        ]);
-    }
+    //     $data = Submission::all();
+    //     return response()->json([
+    //         'data' => $data
+    //     ]);
+    // }
 
     // deleting applicant on the job_post he/she applicant
     public function delete($id)

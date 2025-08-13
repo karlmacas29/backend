@@ -21,6 +21,7 @@ return new class extends Migration
             $table->decimal('grand_total')->nullable()->after('total_qs');
             $table->decimal('ranking')->nullable()->after('grand_total');
             $table->string('status')->default('pending')->after('ranking');
+            $table->boolean('submitted')->default(false);
         });
     }
 
