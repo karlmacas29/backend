@@ -137,6 +137,7 @@ class nPersonal_info extends Model
     {
         return $this->hasMany(references::class, 'nPersonalInfo_id');
     }
+    
     public function getImageUrlAttribute()
     {
         if ($this->image_path && Storage::disk('public')->exists($this->image_path)) {

@@ -1,0 +1,201 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Backend RSP API Docs",
+        "description": "Swagger documentation for MAIFP project",
+        "contact": {
+            "email": "devteam@maifp.local"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://192.168.8.182:9000",
+            "description": "Local development server"
+        }
+    ],
+    "paths": {
+        "/api/scores/{applicant}": {
+            "get": {
+                "tags": [
+                    "Jobpost Result"
+                ],
+                "summary": "Get applicant's score history and final computed score with rank",
+                "description": "Fetch all scores belonging to a specific applicant, including raw history and computed final score with ranking per job post.",
+                "operationId": "cdd54ce7265f720fe98017c5b8ed3be8",
+                "parameters": [
+                    {
+                        "name": "applicant",
+                        "in": "path",
+                        "description": "Applicant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 34
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Applicant history and final scores",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "applicant_id": {
+                                            "type": "integer",
+                                            "example": 34
+                                        },
+                                        "firstname": {
+                                            "type": "string",
+                                            "example": "Deniel"
+                                        },
+                                        "lastname": {
+                                            "type": "string",
+                                            "example": "Tomenio"
+                                        },
+                                        "history": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 21
+                                                    },
+                                                    "job_batches_rsp_id": {
+                                                        "type": "integer",
+                                                        "example": 40061
+                                                    },
+                                                    "education": {
+                                                        "type": "string",
+                                                        "example": "21"
+                                                    },
+                                                    "experience": {
+                                                        "type": "string",
+                                                        "example": "12.00"
+                                                    },
+                                                    "training": {
+                                                        "type": "string",
+                                                        "example": "12.00"
+                                                    },
+                                                    "performance": {
+                                                        "type": "string",
+                                                        "example": "10.00"
+                                                    },
+                                                    "bei": {
+                                                        "type": "string",
+                                                        "example": "12.00"
+                                                    },
+                                                    "total_qs": {
+                                                        "type": "string",
+                                                        "example": "55.00"
+                                                    },
+                                                    "grand_total": {
+                                                        "type": "string",
+                                                        "example": "67.00"
+                                                    },
+                                                    "ranking": {
+                                                        "type": "string",
+                                                        "example": "3"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "final_scores": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "properties": {
+                                                    "firstname": {
+                                                        "type": "string",
+                                                        "example": "Deniel"
+                                                    },
+                                                    "lastname": {
+                                                        "type": "string",
+                                                        "example": "Tomenio"
+                                                    },
+                                                    "education": {
+                                                        "type": "string",
+                                                        "example": "23.00"
+                                                    },
+                                                    "experience": {
+                                                        "type": "string",
+                                                        "example": "18.50"
+                                                    },
+                                                    "training": {
+                                                        "type": "string",
+                                                        "example": "13.50"
+                                                    },
+                                                    "performance": {
+                                                        "type": "string",
+                                                        "example": "9.00"
+                                                    },
+                                                    "bei": {
+                                                        "type": "string",
+                                                        "example": "18.00"
+                                                    },
+                                                    "total_qs": {
+                                                        "type": "string",
+                                                        "example": "64.00"
+                                                    },
+                                                    "grand_total": {
+                                                        "type": "string",
+                                                        "example": "82.00"
+                                                    },
+                                                    "nPersonalInfo_id": {
+                                                        "type": "string",
+                                                        "example": "34"
+                                                    },
+                                                    "job_batches_rsp_id": {
+                                                        "type": "string",
+                                                        "example": "40061"
+                                                    },
+                                                    "rank": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No scores found for this applicant",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No scores found for this applicant"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Jobpost Result",
+            "description": "Jobpost Result"
+        }
+    ]
+}

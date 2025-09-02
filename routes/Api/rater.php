@@ -12,7 +12,7 @@ Route::post('/rater/login', [RaterAuthController::class, 'Raters_Login']);
 
 Route::get('rating/index', [rater_controller::class, 'index']);
 
-Route::get('show', [rater_controller::class, 'showScores']);
+Route::get('show/{jobpostId}', [rater_controller::class, 'showScores']);
 
 Route::middleware('auth:sanctum')->group(function () {
     //get
@@ -34,3 +34,6 @@ Route::delete('/rating/score/{id}', [rater_controller::class, 'delete']);
 // Route::get('rating/index', [SubmissionController::class, 'index']);
 Route::delete('rating/delete/{id}', [SubmissionController::class, 'delete']);
 Route::post('/rating/draft', [rater_controller::class, 'draft_score']);
+
+
+

@@ -23,4 +23,9 @@ class rating_score extends Model
         'ranking',
         'submitted',
     ];
+
+    public function applicant()
+    {
+        return $this->belongsTo(\App\Models\excel\nPersonal_info::class, 'nPersonalInfo_id', 'id');
+    }
 }

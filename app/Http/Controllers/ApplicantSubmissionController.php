@@ -56,99 +56,49 @@ class ApplicantSubmissionController extends Controller
 
 
 
-    //get the image value..
-    public function read_excel()
-    {
-        $excel_file = base_path('/storage/app/public/excels/1754817018_DfVtG272.xlsx');
-
-        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
-        $spreadsheet = $reader->load($excel_file);
-        $sheet = $spreadsheet->getActiveSheet();
-
-        $drawings = $sheet->getDrawingCollection();
-
-        foreach ($drawings as $index => $drawing) {
-            $coordinates = $drawing->getCoordinates();
-
-            // Check if it's a file-based drawing or memory-based
-            if (method_exists($drawing, 'getPath')) {
-                $drawing_path = $drawing->getPath(); // "zip://" path
-                $extension = pathinfo($drawing_path, PATHINFO_EXTENSION);
-
-                // Ensure images directory exists
-                $image_dir = public_path('storage/images');
-                if (!file_exists($image_dir)) {
-                    mkdir($image_dir, 0777, true);
-                }
-
-                $filename = $coordinates . '_' . $index . '.' . $extension;
-                $save_path = $image_dir . '/' . $filename;
-
-                $contents = file_get_contents($drawing_path);
-                file_put_contents($save_path, $contents);
-
-                $public_url = asset('storage/images/' . $filename);
-
-                // ✅ Properly echo coordinates and path
-                echo "<p>Coordinate: <strong>{$coordinates}</strong></p>";
-                echo "<p>Drawing Path: <code>{$drawing_path}</code></p>";
-                echo "<img src='{$public_url}' style='max-width:200px'><br><br>";
-            } else {
-                echo "<p>Drawing at {$coordinates} is not file-based (probably MemoryDrawing).</p>";
-            }
-        }
-    }
-
-    // public function store(Request $request)
+    // //get the image value..
+    // public function read_excel()
     // {
-    //     $request->validate([
-    //         'excel_file' => 'required|file|mimes:xlsx,xls,csv',
-    //         'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // if you're also uploading images directly
-    //     ]);
+    //     $excel_file = base_path('/storage/app/public/excels/1754817018_DfVtG272.xlsx');
 
-    //     // Handle image upload if present
-    //     if ($request->hasFile('image')) {
-    //         $imagePath = $request->file('image')->store('applicant_images', 'public');
-    //         // You can pass this to your import if needed
-    //     }
+    //     $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+    //     $spreadsheet = $reader->load($excel_file);
+    //     $sheet = $spreadsheet->getActiveSheet();
 
-    //     Excel::import(new ApplicantFormImport, $request->file('excel_file'));
-    //     return response()->json(['message' => 'Applicant submissions imported successfully.']);
-    // }
-    // Delete a user and associated rspControl data
-    // public function deleteUser($id)
-    // {
-    //     try {
-    //         DB::beginTransaction();
+    //     $drawings = $sheet->getDrawingCollection();
 
-    //         $user = nPersonal_info::findOrFail($id);
-    //         // Prevent deleting currently authenticated user
-    //         // Delete associated rspControl first (if not using cascading deletes)
-    //         if ($user->rspControl) {
-    //             $user->rspControl->delete();
+    //     foreach ($drawings as $index => $drawing) {
+    //         $coordinates = $drawing->getCoordinates();
+
+    //         // Check if it's a file-based drawing or memory-based
+    //         if (method_exists($drawing, 'getPath')) {
+    //             $drawing_path = $drawing->getPath(); // "zip://" path
+    //             $extension = pathinfo($drawing_path, PATHINFO_EXTENSION);
+
+    //             // Ensure images directory exists
+    //             $image_dir = public_path('storage/images');
+    //             if (!file_exists($image_dir)) {
+    //                 mkdir($image_dir, 0777, true);
+    //             }
+
+    //             $filename = $coordinates . '_' . $index . '.' . $extension;
+    //             $save_path = $image_dir . '/' . $filename;
+
+    //             $contents = file_get_contents($drawing_path);
+    //             file_put_contents($save_path, $contents);
+
+    //             $public_url = asset('storage/images/' . $filename);
+
+    //             // ✅ Properly echo coordinates and path
+    //             echo "<p>Coordinate: <strong>{$coordinates}</strong></p>";
+    //             echo "<p>Drawing Path: <code>{$drawing_path}</code></p>";
+    //             echo "<img src='{$public_url}' style='max-width:200px'><br><br>";
+    //         } else {
+    //             echo "<p>Drawing at {$coordinates} is not file-based (probably MemoryDrawing).</p>";
     //         }
-    //         // Delete the user
-    //         $user->delete();
-    //         DB::commit();
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'User and associated permissions deleted successfully'
-    //         ]);
-    //     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-    //         DB::rollBack();
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'User not found'
-    //         ], 404);
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Failed to delete user',
-    //             'error' => $e->getMessage()
-    //         ], 500);
     //     }
     // }
+
 
     // this function is to delete all applicant on the excel
     public function deleteAllUsers()
