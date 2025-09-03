@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RatersRegisterRequest;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ class RaterAuthController extends Controller
 {
 
     //create account and register rater account
-    public function Raters_register(Request $request)
+    public function RatersRegister(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -34,10 +35,14 @@ class RaterAuthController extends Controller
             'position' => $validated['position'],
             'office' => $validated['office'],
             'password' => Hash::make($validated['password']),
-            //  'active ' => $validated['active'],
+            // 'active ' => $validated['active'],
+            'active' => true, // ✅ always set to active
             'role_id' => 2, // Assuming 2 is for raters
             'remember_token' => Str::random(32)
         ]);
+        // $user = User::create($validated,[
+        //     'remember_token' => Str::random(32)
+        // ]);
 
         // Attach job batches
         $user->job_batches_rsp()->attach($validated['job_batches_rsp_id']);
@@ -47,6 +52,7 @@ class RaterAuthController extends Controller
             'data' => $user->load('job_batches_rsp')
         ], 201);
     }
+
 
     // edit rater where his assign
     public function editRater(Request $request, $id)

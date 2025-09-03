@@ -14,6 +14,14 @@ use App\Models\xService;
 class PlantillaController extends Controller
 {
 
+   public function getMaxControlNo()
+    {
+        // Fetch the maximum ControlNo from vwplantillastructure
+        $maxControlNo = vwplantillastructure::max('ControlNo');
+
+        // Return the maximum ControlNo as a JSON response
+        return response()->json(['maxControlNo' => $maxControlNo]);
+    }
 
     public function test()
     {
@@ -68,22 +76,22 @@ class PlantillaController extends Controller
     }
 
     // office and rater on the modal rater mdoule
-    // public function fetch_office_rater()
-    // {
-    //     $data = vwplantillastructure::select([
-    //             'vwplantillaStructure.ControlNo',
-    //             'vwplantillaStructure.office',
-    //             'vwplantillaStructure.OfficeID',
-    //             'vwActive.BirthDate',
-    //             'vwActive.Designation',
-    //                   'vwActive.Name4',
+    public function fetch_office_rater()
+    {
+        $data = vwplantillastructure::select([
+                'vwplantillaStructure.ControlNo',
+                'vwplantillaStructure.office',
+                'vwplantillaStructure.OfficeID',
+                'vwActive.BirthDate',
+                'vwActive.Designation',
+                      'vwActive.Name4',
 
-    //         ])
-    //         ->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')
-    //         ->whereNotNull('vwplantillaStructure.ControlNo')
-    //         ->get();
-    //     return response()->json($data);
-    // }
+            ])
+            ->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')
+            ->whereNotNull('vwplantillaStructure.ControlNo')
+            ->get();
+        return response()->json($data);
+    }
 
 
     public function arrangement()
