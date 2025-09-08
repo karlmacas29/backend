@@ -8,6 +8,7 @@ use App\Models\rating_score;
 use App\Models\draft_score;
 use App\Models\Submission;
 use App\Models\excel\references;
+use Database\Factories\NPersonalInfoFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -62,6 +63,11 @@ class nPersonal_info extends Model
         'cellphone_number',
         'email_address',
     ];
+
+    protected static function newFactory()
+    {
+        return NPersonalInfoFactory::new();
+    }
 
     public function family()
     {
@@ -137,7 +143,7 @@ class nPersonal_info extends Model
     {
         return $this->hasMany(references::class, 'nPersonalInfo_id');
     }
-    
+
     public function getImageUrlAttribute()
     {
         if ($this->image_path && Storage::disk('public')->exists($this->image_path)) {

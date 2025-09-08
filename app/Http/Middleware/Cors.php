@@ -30,7 +30,7 @@ class Cors
         }
 
         // For all other requests, add CORS headers to the response
-        $response->headers->set('Access-Control-Allow-Origin', 'http://localhost:9000');
+        $response->headers->set('Access-Control-Allow-Origin', 'http://localhost:9000', 'http://192.168.8.80:9000',);
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-TOKEN, X-HTTP-Method-Override');
         $response->headers->set('Access-Control-Allow-Credentials', 'true');

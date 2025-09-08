@@ -3,12 +3,14 @@
 namespace App\Models\excel;
 
 
+use Database\Factories\FamilyFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class nFamily extends Model
 {
     //
-
+    use HasFactory;
     protected $table = 'nFamily';
 
     protected  $fillable = [
@@ -31,6 +33,10 @@ class nFamily extends Model
         'mother_maidenname'
 
     ];
+    protected static function newFactory()
+    {
+        return \Database\Factories\NFamilyFactory::new();
+    }
 
     // Relationship to nPersonalInfo
     public function personalInfo()

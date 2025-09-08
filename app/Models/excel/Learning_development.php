@@ -3,11 +3,12 @@
 namespace App\Models\excel;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Learning_development extends Model
 {
     //
-
+    use HasFactory;
     protected $table = 'nTrainings';
 
     protected $fillable =[
@@ -20,6 +21,10 @@ class Learning_development extends Model
         'conducted_by'
     ];
 
+    protected static function newFactory()
+    {
+        return \Database\Factories\LearningDevelopmentFactory::new();
+    }
     // Relationship to nPersonalInfo
     public function personalInfo()
     {

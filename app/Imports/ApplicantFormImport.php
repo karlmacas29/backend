@@ -18,14 +18,7 @@ class ApplicantFormImport implements WithMultipleSheets
     protected $fileName;
     protected $ImageValue;
 
-    // public function __construct($jobBatchId = null)
-    // {
-    //     $this->jobBatchId = $jobBatchId;
-    // }
-    // public function __construst($nPersonalInfoId= null ){
 
-    //     $this->nPersonalInfoId = $nPersonalInfoId;
-    // }
 
     public function __construct($jobBatchId = null, $nPersonalInfoId = null, $fileName = null, $ImageValue = null)
     {

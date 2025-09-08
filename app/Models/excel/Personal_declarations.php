@@ -3,10 +3,11 @@
 namespace App\Models\excel;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Personal_declarations extends Model
 {
-
+    use HasFactory;
     protected $table = 'personal_declarations';
 
     protected $fillable = [
@@ -53,6 +54,10 @@ class Personal_declarations extends Model
     public function personalInfo()
     {
         return $this->belongsTo(nPersonal_info::class, 'nPersonalInfo_id');
+    }
+    protected static function newFactory()
+    {
+        return \Database\Factories\PersonalDeclarationsFactory::new();
     }
 
 }

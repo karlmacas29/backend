@@ -15,6 +15,7 @@ class Job_batches_user extends Pivot
     protected $fillable = [
         'user_id',
         'job_batches_rsp_id',
+        'status', // newly added field
         'created_at',
         'updated_at',
     ];

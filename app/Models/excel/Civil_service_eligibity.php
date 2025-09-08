@@ -4,10 +4,12 @@ namespace App\Models\excel;
 
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Civil_service_eligibity extends Model
 {
     //
+    use HasFactory;
 
     protected $table = 'nCivilServiceEligibity';
 
@@ -22,7 +24,10 @@ class Civil_service_eligibity extends Model
 
     ];
 
-
+    protected static function newFactory()
+    {
+        return \Database\Factories\CivilServiceEligibityFactory::new();
+    }
     // Relationship to nPersonalInfo
     public function personalInfo()
     {

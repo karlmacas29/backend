@@ -19,6 +19,7 @@ use App\Http\Controllers\StructureDetailController;
 use App\Http\Controllers\OnFundedPlantillaController;
 use App\Http\Controllers\ApplicantSubmissionController;
 
+Route::post('/xPDS', [xPDSController::class, 'getPersonalDataSheet']);
 Route::get('/logs', [LogController::class, 'index']);
 Route::middleware('auth:sanctum')->post('/logs/auth', [LogController::class, 'logAuth']);
 
@@ -72,6 +73,7 @@ Route::prefix('plantilla')->group(function () {
 
 Route::prefix('plantillaData')->group(function () {
     Route::get('/', [PlantillaController::class, 'vwActiveGet']);
+    // Route::get('/qs', [DesignationQSController::class, 'getDesignation']);
     Route::post('/qs', [DesignationQSController::class, 'getDesignation']);
 
 });
@@ -93,22 +95,15 @@ Route::prefix('rater')->group(function () {
     Route::get('/', [UsersController::class, 'getAuthenticatedrater']);
     Route::delete('/{id}', [RaterAuthController::class, 'deleteUser']);
     Route::get('/criteria/applicant/{id}', [rater_controller::class, 'get_criteria_applicant']);
-    Route::get('/show', [rater_controller::class, 'showScores']);
+    Route::get('/show/{jobpostId}', [rater_controller::class, 'showScoresWithHistory']);
     Route::post('/edit/{id}', [RaterAuthController::class, 'editRater']);
     Route::post('/logout', [RaterAuthController::class, 'Rater_logout']);
     Route::post('/changepassword', [RaterAuthController::class, 'change_password']);
     Route::post('/register', [RaterAuthController::class, 'RatersRegister']);
     Route::get('/list', [rater_controller::class, 'get_all_raters']);
+    Route::get('/applicant/history/score/{applicantId}', [rater_controller::class,'applicant_history_score']);
 });
 
-Route::prefix('rating')->group(function () {
-    Route::delete('/score/{id}', [rater_controller::class, 'delete']);
-    Route::get('/index', [rater_controller::class, 'index']);
-    Route::delete('/delete/{id}', [SubmissionController::class, 'delete']);
-    Route::post('/draft', [rater_controller::class, 'draft_score']);
-    Route::post('/score', [rater_controller::class, 'store_score']);
-
-});
 
 Route::prefix('vw-Active')->group(function () {
     Route::post('/status', [ViewActiveController::class, 'getStatus']);
@@ -126,7 +121,7 @@ Route::prefix('job-batches-rsp')->group(function () {
     // Route::post('/applicant/view/{id}', [JobBatchesRspController::class, 'getApplicants']);
     Route::post('/get/view/', [JobBatchesRspController::class, 'get_submission_table']);
     Route::get('/list', [JobBatchesRspController::class, 'job_list']); // fetching the all job post on the admin
-    Route::get('/applicant/view/{id}', [JobBatchesRspController::class, 'get_applicant']);
+    Route::get('/applicant/view/{id}', [JobBatchesRspController::class, 'get_applicant']); // fetching the applicant per job post
     Route::post('/applicant/evaluation/{applicantId}', [SubmissionController::class, 'evaluation']);
 });
 
@@ -149,5 +144,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [AuthController::class, 'deleteUser']);
     });
 
+    Route::prefix('rater')->group(function () {
+        Route::get('/assigned-job-batches', [rater_controller::class, 'getAssignedJobs']);
+        Route::get('/', [UsersController::class, 'getAuthenticatedrater']);
+        // Route::get('/show/{jobpostId}', [rater_controller::class, 'showScores']);
+        Route::post('/logout', [RaterAuthController::class, 'Rater_logout']);
+
+    });
+
+    Route::prefix('rating')->group(function () {
+        Route::delete('/score/{id}', [rater_controller::class, 'delete']);
+        Route::get('/index', [rater_controller::class, 'index']);
+        Route::delete('/delete/{id}', [SubmissionController::class, 'delete']);
+        Route::post('/draft', [rater_controller::class, 'draft_score']); // draft score for applicant rating score
+        Route::post('/score', [rater_controller::class, 'store_score']); // final submission of the applicant score
+    });
 });
 

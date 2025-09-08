@@ -4,11 +4,12 @@ namespace App\Models\excel;
 
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Work_experience extends Model
 {
     //
-
+    use HasFactory;
     protected $table = 'nWorkExperience';
 
     protected $fillable =[
@@ -29,6 +30,11 @@ class Work_experience extends Model
     public function personalInfo()
     {
         return $this->belongsTo(nPersonal_info::class, 'nPersonalInfo_id');
+    }
+
+    protected static function newFactory()
+    {
+        return \Database\Factories\WorkExperienceFactory::new();
     }
 
 }
