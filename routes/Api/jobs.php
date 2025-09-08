@@ -6,9 +6,9 @@ use App\Http\Controllers\OnCriteriaJobController;
 use App\Http\Controllers\SubmissionController;
 
 // Route::apiResource('job-batches-rsp', JobBatchesRspController::class)->only(['index', 'store' ,'destroy',]);
-Route::get('/job-batches-rsp', [JobBatchesRspController::class, 'index']);
-Route::post('/job-batches-rsp', [JobBatchesRspController::class, 'store']);
-Route::delete('/job-batches-rsp/{id}', [JobBatchesRspController::class, 'destroy']);
+// Route::get('/job-batches-rsp', [JobBatchesRspController::class, 'index']);
+// Route::post('/job-batches-rsp', [JobBatchesRspController::class, 'store']);
+// Route::delete('/job-batches-rsp/{id}', [JobBatchesRspController::class, 'destroy']);
 
 Route::get('/job-batches-rsp/{PositionID}/{ItemNo}', [JobBatchesRspController::class, 'show']);
 
