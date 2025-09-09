@@ -312,99 +312,7 @@ class JobBatchesRspController extends Controller
         ]);
     }
 
-
     // public function get_applicant($id)
-    // {
-    //     // Fetch applicants for the given job post with only needed fields
-    //     $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
-    //         ->with(['nPersonalInfo:id,firstname,lastname,name_extension']) // Eager load only firstname and lastname
-    //         ->get(['id', 'job_batches_rsp_id', 'status', 'nPersonalInfo_id', 'created_at', 'ranking']); // Include rank and created_at if they exist in submissions table
-
-    //     $applicants = $qualifiedApplicants->map(function ($submission) {
-    //         return [
-    //             'id' => $submission->nPersonalInfo->id ?? null,
-    //             'firstname' => $submission->nPersonalInfo->firstname ?? null,
-    //             'lastname' => $submission->nPersonalInfo->lastname ?? null,
-    //             'name_extension' => $submission->nPersonalInfo->name_extension ?? null,
-    //             'application_date' => $submission->created_at->toDateString(), // or ->format('Y-m-d H:i:s') if needed
-    //             'status' => $submission->status,
-    //             'ranking' => $submission->ranking,
-    //         ];
-    //     });
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'applicants' => $applicants,
-    //     ]);
-    // }
-    // public function get_applicant($id)
-    // {
-    //     $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
-    //         ->with([
-    //             // 'nPersonalInfo.nPersonalInfo',
-    //             'nPersonalInfo.education',
-    //             'nPersonalInfo.work_experience',
-    //             'nPersonalInfo.training',
-    //             'nPersonalInfo.eligibity',
-    //             'nPersonalInfo.family',
-    //             'nPersonalInfo.children',
-    //             'nPersonalInfo.personal_declarations',
-    //             'nPersonalInfo.skills',
-    //             'nPersonalInfo.voluntary_work',
-    //             'nPersonalInfo.reference'
-    //         ])
-    //         ->get();
-
-    //     // $applicants = $qualifiedApplicants->map(function ($submission) {
-    //     //     $info = $submission->nPersonalInfo;
-
-    //     $applicants = $qualifiedApplicants->map(function ($submission) use ($id) {
-    //         $info = $submission->nPersonalInfo;
-    //         // Fetch ranking from rating_score
-    //         $rating = rating_score::where('nPersonalInfo_id', $submission->nPersonalInfo_id)
-    //             ->where('job_batches_rsp_id', $id)
-    //             ->first();
-
-    //         return [
-    //             'id' => $submission->id,
-    //             'nPersonalInfo_id' => $submission->nPersonalInfo_id,
-    //             'job_batches_rsp_id' => $submission->job_batches_rsp_id,
-    //             'status' => $submission->status,
-    //             'education_remark' => $submission->education_remark,
-    //             'experience_remark' => $submission->experience_remark,
-    //             'training_remark' => $submission->training_remark,
-    //             'eligibility_remark' => $submission->eligibility_remark,
-    //             'controlno' => $info->controlno ?? null,
-    //             'firstname' => $info->firstname ?? '',
-    //             'lastname' => $info->lastname ?? '',
-    //             'name_extension' => $info->name_extension ?? '',
-    //             'image_path' => $info->image_path ?? null,
-    //             'application_date' => $info->created_at ? $info->created_at->toDateString() : null,
-
-    //             // Add all related applicant details
-    //             'nPersonalInfo' => $info ?? [],
-    //             'education' => $info->education ?? [],
-    //             'work_experience' => $info->work_experience ?? [],
-    //             'training' => $info->training ?? [],
-    //             'eligibity' => $info->eligibity ?? [],
-    //             'family' => $info->family ?? [],
-    //             'children' => $info->children ?? [],
-    //             'personal_declarations' => $info->personal_declarations ?? [],
-    //             'reference' => $info->reference ?? [],
-    //             'skills' => $info->skills ?? [],
-    //             'voluntary_work' => $info->voluntary_work ?? [],
-    //             // Add rank from rating_score
-    //             'ranking' => $rating->ranking ?? null,
-    //         ];
-    //     });
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'applicants' => $applicants,
-    //     ]);
-    // }
-
-    //     public function get_applicant($id)
     // {
     //     // All submissions for this job post
     //     $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
@@ -418,7 +326,7 @@ class JobBatchesRspController extends Controller
     //             'nPersonalInfo.personal_declarations',
     //             'nPersonalInfo.skills',
     //             'nPersonalInfo.voluntary_work',
-    //             'nPersonalInfo.reference'
+    //             'nPersonalInfo.reference',
     //         ])
     //         ->get();
 
@@ -430,14 +338,209 @@ class JobBatchesRspController extends Controller
 
     //     $applicants = $qualifiedApplicants->map(function ($submission) use ($id) {
     //         $info = $submission->nPersonalInfo;
+
+    //         // ✅ If no nPersonalInfo_id, fetch from Employee DB (via controlno)
+    //         if (!$info && $submission->ControlNo) {
+    //             $xPDS = new \App\Http\Controllers\xPDSController();
+    //             $employeeData = $xPDS->getPersonalDataSheet(new \Illuminate\Http\Request([
+    //                 'controlno' => $submission->ControlNo
+    //             ]));
+
+    //             $employeeJson = $employeeData->getData(true); // decode JSON response
+    //             $info = [
+    //                 'controlno' => $submission->ControlNo,
+    //                 'firstname' => $employeeJson['User'][0]['Firstname'] ?? '',
+    //                 'lastname' => $employeeJson['User'][0]['Surname'] ?? '',
+    //                 'middlename' => $employeeJson['User'][0]['MIddlename'] ?? '',
+    //                 'name_extension' => $employeeJson['User'][0]['NameExtension'] ?? '',
+    //                 'nPersonalInfo' => $employeeJson['User'] ?? [],
+    //                 'children' => $employeeJson['User'][0]['children'] ?? [],
+    //                 'education' => $employeeJson['Education'] ?? [],
+    //                 'eligibity' => $employeeJson['Eligibility'] ?? [],
+    //                 'work_experience' => $employeeJson['Experience'] ?? [],
+    //                 'training' => $employeeJson['Training'] ?? [],
+    //                 'voluntary_work' => $employeeJson['Voluntary'] ?? [],
+    //                 'skills' => $employeeJson['Skills'] ?? [],
+    //                 'reference' => $employeeJson['Reference'] ?? [],
+    //                 'personal_declarations' => [],
+    //                 'family' => [],
+    //                 'image_path' => null,
+    //                 'created_at' => null,
+    //             ];
+    //         }
+
+    //         // 🔄 Standardize Education Data here
+    //         $educationData = collect($info['education'] ?? [])->map(function ($edu) {
+    //             if (isset($edu['Education'])) {
+    //                 $dates = explode('-', $edu['DateAttend'] ?? '');
+    //                 $from = isset($dates[0]) ? trim($dates[0]) : null;
+    //                 $to   = isset($dates[1]) ? trim($dates[1]) : null;
+
+    //                 return [
+    //                     'level'           => $edu['Education'] ?? null,
+    //                     'school_name'     => $edu['School'] ?? null,
+    //                     'degree'          => $edu['Degree'] ?? null,
+    //                     'attendance_from' => $from,
+    //                     'attendance_to'   => $to,
+    //                     'year_graduated'  => $to,
+    //                     'highest_units'    => $edu['NumUnits'] ?? 0,
+    //                     'degree'          => $edu['Degree'] ?? null,
+    //                 ];
+    //             }
+
+    //             return [
+    //                 'level'           => $edu['level'] ?? null,
+    //                 'school_name'     => $edu['school_name'] ?? null,
+    //                 'degree'          => $edu['degree'] ?? null,
+    //                 'highest_units'        => $edu['highest_units'] ?? null,
+    //                 'attendance_from' => $edu['attendance_from'] ?? null,
+    //                 'attendance_to'   => $edu['attendance_to'] ?? null,
+    //                 'year_graduated'  => $edu['year_graduated'] ?? null,
+    //             ];
+    //         });
+
+
+    //         // 🔄 Standardize Education Data here
+    //         $experienceData = collect($info['experience'] ?? [])->map(function ($exp) {
+    //             if (isset($edu['Experience'])) {
+    //                 $dates = explode('-', $edu['DateAttend'] ?? '');
+    //                 $from = isset($dates[0]) ? trim($dates[0]) : null;
+    //                 $to   = isset($dates[1]) ? trim($dates[1]) : null;
+
+    //                 return [
+    //                     'level'           => $edu['Education'] ?? null,
+    //                     'school_name'     => $edu['School'] ?? null,
+    //                     'degree'          => $edu['Degree'] ?? null,
+    //                     'attendance_from' => $from,
+    //                     'attendance_to'   => $to,
+    //                     'year_graduated'  => $to,
+    //                     'highest_units'    => $edu['NumUnits'] ?? 0,
+    //                     'degree'          => $edu['Degree'] ?? null,
+    //                 ];
+    //             }
+
+    //             return [
+    //                 'level'           => $edu['level'] ?? null,
+    //                 'school_name'     => $edu['school_name'] ?? null,
+    //                 'degree'          => $edu['degree'] ?? null,
+    //                 'highest_units'        => $edu['highest_units'] ?? null,
+    //                 'attendance_from' => $edu['attendance_from'] ?? null,
+    //                 'attendance_to'   => $edu['attendance_to'] ?? null,
+    //                 'year_graduated'  => $edu['year_graduated'] ?? null,
+    //             ];
+    //         });
+
     //         // Fetch ranking from rating_score
     //         $rating = rating_score::where('nPersonalInfo_id', $submission->nPersonalInfo_id)
     //             ->where('job_batches_rsp_id', $id)
     //             ->first();
 
+    //         // Generate image URL
+    //         $imageUrl = null;
+    //         if ($info && isset($info['image_path']) && $info['image_path']) {
+    //             if (Storage::disk('public')->exists($info['image_path'])) {
+    //                 $baseUrl = config('app.url');
+    //                 $imageUrl = $baseUrl . '/storage/' . $info['image_path'];
+    //             }
+    //         }
+
     //         return [
     //             'id' => $submission->id,
     //             'nPersonalInfo_id' => $submission->nPersonalInfo_id,
+    //             'ControlNo' => $submission->ControlNo,
+    //             'job_batches_rsp_id' => $submission->job_batches_rsp_id,
+    //             'status' => $submission->status,
+    //             'education_remark' => $submission->education_remark,
+    //             'experience_remark' => $submission->experience_remark,
+    //             'training_remark' => $submission->training_remark,
+    //             'eligibility_remark' => $submission->eligibility_remark,
+    //             'controlno' => $info['controlno'] ?? null,
+    //             'firstname' => $info['firstname'] ?? '',
+    //             'lastname' => $info['lastname'] ?? '',
+    //             'name_extension' => $info['name_extension'] ?? '',
+    //             'image_path' => $info['image_path'] ?? null,
+    //             'image_url' => $imageUrl,
+    //             'application_date' => $info['application_date']
+    //                 ?? ($info instanceof \App\Models\excel\nPersonal_info
+    //                     ? optional($info->created_at)->toDateString()
+    //                     : (!empty($info['created_at'])
+    //                         ? \Carbon\Carbon::parse($info['created_at'])->toDateString()
+    //                         : ($submission->created_at
+    //                             ? $submission->created_at->toDateString()
+    //                             : null))),
+    //             'nPersonalInfo' => $info ?? [],
+    //             'education' => $educationData,
+    //             'work_experience' => $info['work_experience'] ?? [],
+    //             'training' => $info['training'] ?? [],
+    //             'eligibity' => $info['eligibity'] ?? [],
+    //             'family' => $info['family'] ?? [],
+    //             'children' => $info['children'] ?? [],
+    //             'personal_declarations' => $info['personal_declarations'] ?? [],
+    //             'reference' => $info['reference'] ?? [],
+    //             'skills' => $info['skills'] ?? [],
+    //             'voluntary_work' => $info['voluntary_work'] ?? [],
+    //             'ranking' => $rating->ranking ?? null,
+    //         ];
+    //     });
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'progress' => $progressCount . '/' . $totalApplicants,
+    //         'progress_count' => $progressCount,
+    //         'total_applicants' => $totalApplicants,
+    //         'applicants' => $applicants,
+    //     ]);
+    // }
+
+
+    // public function get_applicant($id)
+    // {
+    //     // All submissions for this job post
+    //     $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
+    //         ->with([
+    //             'nPersonalInfo.education',
+    //             'nPersonalInfo.work_experience',
+    //             'nPersonalInfo.training',
+    //           'nPersonalInfo.eligibity',
+    //             'nPersonalInfo.family',
+    //             'nPersonalInfo.children',
+    //             'nPersonalInfo.personal_declarations',
+    //             'nPersonalInfo.skills',
+    //             'nPersonalInfo.voluntary_work',
+    //             'nPersonalInfo.reference',
+
+    //         ])
+    //         ->get();
+
+    //     // Count all applicants for this job post
+    //     $totalApplicants = $qualifiedApplicants->count();
+
+    //     // Count applicants with qualified OR unqualified status
+    //     $progressCount = $qualifiedApplicants->whereIn('status', ['qualified', 'unqualified'])->count();
+
+    //     $applicants = $qualifiedApplicants->map(function ($submission) use ($id) {
+    //         $info = $submission->nPersonalInfo;
+
+    //         // Fetch ranking from rating_score
+    //         $rating = rating_score::where('nPersonalInfo_id', $submission->nPersonalInfo_id)
+    //             ->where('job_batches_rsp_id', $id)
+    //             ->first();
+
+    //         // Generate image URL
+    //         // Generate image URL with correct domain
+    //         $imageUrl = null;
+    //         if ($info && $info->image_path) {
+    //             // Check if image exists in storage
+    //             if (Storage::disk('public')->exists($info->image_path)) {
+    //                 $baseUrl = config('app.url'); // Get APP_URL from .env
+    //                 $imageUrl = $baseUrl . '/storage/' . $info->image_path;
+    //             }
+    //         }
+
+    //         return [
+    //             'id' => $submission->id,
+    //             'nPersonalInfo_id' => $submission->nPersonalInfo_id,
+    //             'ControlNo' => $submission->ControlNo,
     //             'job_batches_rsp_id' => $submission->job_batches_rsp_id,
     //             'status' => $submission->status,
     //             'education_remark' => $submission->education_remark,
@@ -448,8 +551,12 @@ class JobBatchesRspController extends Controller
     //             'firstname' => $info->firstname ?? '',
     //             'lastname' => $info->lastname ?? '',
     //             'name_extension' => $info->name_extension ?? '',
-    //             'image_path' => $info->image_path ? asset('storage/' . $info->image_path) : null,
-    //             'application_date' => $info->created_at ? $info->created_at->toDateString() : null,
+    //             'image_path' => $info->image_path ?? null, // Raw path stored in database
+    //             'image_path' => $info->image_path ?? null, // Raw path stored in database
+    //             'image_url' => $imageUrl, // Fixed URL with correct domain
+    //             'application_date' => $info && $info->created_at
+    //                 ? $info->created_at->toDateString()
+    //                 : null,
     //             // Add all related applicant details
     //             'nPersonalInfo' => $info ?? [],
     //             'education' => $info->education ?? [],
@@ -490,7 +597,7 @@ class JobBatchesRspController extends Controller
                 'nPersonalInfo.personal_declarations',
                 'nPersonalInfo.skills',
                 'nPersonalInfo.voluntary_work',
-                'nPersonalInfo.reference'
+                'nPersonalInfo.reference',
             ])
             ->get();
 
@@ -503,61 +610,85 @@ class JobBatchesRspController extends Controller
         $applicants = $qualifiedApplicants->map(function ($submission) use ($id) {
             $info = $submission->nPersonalInfo;
 
+            // ✅ If no nPersonalInfo_id, fetch from Employee DB (via controlno)
+            if (!$info && $submission->ControlNo) {
+                $xPDS = new \App\Http\Controllers\xPDSController();
+                $employeeData = $xPDS->getPersonalDataSheet(new \Illuminate\Http\Request([
+                    'controlno' => $submission->ControlNo
+                ]));
+
+                $employeeJson = $employeeData->getData(true); // decode JSON response
+                $info = [
+                    'controlno' => $submission->ControlNo,
+                    'firstname' => $employeeJson['User'][0]['Firstname'] ?? '',
+                    'lastname' => $employeeJson['User'][0]['Surname'] ?? '',
+                    'middlename' => $employeeJson['User'][0]['MIddlename'] ?? '',
+                    'name_extension' => $employeeJson['User'][0]['NameExtension'] ?? '',
+                    'nPersonalInfo' => $employeeJson['User'] ?? [],
+                    'image_path' => null,
+                    'created_at' => null,
+                ];
+            }
+
+
             // Fetch ranking from rating_score
             $rating = rating_score::where('nPersonalInfo_id', $submission->nPersonalInfo_id)
                 ->where('job_batches_rsp_id', $id)
                 ->first();
 
             // Generate image URL
-            // Generate image URL with correct domain
             $imageUrl = null;
-            if ($info && $info->image_path) {
-                // Check if image exists in storage
-                if (Storage::disk('public')->exists($info->image_path)) {
-                    $baseUrl = config('app.url'); // Get APP_URL from .env
-                    $imageUrl = $baseUrl . '/storage/' . $info->image_path;
+            if ($info && isset($info['image_path']) && $info['image_path']) {
+                if (Storage::disk('public')->exists($info['image_path'])) {
+                    $baseUrl = config('app.url');
+                    $imageUrl = $baseUrl . '/storage/' . $info['image_path'];
                 }
             }
 
             return [
                 'id' => $submission->id,
                 'nPersonalInfo_id' => $submission->nPersonalInfo_id,
+                'ControlNo' => $submission->ControlNo,
                 'job_batches_rsp_id' => $submission->job_batches_rsp_id,
                 'status' => $submission->status,
                 'education_remark' => $submission->education_remark,
                 'experience_remark' => $submission->experience_remark,
                 'training_remark' => $submission->training_remark,
                 'eligibility_remark' => $submission->eligibility_remark,
-                'controlno' => $info->controlno ?? null,
-                'firstname' => $info->firstname ?? '',
-                'lastname' => $info->lastname ?? '',
-                'name_extension' => $info->name_extension ?? '',
-                'image_path' => $info->image_path ?? null, // Raw path stored in database
-                'image_path' => $info->image_path ?? null, // Raw path stored in database
-                'image_url' => $imageUrl, // Fixed URL with correct domain
-                'application_date' => $info->created_at ? $info->created_at->toDateString() : null,
-                // Add all related applicant details
+                'controlno' => $info['controlno'] ?? null,
+                'firstname' => $info['firstname'] ?? '',
+                'lastname' => $info['lastname'] ?? '',
+                'name_extension' => $info['name_extension'] ?? '',
+                'image_path' => $info['image_path'] ?? null,
+                'image_url' => $imageUrl,
+                'application_date' => $info['application_date']
+                    ?? ($info instanceof \App\Models\excel\nPersonal_info
+                        ? optional($info->created_at)->toDateString()
+                        : (!empty($info['created_at'])
+                            ? \Carbon\Carbon::parse($info['created_at'])->toDateString()
+                            : ($submission->created_at
+                                ? $submission->created_at->toDateString()
+                                : null))),
                 'nPersonalInfo' => $info ?? [],
-                'education' => $info->education ?? [],
-                'work_experience' => $info->work_experience ?? [],
-                'training' => $info->training ?? [],
-                'eligibity' => $info->eligibity ?? [],
-                'family' => $info->family ?? [],
-                'children' => $info->children ?? [],
-                'personal_declarations' => $info->personal_declarations ?? [],
-                'reference' => $info->reference ?? [],
-                'skills' => $info->skills ?? [],
-                'voluntary_work' => $info->voluntary_work ?? [],
-                // Add rank from rating_score
+                'education' => $info['education'] ?? [],
+                'work_experience' => $info['work_experience'] ?? [],
+                'training' => $info['training'] ?? [],
+                'eligibity' => $info['eligibity'] ?? [],
+                'family' => $info['family'] ?? [],
+                'children' => $info['children'] ?? [],
+                'personal_declarations' => $info['personal_declarations'] ?? [],
+                'reference' => $info['reference'] ?? [],
+                'skills' => $info['skills'] ?? [],
+                'voluntary_work' => $info['voluntary_work'] ?? [],
                 'ranking' => $rating->ranking ?? null,
             ];
         });
 
         return response()->json([
             'status' => true,
-            'progress' => $progressCount . '/' . $totalApplicants, // e.g. 1/10
-            'progress_count' => $progressCount, // just the number completed
-            'total_applicants' => $totalApplicants, // just the total
+            'progress' => $progressCount . '/' . $totalApplicants,
+            'progress_count' => $progressCount,
+            'total_applicants' => $totalApplicants,
             'applicants' => $applicants,
         ]);
     }

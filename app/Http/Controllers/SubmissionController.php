@@ -69,4 +69,5 @@ class SubmissionController extends Controller
             'message' => 'Submission deleted successfully.'
         ]);
     }
+
 }

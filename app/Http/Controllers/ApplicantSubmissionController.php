@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Submission;
 use Illuminate\Support\Str;
+
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\DB;
-
 use App\Imports\ApplicantFormImport;
 use App\Models\excel\nPersonal_info;
 use Maatwebsite\Excel\Facades\Excel;
@@ -135,5 +136,25 @@ class ApplicantSubmissionController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+
+    public function employee_applicant(Request $request)
+    {
+        $validated = $request->validate([
+            'ControlNo' => 'required|nullable|string', // 👈 no longer required
+            'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+        ]);
+
+        $submit = Submission::create([
+            'ControlNo' => $validated['ControlNo'] ?? null,
+            'job_batches_rsp_id' => $validated['job_batches_rsp_id'],
+            'nPersonalInfo_id' => null, // 👈 explicitly null
+        ]);
+
+        return response()->json([
+            'message' => 'Submission created successfully',
+            'data' => $submit
+        ], 201);
     }
 }

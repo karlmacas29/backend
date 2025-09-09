@@ -19,8 +19,10 @@ class Submission extends Model
         'experience_remark',
         'training_remark',
         'eligibility_remark',
-         'status'
+         'status',
+        'ControlNo'
     ];
+    public $timestamps = true; // or just remove if not set
 
     public function nPersonalInfo()
     {
@@ -34,5 +36,10 @@ class Submission extends Model
     //         }
     //     });
     // }
+
+    public function jobPost()
+    {
+        return $this->belongsTo(JobBatchesRsp::class, 'job_batches_rsp_id');
+    }
 }
 

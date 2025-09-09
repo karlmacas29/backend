@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\xPDSController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\CriteriaController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RaterAuthController;
 use App\Http\Controllers\SubmissionController;
@@ -20,6 +21,8 @@ use App\Http\Controllers\OnFundedPlantillaController;
 use App\Http\Controllers\ApplicantSubmissionController;
 
 Route::post('/xPDS', [xPDSController::class, 'getPersonalDataSheet']);
+Route::get('/employee/{ControlNo}', [EmployeeController::class, 'applied_employee']);
+Route::get('/employee/applicant/xpds', [xPDSController::class, 'getPersonalDataSheet']);
 Route::get('/logs', [LogController::class, 'index']);
 Route::middleware('auth:sanctum')->post('/logs/auth', [LogController::class, 'logAuth']);
 
@@ -44,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::prefix('applicant')->group(function () {
     Route::post('/submissions', [ApplicantSubmissionController::class, 'store']);
+    Route::post('/employee', [ApplicantSubmissionController::class, 'employee_applicant']);
     Route::delete('/read', [ApplicantSubmissionController::class, 'read_excel']);
     Route::post('/image', [ApplicantSubmissionController::class, 'store_image']);
     Route::delete('/delete', [ApplicantSubmissionController::class, 'deleteAllUsers']);
