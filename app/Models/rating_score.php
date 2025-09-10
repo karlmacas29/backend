@@ -22,6 +22,7 @@ class rating_score extends Model
         'grand_total',
         'ranking',
         'submitted',
+        'ControlNo'
     ];
 
     public function applicant()

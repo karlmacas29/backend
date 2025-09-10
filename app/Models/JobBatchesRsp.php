@@ -43,6 +43,7 @@ class JobBatchesRsp extends Model
 
     ];
 
+
     protected static function booted()
     {
         static::deleting(function ($jobPost) {
@@ -86,6 +87,12 @@ class JobBatchesRsp extends Model
         return $this->hasMany(criteria_rating::class, 'job_batches_rsp_id');
     }
 
+    // public function applicants()
+    // {
+    //     return $this->belongsToMany(nPersonal_info::class, 'submission', 'job_batches_rsp_id', 'nPersonalInfo_id',)
+    //         ->withTimestamps();
+    // }
+
     public function applicants()
     {
         return $this->belongsToMany(nPersonal_info::class, 'submission', 'job_batches_rsp_id', 'nPersonalInfo_id')
@@ -106,4 +113,9 @@ class JobBatchesRsp extends Model
     // {
     //     return $this->hasMany(OnFundedPlantilla::class, 'PositionID', 'PositionID');
     // }
+
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class, 'job_batches_rsp_id');
+    }
 }
