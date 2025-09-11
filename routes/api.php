@@ -10,6 +10,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RaterAuthController;
 use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\rater\rater_controller;
 use App\Http\Controllers\Api\PlantillaController;
 use App\Http\Controllers\DesignationQSController;
@@ -19,6 +20,16 @@ use App\Http\Controllers\Api\ViewActiveController;
 use App\Http\Controllers\StructureDetailController;
 use App\Http\Controllers\OnFundedPlantillaController;
 use App\Http\Controllers\ApplicantSubmissionController;
+
+Route::post('/hire/{submissionId}', [AppointmentController::class, 'hireApplicant']);
+
+Route::prefix('appointment')->group(function () {
+
+    Route::get('/maxControlNo', [AppointmentController::class, 'maxControlNo']);
+    Route::get('/', [AppointmentController::class, 'find_appointment']);
+    Route::delete('/delete/{ControlNo}', [AppointmentController::class, 'deleteControlNo']);
+});
+
 
 Route::post('/xPDS', [xPDSController::class, 'getPersonalDataSheet']);
 Route::get('/employee/{ControlNo}', [EmployeeController::class, 'applied_employee']);
@@ -47,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::prefix('applicant')->group(function () {
     Route::post('/submissions', [ApplicantSubmissionController::class, 'store']);
+    Route::get('/submissions/index', [ApplicantSubmissionController::class, 'index']);
     Route::post('/employee', [ApplicantSubmissionController::class, 'employee_applicant']);
     Route::delete('/read', [ApplicantSubmissionController::class, 'read_excel']);
     Route::post('/image', [ApplicantSubmissionController::class, 'store_image']);
@@ -163,5 +175,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/draft', [rater_controller::class, 'draft_score']); // draft score for applicant rating score
         Route::post('/score', [rater_controller::class, 'store_score']); // final submission of the applicant score
     });
+
 });
 

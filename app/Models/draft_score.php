@@ -20,5 +20,9 @@ class draft_score extends Model
         'total_qs',
         'grand_total',
         'ranking',
+        'ControlNo',
+        'user_id'
     ];
+
+  
 }

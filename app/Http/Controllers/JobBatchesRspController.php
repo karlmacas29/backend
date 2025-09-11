@@ -50,60 +50,55 @@ class JobBatchesRspController extends Controller
     {
         $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
             ->withCount([
-                'applicants as total_applicants',
-                'applicants as qualified_count' => function ($query) {
-                    $query->where('status', 'qualified');
+                'submissions as total_applicants',
+                'submissions as qualified_count' => function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['qualified']);
                 },
-                'applicants as unqualified_count' => function ($query) {
-                    $query->where('status', 'unqualified');
+                'submissions as unqualified_count' => function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['unqualified']);
                 },
-                'applicants as pending_count' => function ($query) {
-                    $query->where('status', 'pending');
+                'submissions as pending_count' => function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['pending']);
                 },
             ])
             ->get();
 
-        // Loop and update status if needed
         foreach ($jobPosts as $job) {
             $originalStatus = $job->status;
 
             if ($job->qualified_count > 0 || $job->unqualified_count > 0) {
-                if ($job->pending_count > 0) {
-                    $newStatus = 'pending';
-                } else {
-                    $newStatus = 'assessed';
-                }
+                // Some applicants already assessed
+                $newStatus = $job->pending_count > 0 ? 'pending' : 'assessed';
             } else {
+                // No assessments yet
                 $newStatus = 'not started';
             }
 
-            // Save only if status changed
             if ($originalStatus !== $newStatus) {
                 $job->status = $newStatus;
                 $job->save();
             }
         }
 
-        // Optionally, refresh the collection to get the updated statuses
+        // Reload with updated status + counts
         $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
             ->withCount([
-                'applicants as total_applicants',
-                'applicants as qualified_count' => function ($query) {
-                    $query->where('status', 'qualified');
+                'submissions as total_applicants',
+                'submissions as qualified_count' => function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['qualified']);
                 },
-                'applicants as unqualified_count' => function ($query) {
-                    $query->where('status', 'unqualified');
+                'submissions as unqualified_count' => function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['unqualified']);
                 },
-                'applicants as pending_count' => function ($query) {
-                    $query->where('status', 'pending');
+                'submissions as pending_count' => function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['pending']);
                 },
             ])
             ->get();
 
-
-
         return response()->json($jobPosts);
     }
+
 
 
     // public function job_post()
@@ -459,7 +454,7 @@ class JobBatchesRspController extends Controller
                     'skills' => $employeeJson['Skills'] ?? [],
                     'reference' => $employeeJson['Reference'] ?? [],
                     'personal_declarations' => [[
-                    
+
                     ]],
                     'family' => [[
                         'father_extension' => $employeeJson['User'][0]['FatherExtension'] ??   'N/A',
@@ -567,7 +562,6 @@ class JobBatchesRspController extends Controller
 
                 ];
             });
-
 
             $voluntaryData = collect($info['voluntary_work'] ?? [])->map(function ($vol) {
                 return [
@@ -703,206 +697,4 @@ class JobBatchesRspController extends Controller
             'applicants' => $applicants,
         ]);
     }
-
-
-    // public function get_applicant($id)
-    // {
-    //     // All submissions for this job post
-    //     $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
-    //         ->with([
-    //             'nPersonalInfo.education',
-    //             'nPersonalInfo.work_experience',
-    //             'nPersonalInfo.training',
-    //           'nPersonalInfo.eligibity',
-    //             'nPersonalInfo.family',
-    //             'nPersonalInfo.children',
-    //             'nPersonalInfo.personal_declarations',
-    //             'nPersonalInfo.skills',
-    //             'nPersonalInfo.voluntary_work',
-    //             'nPersonalInfo.reference',
-
-    //         ])
-    //         ->get();
-
-    //     // Count all applicants for this job post
-    //     $totalApplicants = $qualifiedApplicants->count();
-
-    //     // Count applicants with qualified OR unqualified status
-    //     $progressCount = $qualifiedApplicants->whereIn('status', ['qualified', 'unqualified'])->count();
-
-    //     $applicants = $qualifiedApplicants->map(function ($submission) use ($id) {
-    //         $info = $submission->nPersonalInfo;
-
-    //         // Fetch ranking from rating_score
-    //         $rating = rating_score::where('nPersonalInfo_id', $submission->nPersonalInfo_id)
-    //             ->where('job_batches_rsp_id', $id)
-    //             ->first();
-
-    //         // Generate image URL
-    //         // Generate image URL with correct domain
-    //         $imageUrl = null;
-    //         if ($info && $info->image_path) {
-    //             // Check if image exists in storage
-    //             if (Storage::disk('public')->exists($info->image_path)) {
-    //                 $baseUrl = config('app.url'); // Get APP_URL from .env
-    //                 $imageUrl = $baseUrl . '/storage/' . $info->image_path;
-    //             }
-    //         }
-
-    //         return [
-    //             'id' => $submission->id,
-    //             'nPersonalInfo_id' => $submission->nPersonalInfo_id,
-    //             'ControlNo' => $submission->ControlNo,
-    //             'job_batches_rsp_id' => $submission->job_batches_rsp_id,
-    //             'status' => $submission->status,
-    //             'education_remark' => $submission->education_remark,
-    //             'experience_remark' => $submission->experience_remark,
-    //             'training_remark' => $submission->training_remark,
-    //             'eligibility_remark' => $submission->eligibility_remark,
-    //             'controlno' => $info->controlno ?? null,
-    //             'firstname' => $info->firstname ?? '',
-    //             'lastname' => $info->lastname ?? '',
-    //             'name_extension' => $info->name_extension ?? '',
-    //             'image_path' => $info->image_path ?? null, // Raw path stored in database
-    //             'image_path' => $info->image_path ?? null, // Raw path stored in database
-    //             'image_url' => $imageUrl, // Fixed URL with correct domain
-    //             'application_date' => $info && $info->created_at
-    //                 ? $info->created_at->toDateString()
-    //                 : null,
-    //             // Add all related applicant details
-    //             'nPersonalInfo' => $info ?? [],
-    //             'education' => $info->education ?? [],
-    //             'work_experience' => $info->work_experience ?? [],
-    //             'training' => $info->training ?? [],
-    //             'eligibity' => $info->eligibity ?? [],
-    //             'family' => $info->family ?? [],
-    //             'children' => $info->children ?? [],
-    //             'personal_declarations' => $info->personal_declarations ?? [],
-    //             'reference' => $info->reference ?? [],
-    //             'skills' => $info->skills ?? [],
-    //             'voluntary_work' => $info->voluntary_work ?? [],
-    //             // Add rank from rating_score
-    //             'ranking' => $rating->ranking ?? null,
-    //         ];
-    //     });
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'progress' => $progressCount . '/' . $totalApplicants, // e.g. 1/10
-    //         'progress_count' => $progressCount, // just the number completed
-    //         'total_applicants' => $totalApplicants, // just the total
-    //         'applicants' => $applicants,
-    //     ]);
-    // }
-
-//     public function get_applicant($id)
-//     {
-//         // All submissions for this job post
-//         $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
-//             ->with([
-//                 'nPersonalInfo.education',
-//                 'nPersonalInfo.work_experience',
-//                 'nPersonalInfo.training',
-//                 'nPersonalInfo.eligibity',
-//                 'nPersonalInfo.family',
-//                 'nPersonalInfo.children',
-//                 'nPersonalInfo.personal_declarations',
-//                 'nPersonalInfo.skills',
-//                 'nPersonalInfo.voluntary_work',
-//                 'nPersonalInfo.reference',
-//             ])
-//             ->get();
-
-//         // Count all applicants for this job post
-//         $totalApplicants = $qualifiedApplicants->count();
-
-//         // Count applicants with qualified OR unqualified status
-//         $progressCount = $qualifiedApplicants->whereIn('status', ['qualified', 'unqualified'])->count();
-
-//         $applicants = $qualifiedApplicants->map(function ($submission) use ($id) {
-//             $info = $submission->nPersonalInfo;
-
-//             // ✅ If no nPersonalInfo_id, fetch from Employee DB (via controlno)
-//             if (!$info && $submission->ControlNo) {
-//                 $xPDS = new \App\Http\Controllers\xPDSController();
-//                 $employeeData = $xPDS->getPersonalDataSheet(new \Illuminate\Http\Request([
-//                     'controlno' => $submission->ControlNo
-//                 ]));
-
-//                 $employeeJson = $employeeData->getData(true); // decode JSON response
-//                 $info = [
-//                     'controlno' => $submission->ControlNo,
-//                     'firstname' => $employeeJson['User'][0]['Firstname'] ?? '',
-//                     'lastname' => $employeeJson['User'][0]['Surname'] ?? '',
-//                     'middlename' => $employeeJson['User'][0]['MIddlename'] ?? '',
-//                     'name_extension' => $employeeJson['User'][0]['NameExtension'] ?? '',
-//                     'nPersonalInfo' => $employeeJson['User'] ?? [],
-//                     'image_path' => null,
-//                     'created_at' => null,
-//                 ];
-//             }
-
-
-//             // Fetch ranking from rating_score
-//             $rating = rating_score::where('nPersonalInfo_id', $submission->nPersonalInfo_id)
-//                 ->where('job_batches_rsp_id', $id)
-//                 ->first();
-
-//             // Generate image URL
-//             $imageUrl = null;
-//             if ($info && isset($info['image_path']) && $info['image_path']) {
-//                 if (Storage::disk('public')->exists($info['image_path'])) {
-//                     $baseUrl = config('app.url');
-//                     $imageUrl = $baseUrl . '/storage/' . $info['image_path'];
-//                 }
-//             }
-
-//             return [
-//                 'id' => $submission->id,
-//                 'nPersonalInfo_id' => $submission->nPersonalInfo_id,
-//                 'ControlNo' => $submission->ControlNo,
-//                 'job_batches_rsp_id' => $submission->job_batches_rsp_id,
-//                 'status' => $submission->status,
-//                 'education_remark' => $submission->education_remark,
-//                 'experience_remark' => $submission->experience_remark,
-//                 'training_remark' => $submission->training_remark,
-//                 'eligibility_remark' => $submission->eligibility_remark,
-//                 'controlno' => $info['controlno'] ?? null,
-//                 'firstname' => $info['firstname'] ?? '',
-//                 'lastname' => $info['lastname'] ?? '',
-//                 'name_extension' => $info['name_extension'] ?? '',
-//                 'image_path' => $info['image_path'] ?? null,
-//                 'image_url' => $imageUrl,
-//                 'application_date' => $info['application_date']
-//                     ?? ($info instanceof \App\Models\excel\nPersonal_info
-//                         ? optional($info->created_at)->toDateString()
-//                         : (!empty($info['created_at'])
-//                             ? \Carbon\Carbon::parse($info['created_at'])->toDateString()
-//                             : ($submission->created_at
-//                                 ? $submission->created_at->toDateString()
-//                                 : null))),
-//                 'nPersonalInfo' => $info ?? [],
-//                 'education' => $info['education'] ?? [],
-//                 'work_experience' => $info['work_experience'] ?? [],
-//                 'training' => $info['training'] ?? [],
-//                 'eligibity' => $info['eligibity'] ?? [],
-//                 'family' => $info['family'] ?? [],
-//                 'children' => $info['children'] ?? [],
-//                 'personal_declarations' => $info['personal_declarations'] ?? [],
-//                 'reference' => $info['reference'] ?? [],
-//                 'skills' => $info['skills'] ?? [],
-//                 'voluntary_work' => $info['voluntary_work'] ?? [],
-//                 'ranking' => $rating->ranking ?? null,
-//             ];
-//         });
-
-//         return response()->json([
-//             'status' => true,
-//             'progress' => $progressCount . '/' . $totalApplicants,
-//             'progress_count' => $progressCount,
-//             'total_applicants' => $totalApplicants,
-//             'applicants' => $applicants,
-//         ]);
-//     }
- }
-
+}

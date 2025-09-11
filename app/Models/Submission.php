@@ -2,8 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\excel\nFamily;
+use App\Models\excel\Children;
+use App\Models\excel\Civil_service_eligibity;
 use App\Models\excel\nPersonal_info;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\excel\Education_background;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 // class Submission extends Pivot
@@ -28,6 +32,20 @@ class Submission extends Model
     {
         return $this->belongsTo(nPersonal_info::class, 'nPersonalInfo_id');
     }
+    // public function children()
+    // {
+    //     return $this->belongsTo(Children::class, 'nPersonalInfo_id');
+    // }
+
+    // public function education()
+    // {
+    //     return $this->belongsTo(Education_background::class, 'nPersonalInfo_id');
+    // }
+
+    // public function family()
+    // {
+    //     return $this->belongsTo(nFamily::class, 'nPersonalInfo_id');
+    // }
     // protected static function booted()
     // {
     //     static::creating(function ($submission) {
@@ -35,6 +53,10 @@ class Submission extends Model
     //             $submission->status = 'pending';
     //         }
     //     });
+    // }
+    // public function eligibity()
+    // {
+    //     return $this->belongsTo(Civil_service_eligibity::class, 'nPersonalInfo_id');
     // }
 
     public function jobPost()

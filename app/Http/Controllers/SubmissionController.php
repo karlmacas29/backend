@@ -10,6 +10,7 @@ class SubmissionController extends Controller
 
 
 
+
     // updating the status of the applicant if this applicant are qualified to rate
     // this function for applicant that qualified to rate or not
     public function evaluation(Request $request, $id)

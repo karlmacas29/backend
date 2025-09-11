@@ -71,12 +71,12 @@ class nPersonal_info extends Model
 
     public function family()
     {
-        return $this->hasMany(nFamily::class, 'nPersonalInfo_id');
+        return $this->hasOne(nFamily::class, 'nPersonalInfo_id');
     }
 
     public function children()
     {
-        return $this->hasMany(Children::class, 'nPersonalInfo_id');
+        return $this->hasMany(Children::class, 'nPersonalInfo_id','id');
     }
 
     public function education()

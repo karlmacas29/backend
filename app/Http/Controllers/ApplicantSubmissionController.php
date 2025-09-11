@@ -139,7 +139,7 @@ class ApplicantSubmissionController extends Controller
     }
 
 
-    public function employee_applicant(Request $request)
+    public function employee_applicant(Request $request) //  this store function to apply the employee on erms
     {
         $validated = $request->validate([
             'ControlNo' => 'required|nullable|string', // 👈 no longer required
@@ -156,5 +156,13 @@ class ApplicantSubmissionController extends Controller
             'message' => 'Submission created successfully',
             'data' => $submit
         ], 201);
+    }
+
+
+    public function index()
+    {
+        $submission = Submission::all();
+
+        return response()->json($submission);
     }
 }

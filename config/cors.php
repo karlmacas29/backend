@@ -20,7 +20,7 @@ return [
     // Allows requests from any domain
     'allowed_origins' => [
         // '*'
-        // 'http://localhost:9000',
+        'http://localhost:9000',
         // 'http://localhost:8000',
         // 'http://192.168.100.105:9000',
         // 'http://192.168.8.80:9000',
