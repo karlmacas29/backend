@@ -25,7 +25,7 @@ Route::post('/hire/{submissionId}', [AppointmentController::class, 'hireApplican
 
 Route::prefix('appointment')->group(function () {
 
-    Route::get('/maxControlNo', [AppointmentController::class, 'maxControlNo']);
+    Route::get('/jobpost', [AppointmentController::class, 'job_post']);
     Route::get('/', [AppointmentController::class, 'find_appointment']);
     Route::delete('/delete/{ControlNo}', [AppointmentController::class, 'deleteControlNo']);
 });
