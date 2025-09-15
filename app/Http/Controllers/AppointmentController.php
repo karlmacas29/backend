@@ -83,12 +83,19 @@ class AppointmentController extends Controller
                  'nPersonalInfo.work_experience', 'nPersonalInfo.eligibity', 'nPersonalInfo.education',
                   'nPersonalInfo.voluntary_work', 'nPersonalInfo.training', 'nPersonalInfo.references',
                   'nPersonalInfo.skills'
-
                   ])
                     ->findOrFail($submissionId);
-
                 $applicant = $submission->nPersonalInfo;
-                $family    = $applicant->family; // ✅ direct family record
+
+            // Case 1: Already employee (no nPersonalInfo_id, but has ControlNo)
+            if (!$submission->nPersonalInfo && $submission->ControlNo) {
+                $finalControlNo = $submission->ControlNo;
+                $applicant = null;   // no need to pull applicant data
+                $family    = null;   // no family data insert needed
+            }
+            // Case 2: External applicant (has nPersonalInfo)
+            else {
+                $applicant = $submission->nPersonalInfo;
 
                 if (!$applicant) {
                     return response()->json([
@@ -97,14 +104,32 @@ class AppointmentController extends Controller
                     ], 404);
                 }
 
-                // ✅ Get max ControlNo
+                $family = $applicant->family;
+
+                // Check if internal employee (has ControlNo)
+                $existingControlNo = $applicant->control_no ?? $applicant->controlno ?? $applicant->ControlNo ?? null;
+                if (!$existingControlNo && isset($submission->ControlNo)) {
+                    $existingControlNo = $submission->ControlNo;
+                }
+
+
+                // // ✅ Get max ControlNo
+                // $maxControlNo = DB::table('xPersonal')->max('ControlNo');
+                // $nextNumber   = $maxControlNo ? intval($maxControlNo) + 1 : 1;
+                // $newControlNo = str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+
+                // If internal, use existing, else generate new
+                if ($existingControlNo) {
+                    $finalControlNo = $existingControlNo;
+                } else {
+                // Generate new ControlNo for external applicants
                 $maxControlNo = DB::table('xPersonal')->max('ControlNo');
                 $nextNumber   = $maxControlNo ? intval($maxControlNo) + 1 : 1;
-                $newControlNo = str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+                $finalControlNo = str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 
                 // ✅ Insert applicant into xPersonal
                 DB::table('xPersonal')->insert([
-                    'ControlNo'    => $newControlNo,
+                    'ControlNo'    => $finalControlNo,
                     'Surname'      => $applicant->lastname,
                     'Firstname'    => $applicant->firstname,
                     'Middlename'   => $applicant->middlename ?? '',
@@ -140,21 +165,21 @@ class AppointmentController extends Controller
                     'Occupation'        => $family->spouse_occupation ?? 'N/A',
                 ]);
 
+
                 // ✅ Children
                 $children = $applicant->children ?? collect();
                 foreach ($children as $child) {
                     DB::table('xChildren')->insert([
-                        'ControlNo' => $newControlNo,
+                        'ControlNo'    => $finalControlNo,
                         'ChildName' => $child->child_name,
                         'BirthDate' => $child->birth_date,
                     ]);
                 }
 
-
                 $work_experience = $applicant->work_experience ?? collect();
                 foreach ($work_experience as $experience) {
                     DB::table('xExperience')->insert([
-                        'CONTROLNO' => $newControlNo,
+                        'CONTROLNO'  => $finalControlNo,
                         'WFrom' => $experience->work_date_from,
                         'WTo' => $experience->work_date_to,
                         'WPosition' => $experience->position_title,
@@ -166,12 +191,11 @@ class AppointmentController extends Controller
                     ]);
                 }
 
-
                 $Eligibility = $applicant->eligibity ?? collect();
                 foreach ($Eligibility as $Eli) {
                     DB::table('xCivilService')->insert([
-                        'ControlNo' => $newControlNo,
-                        'CivilServe' => $Eli->eligibilty,
+                        'ControlNo'    => $finalControlNo,
+                        'CivilServe' => $Eli->eligibility,
                         'Dates' => $Eli->date_of_examination,
                         'Rates' => $Eli->rating,
                         'Place' => $Eli->place_of_examination,
@@ -184,7 +208,7 @@ class AppointmentController extends Controller
                 $Education = $applicant->education ?? collect();
                 foreach ($Education as $edu) {
                     DB::table('xEducation')->insert([
-                        'ControlNo'  => $newControlNo,
+                        'ControlNo'    => $finalControlNo,
                         'Education'  => substr($edu->level, 0, 20),  // match varchar(20)
                         'School'     => substr($edu->school_name, 0, 50), // match varchar(50)
                         'Degree'     => substr($edu->degree, 0, 50),
@@ -201,7 +225,7 @@ class AppointmentController extends Controller
                 $voluntary_work = $applicant->voluntary_work ?? collect();
                 foreach ($voluntary_work as $vol) {
                     DB::table('xNGO')->insert([
-                        'CONTROLNO'  => $newControlNo,
+                        'CONTROLNO'  => $finalControlNo,
                         'OrgName'  => $vol->organization_name,
                         'DateFrom'     => $vol->inclusive_date_from,
                         'DateTo'     => $vol->inclusive_date_to,
@@ -218,7 +242,7 @@ class AppointmentController extends Controller
                     }
 
                     DB::table('xTrainings')->insert([
-                        'ControlNo'  => $newControlNo,
+                        'ControlNo'    => $finalControlNo,
                         'Training'   => $train->training_title ?? '',
                         'Dates'      => ($train->inclusive_date_from ?? '') . ' - ' . ($train->inclusive_date_to ?? ''),
                         'NumHours'   => $train->number_of_hours ?? 0,
@@ -233,7 +257,7 @@ class AppointmentController extends Controller
                 $skills = $applicant->skills ?? collect();
                 foreach ($skills as $skill) {
                     DB::table('xSkills')->insert([
-                        'ControlNo'  => $newControlNo,
+                        'ControlNo'    => $finalControlNo,
                         'Skills'  => $skill->skill,
                     ]);
                 }
@@ -241,7 +265,7 @@ class AppointmentController extends Controller
                 $academic = $applicant->skills ?? collect();
                 foreach ($academic as $acad) {
                     DB::table('xNonAcademic')->insert([
-                        'ControlNo'  => $newControlNo,
+                        'ControlNo'    => $finalControlNo,
                         'NonAcademic'  => $acad->non_academic,
                     ]);
                 }
@@ -249,7 +273,7 @@ class AppointmentController extends Controller
                 $organization = $applicant->skills ?? collect();
                 foreach ($organization as $org) {
                     DB::table('xOrganization')->insert([
-                        'ControlNo'  => $newControlNo,
+                        'ControlNo'    => $finalControlNo,
                         'Organization'  => $org->organization,
                     ]);
                 }
@@ -257,14 +281,15 @@ class AppointmentController extends Controller
                 $reference = $applicant->references ?? collect();
                 foreach ($reference as $ref) {
                     DB::table('xReference')->insert([
-                        'ControlNo'  => $newControlNo,
+                        'ControlNo'    => $finalControlNo,
                         'Names'  => $ref->full_name,
                         'Address'     => $ref->address,
                         'TelNo'     => $ref->contact_number,
 
                     ]);
                 }
-
+            }
+        }
         // ------------------------------------
         // ✅ Step 1: Update job post to Occupied
         // ------------------------------------
@@ -286,6 +311,12 @@ class AppointmentController extends Controller
                 ->where('Descriptions', $jobPost->Position) // <-- match with Descriptions column
                 ->first();
 
+            $office = DB::table('yOffice')
+                ->where('Descriptions', $jobPost->Office)
+                ->orWhere('Codes', $jobPost->Office) // support both string or code
+                ->first();
+            $officeCode = $office->Codes ?? '00000';
+
             $salary = DB::table('tblSalarySchedule')
                 // ->where('PositionID', $jobPost->PositionID)
                 ->where('Grade', $jobPost->SalaryGrade)
@@ -294,7 +325,7 @@ class AppointmentController extends Controller
 
 
             $fromDate = Carbon::now()->startOfDay();      // today with 00:00:00
-            $toDate   = $fromDate->copy()->addYears(5);   // +5 years with 00:00:00
+            $toDate   = $fromDate->copy()->addYears(50);   // +5 years with 00:00:00
 
             // ✅ Compute salary rates
             $rateMon  = $salary->Salary ?? 0;
@@ -302,7 +333,7 @@ class AppointmentController extends Controller
             $rateYear = $rateMon > 0 ? $rateMon * 12 : 0;  // +5 years with 00:00:00
 
             DB::table('xService')->insert([ // insert
-                'ControlNo'   => $newControlNo,
+                    'ControlNo'    => $finalControlNo,
                 // 'FromDate'    => '2025-09-12 00:00:00',
                 // 'ToDate'      => '2026-09-12 00:00:00',
                 'FromDate'    => $fromDate->format('Y-m-d H:i:s'),
@@ -314,7 +345,7 @@ class AppointmentController extends Controller
                 'StatCode'    => '00001',   // keep as string if db column is char(5)
                 'Status'      => 'REGULAR',
 
-                'OffCode'     => $jobPost->OfficeCode ?? '00000',
+                'OffCode'     => $officeCode ?? '00000',
                 'Office'      => $jobPost->Office ?? 'NONE',
 
                 'BranCode'    => '00001',
@@ -354,10 +385,11 @@ class AppointmentController extends Controller
                 ->where('ItemNo', $jobPost->ItemNo)
                 ->first();
 
-
+            $nextId = DB::table('tempRegAppointmentReorg')->max('ID') + 1;
 
             DB::table('tempRegAppointmentReorg')->insert([ // insert
-                'ControlNo'      => $newControlNo,
+                'ID'            => $nextId,
+                'ControlNo'    => $finalControlNo,
                 'DesigCode'      => $designation->Codes ?? '00000',
                 'NewDesignation' => $designation->Descriptions ?? $jobPost->Position,
                 'Designation'    => $designation->Descriptions ?? $jobPost->Position,
@@ -367,7 +399,7 @@ class AppointmentController extends Controller
                 'OffCode'        => $jobPost->OfficeCode,
                 'NewOffice'      => $jobPost->Office,
                 'Office'         => $jobPost->Office,
-                'MRate'          => $jobPost->salary,
+                'MRate'          => $rateMon,
                 'Official'       => '0',
                 'Renew'          => 'APPOINTMENT',
                 'ItemNo'          => $itemNo,
@@ -377,23 +409,150 @@ class AppointmentController extends Controller
             ]);
 
 
-            DB::commit();
+        DB::commit();
 
-            return response()->json([
-                'success'    => true,
-                'message'    => 'Applicant hired successfully and plantilla updated.',
-                'control_no' => $newControlNo,
-                'job_post'   => $jobPost->id,
-            ]);
+        return response()->json([
+            'success'    => true,
+            'message'    => 'Applicant hired successfully and plantilla updated.',
+            'control_no' => $finalControlNo,
+            'job_post'   => $jobPost->id,
+        ]);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+    } catch (\Exception $e) {
+        DB::rollBack();
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Error hiring applicant',
-                'error'   => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Error hiring applicant',
+            'error'   => $e->getMessage()
+        ], 500);
     }
 }
+
+}
+// public function hireApplicant($submissionId)
+// {
+//     try {
+//         return DB::transaction(function () use ($submissionId) {
+//             $submission = Submission::with([
+//                 'nPersonalInfo.children',
+//                 'nPersonalInfo.family',
+//                 'nPersonalInfo.work_experience',
+//                 'nPersonalInfo.eligibity',
+//                 'nPersonalInfo.education',
+//                 'nPersonalInfo.voluntary_work',
+//                 'nPersonalInfo.training',
+//                 'nPersonalInfo.references',
+//                 'nPersonalInfo.skills',
+//             ])->findOrFail($submissionId);
+
+//             // Resolve applicant and control number
+//             [$applicant, $finalControlNo] = $this->resolveApplicant($submission);
+
+//             // If new applicant, insert all details
+//             if ($applicant && !$this->existsInXPersonal($finalControlNo)) {
+//                 $this->insertPersonalInfo($finalControlNo, $applicant);
+//                 $this->insertFamily($finalControlNo, $applicant->family);
+//                 $this->insertChildren($finalControlNo, $applicant->children);
+//                 $this->insertWorkExperience($finalControlNo, $applicant->work_experience);
+//                 $this->insertEligibility($finalControlNo, $applicant->eligibity);
+//                 $this->insertEducation($finalControlNo, $applicant->education);
+//                 $this->insertVoluntaryWork($finalControlNo, $applicant->voluntary_work);
+//                 $this->insertTraining($finalControlNo, $applicant->training);
+//                 $this->insertSkills($finalControlNo, $applicant->skills);
+//                 $this->insertReferences($finalControlNo, $applicant->references);
+//             }
+
+//             // Update job post & submission
+//             $jobPost = $this->updateJobPost($submission);
+
+//             // Update plantilla structure
+//             $this->updatePlantillaStructure($finalControlNo, $jobPost);
+
+//             return response()->json([
+//                 'success'    => true,
+//                 'message'    => 'Applicant hired successfully and plantilla updated.',
+//                 'control_no' => $finalControlNo,
+//                 'job_post'   => $jobPost->id,
+//             ]);
+//         });
+//     } catch (\Throwable $e) {
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'Error hiring applicant',
+//             'error'   => $e->getMessage(),
+//         ], 500);
+//     }
+// }
+// private function resolveApplicant($submission)
+// {
+//     if (!$submission->nPersonalInfo && $submission->ControlNo) {
+//         return [null, $submission->ControlNo];
+//     }
+
+//     $applicant = $submission->nPersonalInfo;
+//     if (!$applicant) {
+//         throw new \Exception('Applicant personal info not found.');
+//     }
+
+//     $controlNo = $applicant->control_no
+//         ?? $applicant->controlno
+//         ?? $applicant->ControlNo
+//         ?? $submission->ControlNo;
+
+//     if (!$controlNo) {
+//         $controlNo = $this->generateControlNo();
+//     }
+
+//     return [$applicant, $controlNo];
+// }
+
+// private function generateControlNo()
+// {
+//     $max = DB::table('xPersonal')->max('ControlNo');
+//     return str_pad(($max ? intval($max) + 1 : 1), 6, '0', STR_PAD_LEFT);
+// }
+
+// private function existsInXPersonal($controlNo)
+// {
+//     return DB::table('xPersonal')->where('ControlNo', $controlNo)->exists();
+// }
+
+// private function insertPersonalInfo($controlNo, $applicant)
+// {
+//     DB::table('xPersonal')->insert([
+//         'ControlNo'   => $controlNo,
+//         'Surname'     => $applicant->lastname,
+//         'Firstname'   => $applicant->firstname,
+//         'Middlename'  => $applicant->middlename ?? '',
+//         'Sex'         => $applicant->sex,
+//         'CivilStatus' => $applicant->civil_status ?? '',
+//         'BirthDate'   => $applicant->date_of_birth,
+//         'BirthPlace'  => $applicant->place_of_birth ?? '',
+//         'Address'     => $this->formatAddress($applicant),
+//         'Citizenship' => $applicant->citizenship ?? 'FILIPINO',
+//         'Religion'    => $applicant->religion ?? '',
+//     ]);
+// }
+
+// private function formatAddress($applicant)
+// {
+//     return trim(implode(' ', array_filter([
+//         $applicant->residential_house,
+//         $applicant->residential_street,
+//         $applicant->residential_barangay,
+//         $applicant->residential_city,
+//         $applicant->residential_province,
+//     ])));
+// }
+
+// private function insertChildren($controlNo, $children)
+// {
+//     collect($children)->each(fn($child) =>
+//         DB::table('xChildren')->insert([
+//             'ControlNo' => $controlNo,
+//             'ChildName' => $child->child_name,
+//             'BirthDate' => $child->birth_date,
+//         ])
+//     );
+// }

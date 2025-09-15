@@ -63,7 +63,7 @@ class PlantillaController extends Controller
             'vwplantillaStructure.OfficeID',
             'vwActive.BirthDate',
             'vwActive.Designation',
-        ])->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo');
+        ])->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')->distinct();
 
         // Filter by office if provided: /plantilla?office=OfficeName
         if ($office = $request->query('office')) {
