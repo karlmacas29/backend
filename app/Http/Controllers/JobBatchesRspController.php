@@ -697,4 +697,11 @@ class JobBatchesRspController extends Controller
             'applicants' => $applicants,
         ]);
     }
+
+    public function count($jobpostId)
+    {
+        $count = Submission::where('job_batches_rsp_id', $jobpostId)->count();
+
+        return response()->json($count);
+    }
 }

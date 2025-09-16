@@ -131,6 +131,7 @@ Route::prefix('vw-Active')->group(function () {
 
 Route::prefix('job-batches-rsp')->group(function () {
     Route::get('/', [JobBatchesRspController::class, 'index']);
+    Route::get('/applicant/count/{jobpostId}', [JobBatchesRspController::class, 'count']);
     Route::post('/', [JobBatchesRspController::class, 'store']);   // change old job-batches-rsp
     Route::put('/{id}', [JobBatchesRspController::class, 'update']);   // change old job-batches-rsp
 
