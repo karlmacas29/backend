@@ -60,20 +60,25 @@ class JobBatchesRspController extends Controller
                 'submissions as pending_count' => function ($query) {
                     $query->whereRaw('LOWER(status) = ?', ['pending']);
                 },
+
+            'submissions as hired_count' => function ($query) {
+                $query->whereRaw('LOWER(status) = ?', ['Hired']);
+            },
             ])
             ->get();
 
         foreach ($jobPosts as $job) {
             $originalStatus = $job->status;
-
-            if ($job->qualified_count > 0 || $job->unqualified_count > 0) {
+            
+            if ($job->hired_count >= 1) {
+                $newStatus = 'Occupied';
+            } elseif ($job->qualified_count > 0 || $job->unqualified_count > 0) {
                 // Some applicants already assessed
                 $newStatus = $job->pending_count > 0 ? 'pending' : 'assessed';
             } else {
                 // No assessments yet
                 $newStatus = 'not started';
             }
-
             if ($originalStatus !== $newStatus) {
                 $job->status = $newStatus;
                 $job->save();
@@ -93,6 +98,11 @@ class JobBatchesRspController extends Controller
                 'submissions as pending_count' => function ($query) {
                     $query->whereRaw('LOWER(status) = ?', ['pending']);
                 },
+
+            'submissions as hired_count' => function ($query) {
+                $query->whereRaw('LOWER(status) = ?', ['Hired']);
+            },
+
             ])
             ->get();
 

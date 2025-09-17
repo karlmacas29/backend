@@ -25,6 +25,7 @@ class RaterAuthController extends Controller
             'position' => 'required|string|max:255',
             'office' => 'required|string|max:255',
             'password' => 'required|string|min:5',
+
             // 'active' => 'required|boolean',
         ]);
 
@@ -61,6 +62,7 @@ class RaterAuthController extends Controller
             'job_batches_rsp_id' => 'nullable|array',
             'job_batches_rsp_id.*' => 'exists:job_batches_rsp,id',
             'office' => 'required|string|max:255',
+            'active' => 'required|boolean',
         ]);
 
         // Find the user (rater) by ID
@@ -68,6 +70,7 @@ class RaterAuthController extends Controller
 
         // Update office
         $user->office = $validated['office'];
+        $user->active = $validated['active'];
         $user->save();
 
         // Sync job_batches_rsp only if provided
@@ -119,6 +122,16 @@ class RaterAuthController extends Controller
                     'password' => ['Wrong password']
                 ]
             ], 401);
+        }
+
+        // check if the active or  inactive
+        if ($user->active != 1) {
+            return response([
+                'status' => false,
+                'errors' => [
+                    'active' => ['Access Denied: Your account is inactive. Please contact the administrator']
+                ]
+            ], 403);
         }
 
         // Only allow users with role_id == 1

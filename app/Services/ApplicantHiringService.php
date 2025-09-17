@@ -64,6 +64,15 @@ class ApplicantHiringService
 
             // Update job post and submission status
             $jobPost = JobBatchesRsp::findOrFail($submission->job_batches_rsp_id);
+
+            if ($jobPost->status === 'Occupied') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This job post is already occupied.'
+                ], 400);
+            }
+
+            // Make sure column name matches your DB schema
             $jobPost->update(['status' => 'Occupied']);
             $submission->update(['status' => 'Hired']);
 
@@ -343,10 +352,10 @@ class ApplicantHiringService
             ->where('ItemNo', $jobPost->ItemNo)
             ->first();
 
-        $nextId = DB::table('tempRegAppointmentReorg')->max('ID') + 1;
+        // $nextId = DB::table('tempRegAppointmentReorg')->max('ID') + 1;
 
         DB::table('tempRegAppointmentReorg')->insert([
-            'ID'            => $nextId,
+            // 'ID'            => $nextId,
             'ControlNo'     => $controlNo,
             'DesigCode'     => $designation->Codes ?? '00000',
             'NewDesignation' => $designation->Descriptions ?? $jobPost->Position,

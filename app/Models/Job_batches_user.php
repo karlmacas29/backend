@@ -19,6 +19,9 @@ class Job_batches_user extends Pivot
         'created_at',
         'updated_at',
     ];
-
-
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+        // adjust 'user_id' if your foreign key is different
+    }
 }

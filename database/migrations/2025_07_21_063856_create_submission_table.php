@@ -14,8 +14,17 @@ return new class extends Migration
         Schema::create('submission', function (Blueprint $table) {
             $table->id();
             $table->foreignId('nPersonalInfo_id')->constrained('nPersonalInfo')->onDelete('cascade');
-            // $table->string('ControlNo')->nullable()->after('nPersonalInfo_id');
+            $table->string('ControlNo')->nullable()->after('nPersonalInfo_id');
             $table->foreignId('job_batches_rsp_id')->constrained('job_batches_rsp')->onDelete('cascade');
+            $table->string('education_remark')->nullable();
+            $table->string('experience_remark')->nullable();
+            $table->string('training_remark')->nullable();
+            $table->string('eligibility_remark')->nullable();
+            $table->decimal('total_qs')->nullable();
+            $table->decimal('grand_total')->nullable();
+            $table->decimal('ranking')->nullable();
+            $table->string('status')->default('pending')->after('ranking');
+            $table->boolean('submitted')->default(false);
             $table->timestamps();
         });
     }

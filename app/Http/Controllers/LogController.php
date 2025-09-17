@@ -14,6 +14,7 @@ class LogController extends Controller
         return response()->json($logs, 200);
     }
 
+    
     public function logAuth(Request $request)
     {
         if (!Auth::check()) {

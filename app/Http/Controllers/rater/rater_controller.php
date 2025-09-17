@@ -164,7 +164,9 @@ class rater_controller extends Controller
         $jobpost = JobBatchesRsp::findOrFail($jobpostId);
 
         // ✅ Count assigned and completed raters
-        $totalAssigned = Job_batches_user::where('job_batches_rsp_id', $jobpostId)->count();
+        $totalAssigned = Job_batches_user::where('job_batches_rsp_id', $jobpostId)->whereHas('user', function($active){
+            $active->where('active', 1);
+        })->count();
         $totalCompleted = Job_batches_user::where('job_batches_rsp_id', $jobpostId)
             ->where('status', 'complete')
             ->count();
@@ -309,6 +311,15 @@ class rater_controller extends Controller
             'data' => $data
         ]);
     }
+
+    // public function dashboard()
+    // {
+
+    //     $data = Auth::user();
+
+
+    // }
+
 
     public function getAssignedJobs()
     {
@@ -756,6 +767,7 @@ class rater_controller extends Controller
                         'job_batches_rsp' => $user->job_batches_rsp->pluck('Position')->implode(', '),
                         'office' => $user->office,
                         'pending' => $pendingCount,
+                        'active' => $user->active,
                         'completed' => $completeCount,
                         'created_at' => $user->created_at->format('Y-m-d H:i:s'),
                         'updated_at' => $user->updated_at->format('Y-m-d H:i:s'),

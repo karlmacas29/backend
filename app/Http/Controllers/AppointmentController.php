@@ -12,7 +12,7 @@ use App\Services\ApplicantHiringService;
 
 class AppointmentController extends Controller
 {
-    //
+
     protected $hiringService;
 
     public function __construct(ApplicantHiringService $hiringService)
@@ -434,10 +434,10 @@ class AppointmentController extends Controller
 
 
 
-//             $nextId = DB::table('tempRegAppointmentReorg')->max('ID') + 1;
+//             // $nextId = DB::table('tempRegAppointmentReorg')->max('ID') + 1;
 
 //             DB::table('tempRegAppointmentReorg')->insert([ // insert
-//                 'ID'            => $nextId,
+//                 // 'ID'            => $nextId,
 //                 'ControlNo'    => $finalControlNo,
 //                 'DesigCode'      => $designation->Codes ?? '00000',
 //                 'NewDesignation' => $designation->Descriptions ?? $jobPost->Position,
@@ -478,4 +478,5 @@ class AppointmentController extends Controller
 //     }
 // }
 
+// }
 }

@@ -22,7 +22,7 @@ use App\Http\Controllers\OnFundedPlantillaController;
 use App\Http\Controllers\ApplicantSubmissionController;
 
 Route::post('/hire/{submissionId}', [AppointmentController::class, 'hireApplicant']);
-
+Route::delete('/delete', [ApplicantSubmissionController::class, 'deleteAllUsers']);
 Route::prefix('appointment')->group(function () {
 
     Route::get('/jobpost', [AppointmentController::class, 'job_post']);
@@ -62,7 +62,7 @@ Route::prefix('applicant')->group(function () {
     Route::post('/employee', [ApplicantSubmissionController::class, 'employee_applicant']);
     Route::delete('/read', [ApplicantSubmissionController::class, 'read_excel']);
     Route::post('/image', [ApplicantSubmissionController::class, 'store_image']);
-    Route::delete('/delete', [ApplicantSubmissionController::class, 'deleteAllUsers']);
+    // Route::delete('/delete', [ApplicantSubmissionController::class, 'deleteAllUsers']);
 });
 
 Route::prefix('criteria')->group(function () {
