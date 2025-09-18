@@ -69,7 +69,7 @@ class JobBatchesRspController extends Controller
 
         foreach ($jobPosts as $job) {
             $originalStatus = $job->status;
-            
+
             if ($job->hired_count >= 1) {
                 $newStatus = 'Occupied';
             } elseif ($job->qualified_count > 0 || $job->unqualified_count > 0) {
@@ -707,11 +707,5 @@ class JobBatchesRspController extends Controller
             'applicants' => $applicants,
         ]);
     }
-
-    public function count($jobpostId)
-    {
-        $count = Submission::where('job_batches_rsp_id', $jobpostId)->count();
-
-        return response()->json($count);
-    }
 }
+

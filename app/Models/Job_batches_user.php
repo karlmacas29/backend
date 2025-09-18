@@ -9,7 +9,7 @@ class Job_batches_user extends Pivot
 {
     //
 
-     // this table is pivot
+     // this table is pivot for assigned rater
     protected $table = 'job_batches_user';
 
     protected $fillable = [

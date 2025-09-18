@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Submission;
 use App\Models\OnFundedPlantilla;
 use App\Models\excel\nPersonal_info;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ class JobBatchesRsp extends Model
 {
     use HasFactory;
 
-    protected $table = 'job_batches_rsp';
+    protected $table = 'job_batches_rsp'; // this is the job_post
 
     protected $fillable = [
         'Office',
@@ -113,9 +114,9 @@ class JobBatchesRsp extends Model
     // {
     //     return $this->hasMany(OnFundedPlantilla::class, 'PositionID', 'PositionID');
     // }
-
+    
     public function submissions()
     {
-        return $this->hasMany(Submission::class, 'job_batches_rsp_id');
+        return $this->hasMany(Submission::class, 'job_batches_rsp_id', 'id');
     }
 }

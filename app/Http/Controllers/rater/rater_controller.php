@@ -23,6 +23,46 @@ use Illuminate\Support\Facades\Validator;
 class rater_controller extends Controller
 {
 
+    // public function view($raterId)
+    // {
+    //     $rater = User::select('id', 'name', 'position', 'office')
+    //         ->with(['job_batches_rsp' => function ($query) {
+    //             $query->withCount('submissions');
+    //     }])
+    //         ->findOrFail($raterId);
+
+    //     $rater->job_batches_rsp->makeHidden(['pivot']);
+
+    //     $rater->job_batches_rsp->each(function ($job) {
+    //         $job->applicant = $job->submissions_count;
+    //         unset($job->submissions_count);
+    //     });
+
+    //     return response()->json($rater);
+    // }
+    public function view($raterId)
+    {
+        $rater = User::select('id', 'name', 'position', 'office')
+            ->with(['job_batches_rsp' => function ($query) {
+                $query->select(
+                    'job_batches_rsp.id',
+                    'job_batches_rsp.Office',
+                    'job_batches_rsp.Position'
+                )->withCount('submissions');
+            }])
+            ->findOrFail($raterId);
+
+        // remove pivot column
+        $rater->job_batches_rsp->makeHidden(['pivot']);
+
+        // rename submissions_count → applicant
+        $rater->job_batches_rsp->each(function ($job) {
+            $job->applicant = $job->submissions_count;
+            unset($job->submissions_count);
+        });
+
+        return response()->json($rater);
+    }
 
 
     // public function showScoresWithHistory($jobpostId)

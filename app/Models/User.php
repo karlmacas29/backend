@@ -14,6 +14,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasApiTokens;
 
+    // the rater and admin
     // Specify the fillable fields for mass assignment
     protected $fillable = [
         'name',
@@ -59,6 +60,9 @@ class User extends Authenticatable
             'job_batches_rsp_id'      // foreign key sa JobBatchesRsp
         )->withTimestamps();
     }
+
+
+
 
     public function office()
     {

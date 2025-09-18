@@ -4,10 +4,10 @@ namespace App\Models;
 
 use App\Models\excel\nFamily;
 use App\Models\excel\Children;
-use App\Models\excel\Civil_service_eligibity;
 use App\Models\excel\nPersonal_info;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\excel\Education_background;
+use App\Models\excel\Civil_service_eligibity;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 // class Submission extends Pivot
@@ -15,7 +15,7 @@ class Submission extends Model
 {
     //
 
-    protected $table ='submission';
+    protected $table ='submission'; // applicant apply on the job post
     protected $fillable =[
         'nPersonalInfo_id',
         'job_batches_rsp_id',
@@ -62,6 +62,11 @@ class Submission extends Model
     public function jobPost()
     {
         return $this->belongsTo(JobBatchesRsp::class, 'job_batches_rsp_id');
+    }
+
+    public function job_batch_rsp()
+    {
+        return $this->belongsTo(JobBatchesRsp::class, 'job_batches_rsp_id', 'id');
     }
 }
 
