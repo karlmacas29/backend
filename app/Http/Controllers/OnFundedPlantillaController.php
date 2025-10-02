@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Validator;
 
 class OnFundedPlantillaController extends Controller
 {
+
+
     /**
      * Display a listing of the resource.
      *
@@ -24,7 +26,7 @@ class OnFundedPlantillaController extends Controller
         ]);
     }
 
- 
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [

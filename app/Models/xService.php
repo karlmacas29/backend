@@ -20,8 +20,21 @@ class xService extends Model
         return $this->hasMany(vwplantillastructure::class, 'ControlNo', 'ControlNo');
     }
 
+    public function active()
+    {
+        return $this->hasMany(vwActive::class, 'ControlNo', 'ControlNo');
+    }
+
+    public function xPersonal()
+    {
+        return $this->hasMany(xPersonal::class, 'ControlNo', 'ControlNo');
+    }
     public function tempRegAppointments()
     {
         return $this->hasMany(TempRegAppointmentReorg::class, 'ControlNo', 'ControlNo');
+    }
+    public function tempRegAppointmentReorgExt()
+    {
+        return $this->hasMany(TempRegAppointmentReorgExt::class, 'ControlNo', 'ControlNo');
     }
 }

@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('nEducation');
         Schema::create('nEducation', function (Blueprint $table) {
             $table->id(); // Primary key
             $table->foreignId('nPersonalInfo_id')->constrained('nPersonalInfo')->onDelete('cascade');

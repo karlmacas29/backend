@@ -22,7 +22,7 @@ class Cors
         if ($request->isMethod('OPTIONS')) {
             // Return empty response with CORS headers for preflight
             return response('', 200)
-                ->header('Access-Control-Allow-Origin', 'http://localhost:9000', 'http://192.168.8.80:9000','http://192.168.8.80:9001')
+                ->header('Access-Control-Allow-Origin', 'http://localhost:9000', 'http://192.168.8.80:9000', 'http://192.168.8.80:9001')
                 ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
                 ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-TOKEN, X-HTTP-Method-Override')
                 ->header('Access-Control-Allow-Credentials', 'true')

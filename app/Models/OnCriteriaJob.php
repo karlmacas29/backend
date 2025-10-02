@@ -14,10 +14,6 @@ class OnCriteriaJob extends Model
     protected $fillable = [
         'job_batches_rsp_id',
         'PositionID',
-        'EduPercent',
-        'EliPercent',
-        'TrainPercent',
-        'ExperiencePercent',
         'Education',
         'Eligibility',
         'Training',

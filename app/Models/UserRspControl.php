@@ -18,6 +18,10 @@ class UserRspControl extends Model
         'isRaterM',
         'isCriteria',
         'isDashboardStat',
+         'isJobCreate',
+        'isJobEdit',
+        'isJobView',
+        'isJobDelete',
     ];
 
     // In UserRspControl.php

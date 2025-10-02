@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('c_behavioral_bei');
         Schema::create('c_behavioral_bei', function (Blueprint $table) {
             $table->id();
             $table->foreignId('criteria_rating_id')->nullable()->constrained('criteria_rating')->onDelete('cascade');

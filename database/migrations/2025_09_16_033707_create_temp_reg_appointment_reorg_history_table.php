@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('temp_reg_appointment_reorg_history');
         Schema::create('temp_reg_appointment_reorg_history', function (Blueprint $table) {
             $table->decimal('ID', 18, 0)->primary();
             $table->string('ControlNo', 10)->nullable();

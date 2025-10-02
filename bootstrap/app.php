@@ -1,6 +1,8 @@
 <?php
 
+
 use App\Http\Middleware\Cors;
+use Fruitcake\Cors\HandleCors;
 use App\Http\Middleware\CheckRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,11 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->prepend(Cors::class);
-        $middleware->append(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
-    $middleware->alias([
-        // 'role' => CheckRole::class,
-    ]);
+    // $middleware->prepend(Cors::class);
+    // $middleware->cors(); // ✅ This enables Laravel’s built-in CORS
+
+    // $middleware->append(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
+    // $middleware->alias([
+    //     // 'role' => CheckRole::class,
+    // ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

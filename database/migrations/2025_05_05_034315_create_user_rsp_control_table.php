@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('user_rsp_control');
         Schema::create('user_rsp_control', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');

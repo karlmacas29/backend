@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('on_funded_plantilla');
         Schema::create('on_funded_plantilla', function (Blueprint $table) {
             $table->id();
             $table->string('fileUpload')->nullable();

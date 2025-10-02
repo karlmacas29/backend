@@ -98,6 +98,10 @@ class AuthController extends Controller
                     'isRaterM' => $request->input('permissions.isRaterM', false),
                     'isCriteria' => $request->input('permissions.isCriteria', false),
                     'isDashboardStat' => $request->input('permissions.isDashboardStat', false),
+                    'isJobCreate' => $request->input('permissions.isJobCreate', false),
+                    'isJobEdit' => $request->input('permissions.isJobEdit', false),
+                    'isJobView' => $request->input('permissions.isJobView', false),
+                    'isJobDelete' => $request->input('permissions.isJobDelete', false),
                 ]);
             }
 
@@ -281,6 +285,12 @@ class AuthController extends Controller
                 'permissions.isRaterM' => 'boolean',
                 'permissions.isCriteria' => 'boolean',
                 'permissions.isDashboardStat' => 'boolean',
+                'permissions.isJobCreate' => 'boolean',
+                'permissions.isJobEdit' => 'boolean',
+                'permissions.isJobView' => 'boolean',
+                'permissions.isJobDelete' => 'boolean',
+
+
             ];
 
             // Add username validation, but exclude the current user's username from the unique check
@@ -315,6 +325,11 @@ class AuthController extends Controller
                         'isRaterM' => $request->input('permissions.isRaterM', false),
                         'isCriteria' => $request->input('permissions.isCriteria', false),
                         'isDashboardStat' => $request->input('permissions.isDashboardStat', false),
+                        'isJobCreate' => $request->input('permissions.isJobCreate', false),
+                        'isJobEdit' => $request->input('permissions.isJobEdit', false),
+                        'isJobView' => $request->input('permissions.isJobView', false),
+                        'isJobDelete' => $request->input('permissions.isJobDelete', false),
+
                     ]);
                 } else {
                     $user->rspControl()->create([
@@ -323,6 +338,11 @@ class AuthController extends Controller
                         'isRaterM' => $request->input('permissions.isRaterM', false),
                         'isCriteria' => $request->input('permissions.isCriteria', false),
                         'isDashboardStat' => $request->input('permissions.isDashboardStat', false),
+                        'isJobCreate' => $request->input('permissions.isJobCreate', false),
+                        'isJobEdit' => $request->input('permissions.isJobEdit', false),
+                        'isJobView' => $request->input('permissions.isJobView', false),
+                        'isJobDelete' => $request->input('permissions.isJobDelete', false),
+
                     ]);
                 }
             }

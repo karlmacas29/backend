@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('submission', function (Blueprint $table) {
-            $table->string('ControlNo')->nullable()->after('nPersonalInfo_id');
+            // $table->string('ControlNo')->nullable()->after('nPersonalInfo_id');
             // use ->unique() if you want unique values
         });
     }
@@ -23,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('submission', function (Blueprint $table) {
-            $table->dropColumn('ControlNo');
+            // $table->dropColumn('ControlNo');
         });
     }
 };

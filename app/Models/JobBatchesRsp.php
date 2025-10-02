@@ -100,21 +100,33 @@ class JobBatchesRsp extends Model
             ->withTimestamps();
     }
 
-    public function onCriteriaJobs(){
+    // public function onCriteriaJobs(){
 
-        return $this->hasMany(OnCriteriaJob::class, 'job_batches_rsp_id');
-    }
+    //     return $this->hasMany(OnCriteriaJob::class, 'job_batches_rsp_id');
+    // }
 
-    public function  funded_plantill()
+
+    public function criteria()
     {
-
-        return $this->hasMany(OnFundedPlantilla::class, 'job_batches_rsp_id');
+        return $this->hasOne(OnCriteriaJob::class, 'job_batches_rsp_id');
     }
+
+    public function plantilla()
+    {
+        return $this->hasOne(OnFundedPlantilla::class, 'job_batches_rsp_id');
+    }
+
+
+    // public function  funded_plantilla()
+    // {
+
+    //     return $this->hasMany(OnFundedPlantilla::class, 'job_batches_rsp_id');
+    // }
     // public function funded()
     // {
     //     return $this->hasMany(OnFundedPlantilla::class, 'PositionID', 'PositionID');
     // }
-    
+
     public function submissions()
     {
         return $this->hasMany(Submission::class, 'job_batches_rsp_id', 'id');

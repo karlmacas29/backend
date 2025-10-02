@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('on_criteria_job');
         Schema::create('on_criteria_job', function (Blueprint $table) {
             $table->id();
             // $table->foreignId('job_batches_rsp_id')->nullable()->constrained('job_batches_rsp')->onDelete('cascade');

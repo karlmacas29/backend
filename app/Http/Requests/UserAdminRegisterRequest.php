@@ -34,6 +34,12 @@ class UserAdminRegisterRequest extends FormRequest
             'permissions.isRaterM' => 'boolean',
             'permissions.isCriteria' => 'boolean',
             'permissions.isDashboardStat' => 'boolean',
+
+            'permissions.isJobCreate' => 'boolean',
+            'permissions.isJobEdit' => 'boolean',
+            'permissions.isJobView' => 'boolean',
+            'permissions.isJobDelete' => 'boolean',
+
         ];
     }
 }

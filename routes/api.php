@@ -143,6 +143,9 @@ Route::prefix('job-batches-rsp')->group(function () {
     Route::get('/list', [JobBatchesRspController::class, 'job_list']); // fetching the all job post on the admin
     Route::get('/applicant/view/{id}', [JobBatchesRspController::class, 'get_applicant']); // fetching the applicant per job post
     Route::post('/applicant/evaluation/{applicantId}', [SubmissionController::class, 'evaluation']);
+
+    Route::post('/update/{job_post_id}', [JobBatchesRspController::class, 'job_post_update']);
+    Route::get('/{job_post_id}', [JobBatchesRspController::class, 'job_post_view']);
 });
 
 

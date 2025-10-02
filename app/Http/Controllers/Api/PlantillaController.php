@@ -177,15 +177,68 @@ class PlantillaController extends Controller
     public function getAllData($ControlNo)
     {
         try {
-            $data = xService::select(['ControlNo', 'FromDate', 'ToDate'])->latest('FromDate', 'ToDate')->limit(1) // specify columns from xService
+            $data = xService::select(['ControlNo', 'FromDate', 'ToDate','Designation','Status','Office','RateYear','RateDay','RateMon'])->latest('FromDate', 'ToDate')->limit(1) // specify columns from xService
                 ->with([
-                    'plantilla' => function ($query) {
-                        $query->select(['ControlNo', 'Name4']); // specify columns from vwplantillastructure
+
+                'xPersonal' => function ($query) {
+                    $query->select(['ControlNo', 'Surname', 'TINNo','Address' ]); // specify columns from vwplantillastructure
+                },
+                    'active' => function ($query) {
+                        $query->select(['ControlNo', 'Name4','Sex']); // specify columns from vwplantillastructure
                     },
                     'tempRegAppointments' => function ($query) {
                         $query->select(['ControlNo', 'DesigCode','NewDesignation','Designation','SG','Step','Status','OffCode','NewOffice','Office',
                         'MRate','ItemNo','Pages','DivCode', 'SecCode','Official','Renew','StructureID','Groupcode','group','unitcode','sepcause','vicecause','sepdate'])->latest('sepdate')->limit(1); // specify columns from TempRegAppointmentReorg
-                    }
+                    },
+
+                'plantilla' => function ($query){
+                    $query->select(['ControlNo','office','office2','group','division','section','unit','position','ID','StructureID','OfficeID','OfficeID1','GroupID','DivisionID','SectionID','UnitID','PositionID','PageNo','ItemNo','SG','Ordr','Funded','groupordr','divordr','secordr','unitordr','level','Status']);
+                },
+                'tempRegAppointmentReorgExt' => function ($query) {
+                    $query->select([
+                        'ControlNo',
+                        'PresAppro',
+                        'PrevAppro',
+                        'SalAuthorized',
+                        'OtherComp',
+                        'SupPosition',
+                        'HSupPosition',
+                        'Tool',
+                        'Contact1',
+                        'Contact2',
+                        'Contact3',
+                        'Contact4',
+                        'Contact5',
+                        'Contact6',
+                        'ContactOthers',
+                        'Working1',
+                        'Working2',
+                        'WorkingOthers',
+                        'DescriptionSection',
+                        'DescriptionFunction',
+                        'StandardEduc',
+                        'StandardExp',
+                        'StandardTrain',
+                        'StandardElig',
+                        'Supervisor',
+                        'Core1',
+                        'Core2',
+                        'Core3',
+                        'Corelevel1',
+                        'Corelevel2',
+                        'Corelevel3',
+                        'Corelevel4',
+                        'Leader1',
+                        'Leader2',
+                        'Leader3',
+                        'Leader4',
+                        'leaderlevel1',
+                        'leaderlevel2',
+                        'leaderlevel3',
+                        'leaderlevel4',
+                        'structureid',
+                    ]); // specify columns from TempRegAppointmentReorg
+                }
                 ])
                 ->where('ControlNo', $ControlNo)
                 ->get();

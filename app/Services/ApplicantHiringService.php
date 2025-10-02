@@ -24,7 +24,8 @@ class ApplicantHiringService
                 'nPersonalInfo.voluntary_work',
                 'nPersonalInfo.training',
                 'nPersonalInfo.references',
-                'nPersonalInfo.skills'
+                'nPersonalInfo.skills',
+                'nPersonalInfo.personal_declarations'
             ])->findOrFail($submissionId);
 
             $applicant = $submission->nPersonalInfo;
@@ -42,13 +43,14 @@ class ApplicantHiringService
                 }
 
                 $family = $applicant->family;
+                $personal_declarations = $applicant->personal_declarations;
                 $existingControlNo = $applicant->control_no ?? $applicant->controlno ?? $applicant->ControlNo ?? $submission->ControlNo ?? null;
 
                 // If internal, use existing, else generate new
                 $finalControlNo = $existingControlNo ?? $this->generateControlNo();
 
                 if (!$existingControlNo) {
-                    $this->insertPersonalInfo($applicant, $family, $finalControlNo);
+                    $this->insertPersonalInfo($applicant, $family,  $personal_declarations, $finalControlNo);
                     $this->insertChildren($applicant->children, $finalControlNo);
                     $this->insertWorkExperience($applicant->work_experience, $finalControlNo);
                     $this->insertEligibility($applicant->eligibity, $finalControlNo);
@@ -59,6 +61,8 @@ class ApplicantHiringService
                     $this->insertNonAcademic($applicant->skills, $finalControlNo);
                     $this->insertOrganization($applicant->skills, $finalControlNo);
                     $this->insertReferences($applicant->references, $finalControlNo);
+
+                    // $this->insertPersonalInfo($applicant, $finalControlNo);
                 }
             }
 
@@ -107,7 +111,7 @@ class ApplicantHiringService
         return str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
 
-    private function insertPersonalInfo($applicant, $family, $controlNo)
+    private function insertPersonalInfo($applicant, $family,  $personal_declarations, $controlNo)
     {
         DB::table('xPersonal')->insert([
             'ControlNo'    => $controlNo,
@@ -140,6 +144,32 @@ class ApplicantHiringService
             'MaidenName'   => $family->spouse_middlename ?? 'N/A',
             'SpouseName'   => $family->spouse_name ?? 'N/A',
             'Occupation'   => $family->spouse_occupation ?? 'N/A',
+
+            'Q1' =>  $personal_declarations->a_third_degreee_answer  ?? 'N/A',
+            'R1' =>  $personal_declarations->{'34_if_yes'} ?? 'N/A',
+
+            'Q2' =>  $personal_declarations->a_found_guilty  ?? 'N/A',
+            'R2' =>  $personal_declarations->guilty_yes  ?? 'N/A',
+
+            'Q3' =>  $personal_declarations->b_criminally_charged  ?? 'N/A',
+            'R3' =>  $personal_declarations->case_date_filed  ?? 'N/A',
+
+            'Q4' =>  $personal_declarations->{'36_convited_answer'}  ?? 'N/A',
+            'R4' =>  $personal_declarations->{'36_if_yes'}  ?? 'N/A',
+
+
+            'Q5' =>  $personal_declarations->{'37_service'}  ?? 'N/A',
+            'R5' =>  $personal_declarations->{'37_if_yes'}  ?? 'N/A',
+
+            'Q6' =>  $personal_declarations->a_candidate  ?? 'N/A',
+            'R6' =>  $personal_declarations->candidate_yes  ?? 'N/A',
+
+            'Q7' =>  $personal_declarations->b_resigned ?? 'N/A',
+            'R7' =>  $personal_declarations->b_resigned_yes  ?? 'N/A',
+
+            'R11' => $personal_declarations->{'39_if_yes'} ?? 'N/A',
+            'Q11' =>  $personal_declarations->{'39_status'}?? 'N/A',
+            'Q22' =>  $personal_declarations->a_indigenous  ?? 'N/A',
         ]);
     }
 
