@@ -13,7 +13,7 @@ return new class extends Migration
     {
 
         //this is pivot table for job_batches_rsp and users
-        Schema::dropIfExists('job_batches_user');
+        // Schema::dropIfExists('job_batches_user');
         Schema::create('job_batches_user', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');

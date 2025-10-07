@@ -30,53 +30,9 @@ class AuthController extends Controller
         ]);
     }
 
-
-    // public function fetch_rater_assign()
-    // {
-    //     $raterId = 40043;
-
-    //     $jobBatchIds = DB::table('job_batches_user')
-    //         ->where('user_id', $raterId)
-    //         ->pluck('job_batches_rsp_id');
-
-    //     return response()->json([
-    //         'rater_id' => $raterId,
-    //         'job_batch_ids' => $jobBatchIds,
-    //     ]);
-    // }
-    // public function fetch_rater_assign()
-    // {
-    //     $raterId = 40043;
-
-    //     $jobBatchIds = DB::table('job_batches_user')
-    //         ->where('user_id', $raterId)
-    //         ->pluck('job_batches_rsp_id');
-
-    //     $submissions = Submission::whereIn('job_batches_rsp_id', $jobBatchIds)->get();
-
-    //     return response()->json($submissions);
-    // }
-
-
-    // create raters account
-
     // create account
     public function Token_Register(UserAdminRegisterRequest $request)
     {
-        // $validatedData = $request->validate([
-        //     // 'name' => 'required|string|max:255',
-        //     // 'username' => 'required|string|unique:users|max:255',
-        //     // 'password' => 'required|string|min:3',
-        //     // 'position' => 'required|string|max:255',
-        //     // 'active' => 'required|boolean',
-
-        //     // // Optional permission flags
-        //     // 'permissions.isFunded' => 'boolean',
-        //     // 'permissions.isUserM' => 'boolean',
-        //     // 'permissions.isRaterM' => 'boolean',
-        //     // 'permissions.isCriteria' => 'boolean',
-        //     // 'permissions.isDashboardStat' => 'boolean',
-        // ]);
 
         try {
             DB::beginTransaction();
@@ -104,6 +60,23 @@ class AuthController extends Controller
                     'isJobDelete' => $request->input('permissions.isJobDelete', false),
                 ]);
             }
+
+
+            // ✅ Activity Log
+            activity($user->name)
+                ->causedBy($user)  // The currently logged-in admin creating this new admin
+                ->performedOn($user)
+                ->withProperties([
+                    'created_by' => Auth::user()?->name,
+                    'new_admin_name' => $user->name,
+                    'username' => $user->username,
+                    'position' => $user->position,
+                    'active' => $user->active,
+                    'role' => 'Admin',
+                    'ip' => request()->ip(),
+                    'user_agent' => request()->header('User-Agent'),
+                ])
+                ->log("Admin '{$user->name}' was registered successfully by '" . Auth::user()?->name . "'.");
 
             DB::commit();
 
@@ -186,10 +159,25 @@ class AuthController extends Controller
         }
 
         // Generate a token for the user
-        $token = $user->createToken('my-secret-token')->plainTextToken;
-
+        // $token = $user->createToken('my-secret-token')->plainTextToken;
+        $token = $user->createToken('admin_token')->plainTextToken;
         // Set the token in a secure cookie
         $cookie = cookie('admin_token', $token, 60 * 24, null, null, true, true, false, 'None');
+
+        if ($user instanceof \App\Models\User) {
+            activity($user->name)
+                ->causedBy($user)
+                ->performedOn($user)
+                ->withProperties([
+                    'username' => $user->username,
+                    'role' => $user->role?->role_name,
+                    'office' => $user->office,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->header('User-Agent'),
+                ])
+                ->log("Admin '{$user->name}' logged in successfully.");
+        }
+
 
         return response([
             'status' => true,
@@ -215,6 +203,20 @@ class AuthController extends Controller
         }
 
         $cookie = cookie()->forget('admin_token');
+
+        if ($user instanceof \App\Models\User) {
+            activity($user->name)
+                ->causedBy($user)
+                ->performedOn($user)
+                ->withProperties([
+                    'username' => $user->username,
+                    'role' => $user->role?->role_name,
+                    'office' => $user->office,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->header('User-Agent'),
+                ])
+                ->log("Admin '{$user->name}' logout successfully.");
+        }
 
         return response([
             'status' => true,

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::dropIfExists('c_experience');
+        // Schema::dropIfExists('c_experience');
         Schema::create('c_experience', function (Blueprint $table) {
             $table->id();
             $table->foreignId('criteria_rating_id')->nullable()->constrained('criteria_rating')->onDelete('cascade');

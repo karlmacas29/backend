@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::dropIfExists('skill_non_academic');
+        // Schema::dropIfExists('skill_non_academic');
 
         Schema::create('skill_non_academic', function (Blueprint $table) {
             $table->id();

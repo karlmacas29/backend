@@ -134,6 +134,7 @@ class PersonalInformationSheet implements WithEvents
 
             if ($validator->fails()) {
                 throw new ValidationException($validator);
+                throw new \Exception('Personal Information resubmit — missing firstname or lastname.');
             }
 
             // Create personal info

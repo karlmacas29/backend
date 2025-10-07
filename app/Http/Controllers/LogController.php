@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class LogController extends Controller
 {
@@ -14,7 +15,14 @@ class LogController extends Controller
         return response()->json($logs, 200);
     }
 
-    
+    public function activityLogs()
+    {
+        $logs = DB::table('activity_log')->orderBy('created_at', 'desc')->get();
+        return response()->json($logs, 200);
+    }
+
+
+
     public function logAuth(Request $request)
     {
         if (!Auth::check()) {

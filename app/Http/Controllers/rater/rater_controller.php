@@ -832,7 +832,7 @@ class rater_controller extends Controller
     public function get_rater_usernames()
     {
         try {
-            $users = User::where('role_id', 2)
+            $users = User::where('role_id', 2)->where('active', 1)
                 ->orderBy('created_at', 'desc') // Order by latest created first
                 ->get()
                 ->map(function ($user) {

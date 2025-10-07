@@ -17,47 +17,151 @@ class RaterAuthController extends Controller
     //create account and register rater account
     public function RatersRegister(Request $request)
     {
+        $authUser = Auth::user(); // The currently logged-in admin (who is creating the rater)
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username',
             'job_batches_rsp_id' => 'required|array',
             'job_batches_rsp_id.*' => 'exists:job_batches_rsp,id',
             'position' => 'required|string|max:255',
             'office' => 'required|string|max:255',
             'password' => 'required|string|min:5',
-
-            // 'active' => 'required|boolean',
         ]);
 
-        // Generate username from name if not provided
-        $user = User::create([
+        // Create the new rater user
+        $rater = User::create([
             'name' => $validated['name'],
             'username' => $validated['username'],
             'position' => $validated['position'],
             'office' => $validated['office'],
             'password' => Hash::make($validated['password']),
-            // 'active ' => $validated['active'],
-            'active' => true, // ✅ always set to active
-            'role_id' => 2, // Assuming 2 is for raters
-            'remember_token' => Str::random(32)
+            'active' => true, // Always set new raters as active
+            'role_id' => 2,   // 2 = Rater
+            'remember_token' => Str::random(32),
         ]);
-        // $user = User::create($validated,[
-        //     'remember_token' => Str::random(32)
-        // ]);
 
         // Attach job batches
-        $user->job_batches_rsp()->attach($validated['job_batches_rsp_id']);
+        $rater->job_batches_rsp()->attach($validated['job_batches_rsp_id']);
+
+        // ✅ Log the activity using Spatie Activity Log
+        activity($authUser->name)
+            ->causedBy($authUser)               // The admin who created the rater
+            ->performedOn($rater)               // The new rater account created
+            ->withProperties([
+                'created_by' => $authUser?->name,
+                'new_rater_name' => $rater->name,
+                'username' => $rater->username,
+                'position' => $rater->position,
+                'office' => $rater->office,
+                'role' => 'Rater',
+                'assigned_job_batches' => $validated['job_batches_rsp_id'],
+                'ip' => $request->ip(),
+                'user_agent' => $request->header('User-Agent'),
+            ])
+            ->log("Rater '{$rater->name}' was registered successfully by '{$authUser?->name}'.");
+
         return response()->json([
             'status' => true,
             'message' => 'Rater Registered Successfully',
-            'data' => $user->load('job_batches_rsp')
+            'data' => $rater->load('job_batches_rsp'),
         ], 201);
     }
 
+    // public function RatersRegister(Request $request)
+    // {
+
+    //     $user = Auth::user();
+
+    //     $validated = $request->validate([
+    //         'name' => 'required|string|max:255',
+    //         'username' => 'required|string|max:255',
+    //         'job_batches_rsp_id' => 'required|array',
+    //         'job_batches_rsp_id.*' => 'exists:job_batches_rsp,id',
+    //         'position' => 'required|string|max:255',
+    //         'office' => 'required|string|max:255',
+    //         'password' => 'required|string|min:5',
+
+    //         // 'active' => 'required|boolean',
+    //     ]);
+
+    //     // Generate username from name if not provided
+    //     $user = User::create([
+    //         'name' => $validated['name'],
+    //         'username' => $validated['username'],
+    //         'position' => $validated['position'],
+    //         'office' => $validated['office'],
+    //         'password' => Hash::make($validated['password']),
+    //         // 'active ' => $validated['active'],
+    //         'active' => true, // ✅ always set to active
+    //         'role_id' => 2, // Assuming 2 is for raters
+    //         'remember_token' => Str::random(32)
+    //     ]);
+
+    //     // Attach job batches
+    //     $user->job_batches_rsp()->attach($validated['job_batches_rsp_id']);
+
+
+    //     // ✅ Log the activity using Spatie Activity Log
+    //     activity('rater_registration')
+    //         ->causedBy($user)               // The admin who created the rater
+    //         ->performedOn($user)               // The new rater account created
+    //         ->withProperties([
+    //             'created_by' => $authUser?->name,
+    //             'new_rater_name' => $rater->name,
+    //             'username' => $rater->username,
+    //             'position' => $rater->position,
+    //             'office' => $rater->office,
+    //             'role' => 'Rater',
+    //             'assigned_job_batches' => $validated['job_batches_rsp_id'],
+    //             'ip' => $request->ip(),
+    //             'user_agent' => $request->header('User-Agent'),
+    //         ])
+    //         ->log("Rater '{$rater->name}' was registered successfully by '{$authUser?->name}'.");
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Rater Registered Successfully',
+    //         'data' => $user->load('job_batches_rsp')
+    //     ], 201);
+    // }
+
 
     // edit rater where his assign
+    // public function editRater(Request $request, $id)
+    // {
+    //     $validated = $request->validate([
+    //         'job_batches_rsp_id' => 'nullable|array',
+    //         'job_batches_rsp_id.*' => 'exists:job_batches_rsp,id',
+    //         'office' => 'required|string|max:255',
+    //         'active' => 'required|boolean',
+    //     ]);
+
+    //     // Find the user (rater) by ID
+    //     $user = User::findOrFail($id);
+
+    //     // Update office
+    //     $user->office = $validated['office'];
+    //     $user->active = $validated['active'];
+    //     $user->save();
+
+    //     // Sync job_batches_rsp only if provided
+    //     if (isset($validated['job_batches_rsp_id'])) {
+    //         $user->job_batches_rsp()->sync($validated['job_batches_rsp_id']);
+    //     }
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Rater Updated Successfully',
+    //         'data' => $user->load('job_batches_rsp')
+    //     ]);
+    // }
+
+
     public function editRater(Request $request, $id)
     {
+        $authUser = Auth::user(); // The admin who performs the update
+
         $validated = $request->validate([
             'job_batches_rsp_id' => 'nullable|array',
             'job_batches_rsp_id.*' => 'exists:job_batches_rsp,id',
@@ -66,22 +170,53 @@ class RaterAuthController extends Controller
         ]);
 
         // Find the user (rater) by ID
-        $user = User::findOrFail($id);
+        $rater = User::findOrFail($id);
 
-        // Update office
-        $user->office = $validated['office'];
-        $user->active = $validated['active'];
-        $user->save();
+        // Keep old values for logging comparison
+        $oldData = [
+            'office' => $rater->office,
+            'active' => $rater->active,
+            'job_batches_rsp_id' => $rater->job_batches_rsp()->pluck('job_batches_rsp.id')->toArray(),
 
-        // Sync job_batches_rsp only if provided
+        ];
+
+        // Update new values
+        $rater->update([
+            'office' => $validated['office'],
+            'active' => $validated['active'],
+        ]);
+
+        // Sync job_batches_rsp if provided
         if (isset($validated['job_batches_rsp_id'])) {
-            $user->job_batches_rsp()->sync($validated['job_batches_rsp_id']);
+            $rater->job_batches_rsp()->sync($validated['job_batches_rsp_id']);
         }
+
+        // Load updated relations
+        $rater->load('job_batches_rsp');
+
+        // ✅ Log the update activity
+        activity($authUser->name)
+            ->causedBy($authUser)                // The admin who made the change
+            ->performedOn($rater)                // The rater whose account was edited
+            ->withProperties([
+                'updated_by' => $authUser?->name,
+                'rater_name' => $rater->name,
+                'rater_username' => $rater->username,
+                'old_data' => $oldData,
+                'new_data' => [
+                    'office' => $rater->office,
+                    'active' => $rater->active,
+                    'job_batches_rsp_id' => $validated['job_batches_rsp_id'] ?? $oldData['job_batches_rsp_id'],
+                ],
+                'ip' => $request->ip(),
+                'user_agent' => $request->header('User-Agent'),
+            ])
+            ->log("Rater '{$rater->name}' was updated by '{$authUser?->name}'.");
 
         return response()->json([
             'status' => true,
             'message' => 'Rater Updated Successfully',
-            'data' => $user->load('job_batches_rsp')
+            'data' => $rater,
         ]);
     }
 
@@ -159,10 +294,27 @@ class RaterAuthController extends Controller
         }
 
         // Generate a token for the user
-        $token = $user->createToken('my-secret-token')->plainTextToken;
-
+        // $token = $user->createToken('my-secret-token')->plainTextToken;
+        $token = $user->createToken('rater_token')->plainTextToken;
         // Set the token in a secure cookie
         $cookie = cookie('rater_token', $token, 60 * 24, null, null, true, true, false, 'None');
+
+        //  Log the activity using Spatie Activity Log
+        // ✅ Fix: Ensure the correct type for Spatie activity log
+        if ($user instanceof \App\Models\User) {
+            activity($user->name)
+                ->causedBy($user)
+                ->performedOn($user)
+                ->withProperties([
+                    'username' => $user->username,
+                    'role' => $user->role?->role_name,
+                    'office' => $user->office,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->header('User-Agent'),
+                ])
+                ->log("Rater '{$user->name}' logged in successfully.");
+        }
+
 
         return response([
             'status' => true,
@@ -176,6 +328,7 @@ class RaterAuthController extends Controller
             'token' => $token,
         ])->withCookie($cookie);
     }
+
 
     // change password for the rater
     public function change_password(Request $request)
@@ -272,12 +425,28 @@ class RaterAuthController extends Controller
 
         $cookie = cookie()->forget('rater_token');
 
+
+        // ✅ Fix: Ensure the correct type for Spatie activity log
+        if ($user instanceof \App\Models\User) {
+            activity($user->name)
+                ->causedBy($user)
+                ->performedOn($user)
+                ->withProperties([
+                    'username' => $user->username,
+                    'role' => $user->role?->role_name,
+                    'office' => $user->office,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->header('User-Agent'),
+                ])
+                ->log("Rater '{$user->name}' logout successfully.");
+
+        }
         return response([
             'status' => true,
             'message' => 'Logout Successfully',
         ])->withCookie($cookie);
+
+
     }
-
-
 
 }

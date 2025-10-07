@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::dropIfExists('criteria_rating');
+        // Schema::dropIfExists('criteria_rating');
 
         Schema::create('criteria_rating', function (Blueprint $table) {
             $table->id();

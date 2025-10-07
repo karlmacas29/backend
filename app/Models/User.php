@@ -5,14 +5,17 @@ namespace App\Models;
 use App\Models\Role;
 use App\Models\JobBatchesRsp;
 use App\Models\UserRspControl;
+
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Activitylog\LogOptions;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens,LogsActivity;
 
     // the rater and admin
     // Specify the fillable fields for mass assignment
@@ -62,11 +65,18 @@ class User extends Authenticatable
     }
 
 
-
-
     public function office()
     {
         return $this->hasOne(vwplantillaStructure::class, 'office_id', 'office_id');
     }
 
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'username', 'position', 'role_id', 'office'])
+            ->logOnlyDirty() // logs only changed attributes
+            ->useLogName('user')
+            ->setDescriptionForEvent(fn(string $eventName) => "User has been {$eventName}");
+    }
 }

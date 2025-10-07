@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::dropIfExists('job_batches_rsp');
+        // Schema::dropIfExists('job_batches_rsp');
         Schema::create('job_batches_rsp', function (Blueprint $table) {
             $table->id();
             $table->text('Office')->nullable();

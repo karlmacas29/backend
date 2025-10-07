@@ -91,4 +91,25 @@ class ViewActiveController extends Controller
             'totalFemale' =>(string) $female
         ]);
     }
+
+    public function plantilla_number()
+    {
+        $funded = vwplantillastructure::where('Funded', true)->count();
+        $unfunded = vwplantillastructure::where('Funded', false)->count();
+        $occupied = vwplantillastructure::where('Funded', true)
+            ->whereNotNull('ControlNo')
+            ->count();
+        $unoccupied = vwplantillastructure::where('Funded', true)
+            ->whereNull('ControlNo')
+            ->count();
+        $total = vwplantillastructure::count();
+
+        return response()->json([
+            'funded' => $funded,
+            'unfunded' => $unfunded,
+            'occupied' => $occupied,
+            'unoccupied' => $unoccupied,
+            'total' => $total,
+        ]);
+    }
 }

@@ -18,7 +18,8 @@ class UserRspControl extends Model
         'isRaterM',
         'isCriteria',
         'isDashboardStat',
-         'isJobCreate',
+
+        'isJobCreate',
         'isJobEdit',
         'isJobView',
         'isJobDelete',

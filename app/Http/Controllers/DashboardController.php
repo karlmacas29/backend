@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Submission;
 use Illuminate\Http\Request;
 use App\Models\JobBatchesRsp;
+use App\Models\vwplantillastructure;
 
 class DashboardController extends Controller
 {
@@ -25,24 +26,27 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function plantilla_number()
+    {
+        $funded = vwplantillastructure::where('Funded', true)->count();
+        $unfunded = vwplantillastructure::where('Funded', false)->count();
+        $occupied = vwplantillastructure::where('Funded', true)
+            ->whereNotNull('ControlNo')
+            ->count();
+        $unoccupied = vwplantillastructure::where('Funded', true)
+            ->whereNull('ControlNo')
+            ->count();
+        $total = vwplantillastructure::count();
 
-    // public function job_post_status()
-    // {
-    //     $jobPosts = JobBatchesRsp::select('id', 'Position','post_date')
-    //         ->withCount([
-    //             'applicants as total_applicants',
-    //             'applicants as qualified_count' => function ($query) {
-    //                 $query->where('status', 'qualified');
-    //             },
-    //             'applicants as unqualified_count' => function ($query) {
-    //                 $query->where('status', 'unqualified');
-    //             },
-    //             'applicants as pending_count' => function ($query) {
-    //                 $query->where('status', 'pending');
-    //             },
-    //         ])
-    //         ->get();
+        return response()->json([
+            'funded' => $funded,
+            'unfunded' => $unfunded,
+            'occupied' => $occupied,
+            'unoccupied' => $unoccupied,
+            'total' => $total,
+        ]);
+    }
 
-    //     return response()->json($jobPosts);
-    // }
+
+
 }
