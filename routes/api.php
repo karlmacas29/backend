@@ -90,6 +90,13 @@ Route::prefix('job-batches-rsp')->group(function () {
     Route::get('/{job_post_id}', [JobBatchesRspController::class, 'job_post_view']);
 });
 
+Route::prefix('on-criteria-job')->group(function () {
+    Route::get('/', [OnCriteriaJobController::class, 'index']);
+    Route::post('/', [OnCriteriaJobController::class, 'store']); // change old on-criteria-job
+    Route::post('/{id}', [OnCriteriaJobController::class, 'update']);
+    Route::delete('/{id}', [OnCriteriaJobController::class, 'destroy']);
+    Route::get('/{PositionID}/{ItemNo}', [OnCriteriaJobController::class, 'show']);
+});
 
 
 
@@ -142,13 +149,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/delete/{ControlNo}', [AppointmentController::class, 'deleteControlNo']);
     });
 
-    Route::prefix('on-criteria-job')->group(function () {
-        Route::get('/', [OnCriteriaJobController::class, 'index']);
-        Route::post('/', [OnCriteriaJobController::class, 'store']); // change old on-criteria-job
-        Route::post('/{id}', [OnCriteriaJobController::class, 'update']);
-        Route::delete('/{id}', [OnCriteriaJobController::class, 'destroy']);
-        Route::get('/{PositionID}/{ItemNo}', [OnCriteriaJobController::class, 'show']);
-    });
 
 
     Route::prefix('vw-Active')->group(function () {
