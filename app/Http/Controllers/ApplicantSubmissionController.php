@@ -65,6 +65,49 @@ class ApplicantSubmissionController extends Controller
         }
     }
 
+    public function applicant_store(Request $request)
+    {
+        $validated = $request->validate([
+            'excel_file' => 'required|file|mimes:xlsx,xls,csv,xlsm',
+            'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+
+        ]);
+
+        $file = $request->file('excel_file');
+        $fileName = time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+
+        try {
+            // Try to import using the uploaded file directly
+            // Excel::import(new ApplicantFormImport($validated['job_batches_rsp_id']), $file);
+            $import = new ApplicantFormImport($validated['job_batches_rsp_id'], null, $fileName);
+            Excel::import($import, $file);
+
+            // Only save the file if import was successful
+            $file->storeAs('excels', $fileName);
+
+            return response()->json([
+                'message' => 'Applicant submissions imported successfully.',
+                'excel_file_name' => $fileName
+            ]);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed during Excel import.',
+                'errors' => $e->failures()
+            ], 422);
+        } catch (\Exception $e) {
+            // Check for missing personal info
+            if (str_contains($e->getMessage(), 'Personal Information resubmit')) {
+                return response()->json([
+                    'message' => 'Personal Information resubmit — missing firstname or lastname.'
+                ], 422);
+            }
+
+            return response()->json([
+                'message' => 'Failed to import Excel file.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
     // //get the image value..
@@ -158,6 +201,7 @@ class ApplicantSubmissionController extends Controller
 
         $submit = Submission::create([
             'ControlNo' => $validated['ControlNo'] ?? null,
+            'status' => 'pending',
             'job_batches_rsp_id' => $validated['job_batches_rsp_id'],
             'nPersonalInfo_id' => null, // 👈 explicitly null
         ]);

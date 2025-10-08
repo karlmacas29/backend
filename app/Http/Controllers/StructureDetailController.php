@@ -88,7 +88,7 @@ class StructureDetailController extends Controller
                 ], 422);
             }
 
-            
+
             $updatedCount = DB::table('tblStructureDetails')
                 ->where('PositionID', $positionId)
                 ->where('ItemNo', $itemNo) // Added ItemNo to the where clause

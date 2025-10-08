@@ -54,9 +54,9 @@ Route::middleware('auth:sanctum')->post('/logs/auth', [LogController::class, 'lo
 
 
 Route::prefix('applicant')->group(function () {
-    Route::post('/submissions', [ApplicantSubmissionController::class, 'store']);
+    Route::post('/submissions', [ApplicantSubmissionController::class, 'store']); // for external applicant
     Route::get('/submissions/index', [ApplicantSubmissionController::class, 'index']);
-    Route::post('/employee', [ApplicantSubmissionController::class, 'employee_applicant']);
+    Route::post('/employee', [ApplicantSubmissionController::class, 'employee_applicant']); // for employyee qpplicant
     Route::delete('/read', [ApplicantSubmissionController::class, 'read_excel']);
     Route::post('/image', [ApplicantSubmissionController::class, 'store_image']);
     // Route::delete('/delete', [ApplicantSubmissionController::class, 'deleteAllUsers']);

@@ -39,7 +39,8 @@ class JobBatchesRsp extends Model
         'Training',
         'Experience',
         'fileUpload',
-        'status'
+        'status',
+        'tblStructureDetails_ID',
 
 
     ];
