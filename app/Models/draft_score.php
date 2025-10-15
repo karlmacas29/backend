@@ -21,8 +21,9 @@ class draft_score extends Model
         'grand_total',
         'ranking',
         'ControlNo',
-        'user_id'
+        'user_id',
+        'rater_name'
     ];
 
-  
+
 }

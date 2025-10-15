@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use ZipArchive;
 use App\Models\Submission;
+
 use Illuminate\Support\Str;
 
+use App\Models\ApplicantZip;
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\DB;
 use App\Imports\ApplicantFormImport;
 use App\Models\excel\nPersonal_info;
@@ -18,76 +20,125 @@ class ApplicantSubmissionController extends Controller
 {
 
     // this function saving a information of applicant using excel  and get the job_post_id the will be save on submission  pivot table
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls,csv,xlsm',
-            'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'excel_file' => 'required|file|mimes:xlsx,xls,csv,xlsm',
+    //         'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
 
-        ]);
+    //     ]);
 
-        $file = $request->file('excel_file');
-        $fileName = time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+    //     $file = $request->file('excel_file');
+    //     $fileName = time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
 
-        try {
-            // Try to import using the uploaded file directly
-            // Excel::import(new ApplicantFormImport($validated['job_batches_rsp_id']), $file);
-            $import = new ApplicantFormImport($validated['job_batches_rsp_id'], null, $fileName);
-            Excel::import($import, $file);
+    //     try {
+    //         // Try to import using the uploaded file directly
+    //         // Excel::import(new ApplicantFormImport($validated['job_batches_rsp_id']), $file);
+    //         $import = new ApplicantFormImport($validated['job_batches_rsp_id'], null, $fileName);
+    //         Excel::import($import, $file);
 
-            // Only save the file if import was successful
-            $file->storeAs('excels', $fileName);
+    //         // Only save the file if import was successful
+    //         $file->storeAs('excels', $fileName);
 
-            return response()->json([
-                'message' => 'Applicant submissions imported successfully.',
-                'excel_file_name' => $fileName
-            ]);
+    //         return response()->json([
+    //             'message' => 'Applicant submissions imported successfully.',
+    //             'excel_file_name' => $fileName
+    //         ]);
 
-        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed during Excel import.',
-                'errors' => $e->failures()
-            ], 422);
+    //     } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+    //         return response()->json([
+    //             'message' => 'Validation failed during Excel import.',
+    //             'errors' => $e->failures()
+    //         ], 422);
 
 
-        } catch (\Exception $e) {
-            // Check for missing personal info
-            if (str_contains($e->getMessage(), 'Personal Information resubmit')) {
-                return response()->json([
-                    'message' => 'Personal Information resubmit — missing firstname or lastname.'
-                ], 422);
-            }
+    //     } catch (\Exception $e) {
+    //         // Check for missing personal info
+    //         if (str_contains($e->getMessage(), 'Personal Information resubmit')) {
+    //             return response()->json([
+    //                 'message' => 'Personal Information resubmit — missing firstname or lastname.'
+    //             ], 422);
+    //         }
 
-            return response()->json([
-                'message' => 'Failed to import Excel file.',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+    //         return response()->json([
+    //             'message' => 'Failed to import Excel file.',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 
     public function applicant_store(Request $request)
     {
         $validated = $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,xls,csv,xlsm',
+            'zip_file' => 'required|file|mimes:zip', // ✅ ZIP now required
             'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
-
         ]);
 
-        $file = $request->file('excel_file');
-        $fileName = time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+        $excelFile = $request->file('excel_file');
+        $excelFileName = time() . '_' . Str::random(8) . '.' . $excelFile->getClientOriginalExtension();
 
         try {
-            // Try to import using the uploaded file directly
-            // Excel::import(new ApplicantFormImport($validated['job_batches_rsp_id']), $file);
-            $import = new ApplicantFormImport($validated['job_batches_rsp_id'], null, $fileName);
-            Excel::import($import, $file);
+            // ✅ Import the Excel file
+            $import = new ApplicantFormImport($validated['job_batches_rsp_id'], null, $excelFileName);
+            Excel::import($import, $excelFile);
 
-            // Only save the file if import was successful
-            $file->storeAs('excels', $fileName);
+            // Store the Excel file
+            $excelFile->storeAs('excels', $excelFileName);
+
+            // ✅ Get the created nPersonal_info ID from import
+            $nPersonalInfoId = $import->getPersonalInfoId();
+
+            // ✅ Store ZIP file
+            $zipFile = $request->file('zip_file');
+            $zipFileName = time() . '_' . Str::random(8) . '.' . $zipFile->getClientOriginalExtension();
+            $zipPath = $zipFile->storeAs('zips', $zipFileName);
+
+            // ✅ Save ZIP record linked to nPersonal_info
+            $zipRecord = ApplicantZip::create([
+                'nPersonalInfo_id' => $nPersonalInfoId,
+                'zip_path' => $zipPath,
+            ]);
+
+            // Extract ZIP
+            $zip = new ZipArchive;
+            $zipFullPath = storage_path('app/public/' . $zipPath);
+
+            // Check file exists
+            if (!file_exists($zipFullPath)) {
+                throw new \Exception("ZIP file not found at path: $zipFullPath");
+            }
+
+            // Open and extract
+            if ($zip->open($zipFullPath) === true) {
+                $extractPath = storage_path('app/public/applicant_files/' . $nPersonalInfoId);
+                if (!file_exists($extractPath)) {
+                    mkdir($extractPath, 0755, true);
+                }
+
+                $zip->extractTo($extractPath);
+                $zip->close();
+
+
+            } else {
+                throw new \Exception('Failed to open ZIP file.');
+            }
 
             return response()->json([
-                'message' => 'Applicant submissions imported successfully.',
-                'excel_file_name' => $fileName
+                'message' => 'Applicant imported successfully.',
+                'excel_file_name' => $excelFileName,
+                'nPersonalInfo_id' => $nPersonalInfoId,
+                'zip' => [
+                    'zip_file_name' => $zipFileName,
+                    'zip_path' => $zipPath,
+                    'zip_id' => $zipRecord->id,
+                ],
+                // 'images' => [
+                //     'training' => $trainingImages,
+                //     'education' => $educationImages,
+                //     'experience' => $experienceImages,
+                //     'voluntary' => $voluntaryImages,
+                // ],
             ]);
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             return response()->json([
@@ -95,7 +146,6 @@ class ApplicantSubmissionController extends Controller
                 'errors' => $e->failures()
             ], 422);
         } catch (\Exception $e) {
-            // Check for missing personal info
             if (str_contains($e->getMessage(), 'Personal Information resubmit')) {
                 return response()->json([
                     'message' => 'Personal Information resubmit — missing firstname or lastname.'
@@ -103,55 +153,46 @@ class ApplicantSubmissionController extends Controller
             }
 
             return response()->json([
-                'message' => 'Failed to import Excel file.',
+                'message' => 'Failed to import Excel or ZIP file.',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
+    private function getImagesFromFolder($folderPath)
+    {
+        $images = [];
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
 
+        if (!is_dir($folderPath)) {
+            return $images;
+        }
 
-    // //get the image value..
-    // public function read_excel()
-    // {
-    //     $excel_file = base_path('/storage/app/public/excels/1754817018_DfVtG272.xlsx');
+        $files = scandir($folderPath);
 
-    //     $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
-    //     $spreadsheet = $reader->load($excel_file);
-    //     $sheet = $spreadsheet->getActiveSheet();
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
 
-    //     $drawings = $sheet->getDrawingCollection();
+            $filePath = $folderPath . '/' . $file;
 
-    //     foreach ($drawings as $index => $drawing) {
-    //         $coordinates = $drawing->getCoordinates();
+            // Check if it's a file and has image extension
+            if (is_file($filePath)) {
+                $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-    //         // Check if it's a file-based drawing or memory-based
-    //         if (method_exists($drawing, 'getPath')) {
-    //             $drawing_path = $drawing->getPath(); // "zip://" path
-    //             $extension = pathinfo($drawing_path, PATHINFO_EXTENSION);
+                if (in_array($extension, $allowedExtensions)) {
+                    $images[] = [
+                        'filename' => $file,
+                        'path' => $filePath,
+                        'relative_path' => str_replace(storage_path('app/public/'), '', $filePath),
+                        'url' => asset('storage/' . str_replace(storage_path('app/public/'), '', $filePath)),
+                    ];
+                }
+            }
+        }
 
-    //             // Ensure images directory exists
-    //             $image_dir = public_path('storage/images');
-    //             if (!file_exists($image_dir)) {
-    //                 mkdir($image_dir, 0777, true);
-    //             }
-
-    //             $filename = $coordinates . '_' . $index . '.' . $extension;
-    //             $save_path = $image_dir . '/' . $filename;
-
-    //             $contents = file_get_contents($drawing_path);
-    //             file_put_contents($save_path, $contents);
-
-    //             $public_url = asset('storage/images/' . $filename);
-
-    //             // ✅ Properly echo coordinates and path
-    //             echo "<p>Coordinate: <strong>{$coordinates}</strong></p>";
-    //             echo "<p>Drawing Path: <code>{$drawing_path}</code></p>";
-    //             echo "<img src='{$public_url}' style='max-width:200px'><br><br>";
-    //         } else {
-    //             echo "<p>Drawing at {$coordinates} is not file-based (probably MemoryDrawing).</p>";
-    //         }
-    //     }
-    // }
+        return $images;
+    }
 
 
     // this function is to delete all applicant on the excel

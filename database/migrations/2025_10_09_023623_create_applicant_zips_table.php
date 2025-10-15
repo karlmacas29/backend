@@ -1,6 +1,5 @@
 <?php
 
-use GuzzleHttp\Psr7\DroppingStream;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('nPersonalInfo', function (Blueprint $table) {
-            //
-            $table->string('zip_file')->nullable()->after('excel_file');
+        Schema::create('applicant_zips', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('nPersonalInfo_id')->constrained('nPersonalInfo')->onDelete('cascade');
+            $table->string('zip_path');
+            $table->timestamps();
         });
     }
 
@@ -23,9 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('nPersonalInfo', function (Blueprint $table) {
-            //
-            $table->dropColumn('zip_file');
-        });
+        Schema::dropIfExists('applicant_zips');
     }
 };

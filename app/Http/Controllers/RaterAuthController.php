@@ -187,9 +187,39 @@ class RaterAuthController extends Controller
         ]);
 
         // Sync job_batches_rsp if provided
+        // if (isset($validated['job_batches_rsp_id'])) {
+        //     $rater->job_batches_rsp()->sync($validated['job_batches_rsp_id']);
+        // }
+
         if (isset($validated['job_batches_rsp_id'])) {
-            $rater->job_batches_rsp()->sync($validated['job_batches_rsp_id']);
+            $newJobPosts = collect($validated['job_batches_rsp_id']);
+
+            foreach ($newJobPosts as $jobPostId) {
+                // Check if pivot already exists
+                $pivot = \App\Models\Job_batches_user::where('user_id', $rater->id)
+                    ->where('job_batches_rsp_id', $jobPostId)
+                    ->first();
+
+                if ($pivot) {
+                    // ✅ Keep existing status (complete or pending)
+                    continue;
+                } else {
+                    // 🆕 New assignment, default to pending
+                    \App\Models\Job_batches_user::create([
+                        'user_id' => $rater->id,
+                        'job_batches_rsp_id' => $jobPostId,
+                        'status' => 'pending',
+                    ]);
+                }
+            }
+
+            // Optional: Remove assignments that are no longer selected but preserve completed ones
+            $rater->job_batches_rsp()
+                ->wherePivotNotIn('job_batches_rsp_id', $newJobPosts)
+                ->wherePivot('status', '!=', 'complete')
+                ->detach();
         }
+
 
         // Load updated relations
         $rater->load('job_batches_rsp');

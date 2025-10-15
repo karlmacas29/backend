@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('job_batches_user', function (Blueprint $table) {
-            $table->enum('status', ['pending', 'complete'])
+            $table->enum('status', ['pending', 'complete', 'Occupied', 'Unoccupied','assessed', 'not_assessed','rated'])
                 ->default('pending')
                 ->after('job_batches_rsp_id'); // place it after this column
         });

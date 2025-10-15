@@ -63,6 +63,9 @@ class Cors
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-TOKEN');
         $response->headers->set('Access-Control-Allow-Credentials', 'true');
 
+
+        // 👇 Add this line
+        $response->headers->set('Access-Control-Expose-Headers', 'Content-Disposition');
         return $response;
     }
 }

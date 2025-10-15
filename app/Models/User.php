@@ -20,7 +20,7 @@ class User extends Authenticatable
     // the rater and admin
     // Specify the fillable fields for mass assignment
     protected $fillable = [
-        'name',
+        'name', // rater name
         'username', // Replace email with username
         'password',
         'position', // Add position to fillable

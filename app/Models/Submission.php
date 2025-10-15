@@ -17,14 +17,15 @@ class Submission extends Model
 
     protected $table ='submission'; // applicant apply on the job post
     protected $fillable =[
-        'nPersonalInfo_id',
+        'nPersonalInfo_id', // applicant
         'job_batches_rsp_id',
         'education_remark',
         'experience_remark',
         'training_remark',
         'eligibility_remark',
          'status',
-        'ControlNo'
+        'ControlNo',
+        
     ];
     public $timestamps = true; // or just remove if not set
 

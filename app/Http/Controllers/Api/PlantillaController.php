@@ -46,6 +46,8 @@ class PlantillaController extends Controller
             'vwplantillaStructure.ControlNo',
             'vwplantillaStructure.ID',
             'vwplantillaStructure.office',
+            'vwplantillaStructure.office2',
+            'vwplantillaStructure.group',
             'vwplantillaStructure.division',
             'vwplantillaStructure.section',
             'vwplantillaStructure.unit',

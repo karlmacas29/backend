@@ -17,6 +17,24 @@ use Illuminate\Support\Facades\Storage;
 
 class JobBatchesRspController extends Controller
 {
+
+    public function Unoccupied(Request $request, $JobPostingId)
+    {
+        $validated = $request->validate([
+            'status' => 'required|string|in:Unoccupied',
+        ]);
+
+        $jobPost = JobBatchesRsp::findOrFail($JobPostingId);
+        $jobPost->update([
+            'status' => $validated['status'],
+        ]);
+
+        return response()->json([
+            'message' => 'Status updated successfully.',
+            'data' => $jobPost,
+        ]);
+    }
+
     public function index() //  this function fetching the only didnit meet the end_date
     {
         // Only fetch jobs where end_post is today or later (still active)
@@ -28,6 +46,69 @@ class JobBatchesRspController extends Controller
         return response()->json($activeJobs);
     }
 
+
+    // public function job_post()
+    // {
+    //     $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
+    //         ->withCount([
+    //             'submissions as total_applicants',
+    //             'submissions as qualified_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['qualified']);
+    //             },
+    //             'submissions as unqualified_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['unqualified']);
+    //             },
+    //             'submissions as pending_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['pending']);
+    //             },
+
+    //         'submissions as hired_count' => function ($query) {
+    //             $query->whereRaw('LOWER(status) = ?', ['Hired']);
+    //         },
+    //         ])
+    //         ->get();
+
+    //     foreach ($jobPosts as $job) {
+    //         $originalStatus = $job->status;
+
+    //         if ($job->hired_count >= 1) {
+    //             $newStatus = 'Occupied';
+    //         } elseif ($job->qualified_count > 0 || $job->unqualified_count > 0) {
+    //             // Some applicants already assessed
+    //             $newStatus = $job->pending_count > 0 ? 'pending' : 'assessed';
+    //         } else {
+    //             // No assessments yet
+    //             $newStatus = 'not started';
+    //         }
+    //         if ($originalStatus !== $newStatus) {
+    //             $job->status = $newStatus;
+    //             $job->save();
+    //         }
+    //     }
+
+    //     // Reload with updated status + counts
+    //     $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
+    //         ->withCount([
+    //             'submissions as total_applicants',
+    //             'submissions as qualified_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['qualified']);
+    //             },
+    //             'submissions as unqualified_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['unqualified']);
+    //             },
+    //             'submissions as pending_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['pending']);
+    //             },
+
+    //         'submissions as hired_count' => function ($query) {
+    //             $query->whereRaw('LOWER(status) = ?', ['Hired']);
+    //         },
+
+    //         ])
+    //         ->get();
+
+    //     return response()->json($jobPosts);
+    // }
 
     public function job_post()
     {
@@ -43,32 +124,47 @@ class JobBatchesRspController extends Controller
                 'submissions as pending_count' => function ($query) {
                     $query->whereRaw('LOWER(status) = ?', ['pending']);
                 },
-
-            'submissions as hired_count' => function ($query) {
-                $query->whereRaw('LOWER(status) = ?', ['Hired']);
-            },
+                'submissions as hired_count' => function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['hired']);
+                },
             ])
             ->get();
 
         foreach ($jobPosts as $job) {
-            $originalStatus = $job->status;
+            $originalStatus = strtolower($job->status);
+            $newStatus = $originalStatus;
 
-            if ($job->hired_count >= 1) {
-                $newStatus = 'Occupied';
+            // 🚫 Skip manual statuses (do not override)
+            $manualStatuses = ['unoccupied', 'occupied', 'closed'];
+
+            if (in_array($originalStatus, $manualStatuses)) {
+                continue; // Don't change status if manually set
+            }
+
+            // ✅ Check if all raters completed their rating
+            $allRatersComplete = \App\Models\Job_batches_user::where('job_batches_rsp_id', $job->id)
+                ->exists() && // must have raters
+                !\App\Models\Job_batches_user::where('job_batches_rsp_id', $job->id)
+                    ->where('status', '!=', 'complete')
+                    ->exists();
+
+            if ($allRatersComplete) {
+                $newStatus = 'rated';
+            } elseif ($job->hired_count >= 1) {
+                $newStatus = 'occupied';
             } elseif ($job->qualified_count > 0 || $job->unqualified_count > 0) {
-                // Some applicants already assessed
                 $newStatus = $job->pending_count > 0 ? 'pending' : 'assessed';
             } else {
-                // No assessments yet
                 $newStatus = 'not started';
             }
+
             if ($originalStatus !== $newStatus) {
                 $job->status = $newStatus;
                 $job->save();
             }
         }
 
-        // Reload with updated status + counts
+        // Reload updated list
         $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
             ->withCount([
                 'submissions as total_applicants',
@@ -81,22 +177,92 @@ class JobBatchesRspController extends Controller
                 'submissions as pending_count' => function ($query) {
                     $query->whereRaw('LOWER(status) = ?', ['pending']);
                 },
-
-            'submissions as hired_count' => function ($query) {
-                $query->whereRaw('LOWER(status) = ?', ['Hired']);
-            },
-
+                'submissions as hired_count' => function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['hired']);
+                },
             ])
             ->get();
 
         return response()->json($jobPosts);
     }
 
+
+    // public function job_post()
+    // {
+    //     // Fetch all job posts with counts
+    //     $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
+    //         ->withCount([
+    //             'submissions as total_applicants',
+    //             'submissions as qualified_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['qualified']);
+    //             },
+    //             'submissions as unqualified_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['unqualified']);
+    //             },
+    //             'submissions as pending_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['pending']);
+    //             },
+    //             'submissions as hired_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['hired']);
+    //             },
+    //         ])
+    //         ->get();
+
+    //     foreach ($jobPosts as $job) {
+    //         $originalStatus = $job->status;
+
+    //         // 🔍 Check if all raters assigned to this job have completed their rating
+    //         $allRatersComplete = \App\Models\Job_batches_user::where('job_batches_rsp_id', $job->id)
+    //             ->exists() && // ensure there are assigned raters
+    //             !\App\Models\Job_batches_user::where('job_batches_rsp_id', $job->id)
+    //                 ->where('status', '!=', 'complete')
+    //                 ->exists();
+
+    //         if ($allRatersComplete) {
+    //             $newStatus = 'Rated';
+    //         } elseif ($job->hired_count >= 1) {
+    //             $newStatus = 'Occupied';
+    //         } elseif ($job->qualified_count > 0 || $job->unqualified_count > 0) {
+    //             $newStatus = $job->pending_count > 0 ? 'pending' : 'assessed';
+    //         } else {
+    //             $newStatus = 'not started';
+    //         }
+
+    //         // Only update if status has changed
+    //         if ($originalStatus !== $newStatus) {
+    //             $job->status = $newStatus;
+    //             $job->save();
+    //         }
+    //     }
+
+    //     // Reload updated list
+    //     $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
+    //         ->withCount([
+    //             'submissions as total_applicants',
+    //             'submissions as qualified_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['qualified']);
+    //             },
+    //             'submissions as unqualified_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['unqualified']);
+    //             },
+    //             'submissions as pending_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['pending']);
+    //             },
+    //             'submissions as hired_count' => function ($query) {
+    //                 $query->whereRaw('LOWER(status) = ?', ['hired']);
+    //             },
+    //         ])
+    //         ->get();
+
+    //     return response()->json($jobPosts);
+    // }
+
     public function job_list()
 
     {
         // Get all job posts with criteria and assigned raters
-        $jobs = JobBatchesRsp::with(['criteriaRatings', 'users:id,name'])->select('id','office','isOpen','Position', 'PositionID', 'ItemNo') // Include only user id and name
+        $jobs = JobBatchesRsp::with(['criteriaRatings', 'users:id,name'])->select('id','office','isOpen','Position', 'PositionID', 'ItemNo')
+        ->where('status', '!=', 'occupied') //
             ->get();
 
         // Add 'status' and 'assigned_raters' to each job
@@ -269,6 +435,7 @@ class JobBatchesRspController extends Controller
                 'nPersonalInfo.skills',
                 'nPersonalInfo.voluntary_work',
                 'nPersonalInfo.reference',
+
             ])
             ->get();
 
@@ -298,7 +465,6 @@ class JobBatchesRspController extends Controller
                     'name_extension' => $employeeJson['User'][0]['NameExtension'] ?? null,
 
                     'image_path' => $employeeJson['User'][0]['Pics'] ?? $employeeJson['User'][0]['image_path'] ?? null,
-
                     'date_of_birth' => $employeeJson['User'][0]['BirthDate'] ?? 'N/A',
                     'place_of_birth' => $employeeJson['User'][0]['BirthPlace'] ??  'N/A',
                     'sex' => $employeeJson['User'][0]['Sex'] ??  'N/A',
@@ -552,7 +718,36 @@ class JobBatchesRspController extends Controller
                     $imageUrl = $baseUrl . '/storage/' . $info['image_path'];
                 }
             }
+            $trainingImages = [];
+            $educationImages = [];
+            $eligibilityImages = [];
+            $experienceImages = [];
 
+            if ($info && isset($info['id'])) {
+                $baseFolder = storage_path('app/public/applicant_files/' . $submission->nPersonalInfo_id);
+
+                $folders = [
+                    'training' => $baseFolder . '/document/training',
+                    'education' => $baseFolder . '/document/education',
+                    'eligibility' => $baseFolder . '/document/eligibility',
+                    'experience' => $baseFolder . '/document/experience',
+                ];
+
+                foreach ($folders as $type => $path) {
+                    if (is_dir($path)) {
+                        $files = collect(scandir($path))
+                            ->filter(fn($file) => !in_array($file, ['.', '..']))
+                            ->map(fn($file) => asset('storage/applicant_files/' . $info['id'] . '/document/' . $type . '/' . $file))
+                            ->values()
+                            ->toArray();
+
+                        if ($type === 'training') $trainingImages = $files;
+                        if ($type === 'education') $educationImages = $files;
+                        if ($type === 'eligibility') $eligibilityImages = $files;
+                        if ($type === 'experience') $experienceImages = $files;
+                    }
+                }
+            }
             return [
                 'id' => $submission->id,
                 'nPersonalInfo_id' => $submission->nPersonalInfo_id,
@@ -568,6 +763,7 @@ class JobBatchesRspController extends Controller
                 'name_extension' => $info['name_extension'] ?? '',
                 'image_path' => $info['image_path'] ?? null,
                 'image_url' => $imageUrl,
+
                 'application_date' => $info['application_date']
                     ?? ($info instanceof \App\Models\excel\nPersonal_info
                         ? optional($info->created_at)->toDateString()
@@ -591,6 +787,10 @@ class JobBatchesRspController extends Controller
                 'skills' => $skillData,
                 'Academic' => $info['Academic'] ?? [],
                 'Organization' => $info['Organization'] ?? [],
+                'training_images' => $trainingImages,
+                'education_images' => $educationImages,
+                'eligibility_images' => $eligibilityImages,
+                'experience_images' => $experienceImages,
             ];
         });
 
@@ -601,6 +801,8 @@ class JobBatchesRspController extends Controller
             'total_applicants' => $totalApplicants,
             'applicants' => $applicants,
         ]);
+        // ->header("Content-Type", "application/json") // correct header
+        // ->header("Access-Control-Allow-Origin", "http://localhost:9000"); // allow any origin for downloads;
     }
 
 
@@ -837,6 +1039,101 @@ class JobBatchesRspController extends Controller
             'criteria' => $criteria ?? null,
             'plantilla' => $plantilla
         ], 200);
+    }
+
+    public function republished(Request $request)
+    {
+        // Validate basic fields for job batch
+        $jobValidated = $request->validate([
+            'Office' => 'nullable|string',
+            'Office2' => 'nullable|string',
+            'Group' => 'nullable|string',
+            'Division' => 'nullable|string',
+            'Section' => 'nullable|string',
+            'Unit' => 'nullable|string',
+            'Position' => 'required|string',
+            'PositionID' => 'nullable|integer',
+            'isOpen' => 'boolean',
+            'post_date' => 'required|nullable|date',
+            'end_date' => 'required|nullable|date',
+            'PageNo' => 'required|string',
+            'ItemNo' => 'required|string',
+            'SalaryGrade' => 'nullable|string',
+            'salaryMin' => 'nullable|string',
+            'salaryMax' => 'nullable|string',
+            'level' => 'nullable|string',
+            'tblStructureDetails_ID' => 'nullable|string',
+        ]);
+
+        // Validate criteria if present
+        $criteriaValidated = $request->only(['Education', 'Eligibility', 'Training', 'Experience']);
+
+        // Validate file if present
+        if ($request->hasFile('fileUpload')) {
+            $fileValidated = $request->validate([
+                'fileUpload' => 'required|mimes:pdf|max:5120',
+            ]);
+        }
+
+        // --- Step 1: Update PageNo if PageNo exists ---
+        // if ($request->has('PageNo') && $jobValidated['tblStructureDetails_ID'] && $jobValidated['ItemNo']) {
+        //     $exists = DB::table('tblStructureDetails')
+        //         ->where('PageNo', $jobValidated['PageNo'])
+        //         ->where('ItemNo', $jobValidated['ItemNo'])
+        //         ->where('ID', '<>', $jobValidated['tblStructureDetails_ID'])
+        //         ->exists();
+
+        //     if ($exists) {
+        //         return response()->json([
+        //             'status' => 'error',
+        //             'message' => 'Duplicate PageNo and ItemNo already exists in plantilla.'
+        //         ], 422);
+        //     }
+
+        //     DB::table('tblStructureDetails')
+        //         ->where('PositionID', $jobValidated['PositionID'])
+        //         ->where('ItemNo', $jobValidated['ItemNo'])
+        //         ->update(['PageNo' => $jobValidated['PageNo']]);
+        // }
+
+        // --- Step2: Create Job Post if new ---
+        $jobBatch = JobBatchesRsp::create($jobValidated);
+
+        // Create criteria if exists
+        if (!empty($criteriaValidated)) {
+            $criteria = OnCriteriaJob::create([
+                'job_batches_rsp_id' => $jobBatch->id,
+                'PositionID' => $jobValidated['PositionID'] ?? null,
+                'ItemNo' => $jobValidated['ItemNo'] ?? null,
+                'Education' => $criteriaValidated['Education'] ?? null,
+                'Eligibility' => $criteriaValidated['Eligibility'] ?? null,
+                'Training' => $criteriaValidated['Training'] ?? null,
+                'Experience' => $criteriaValidated['Experience'] ?? null,
+            ]);
+        }
+
+        // Handle plantilla and file upload
+        $plantilla = new OnFundedPlantilla();
+        $plantilla->job_batches_rsp_id = $jobBatch->id;
+        $plantilla->PositionID = $jobValidated['PositionID'] ?? null;
+        $plantilla->ItemNo = $jobValidated['ItemNo'] ?? null;
+
+        if ($request->hasFile('fileUpload')) {
+            $file = $request->file('fileUpload');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $filePath = $file->storeAs('plantilla_files', $fileName, 'public');
+            $plantilla->fileUpload = $filePath;
+        }
+
+        $plantilla->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Job post processed successfully',
+            'job_post' => $jobBatch,
+            'criteria' => $criteria ?? null,
+            'plantilla' => $plantilla
+        ], 201);
     }
 }
 

@@ -54,7 +54,8 @@ Route::middleware('auth:sanctum')->post('/logs/auth', [LogController::class, 'lo
 
 
 Route::prefix('applicant')->group(function () {
-    Route::post('/submissions', [ApplicantSubmissionController::class, 'store']); // for external applicant
+
+    Route::post('/submissions', [ApplicantSubmissionController::class, 'applicant_store']); // for external applicant with zip file
     Route::get('/submissions/index', [ApplicantSubmissionController::class, 'index']);
     Route::post('/employee', [ApplicantSubmissionController::class, 'employee_applicant']); // for employyee qpplicant
     Route::delete('/read', [ApplicantSubmissionController::class, 'read_excel']);
@@ -62,21 +63,17 @@ Route::prefix('applicant')->group(function () {
     // Route::delete('/delete', [ApplicantSubmissionController::class, 'deleteAllUsers']);
 });
 
-
-
-
 Route::prefix('rater')->group(function () {
     Route::get('/name', [rater_controller::class, 'get_rater_usernames']);
     Route::post('/login', [RaterAuthController::class, 'Raters_Login']);
 });
-
-
 
 Route::prefix('job-batches-rsp')->group(function () {
     Route::get('/', [JobBatchesRspController::class, 'index']);
     // Route::get('/applicant/count/{jobpostId}', [JobBatchesRspController::class, 'count']);
     Route::post('/', [JobBatchesRspController::class, 'store']);   // change old job-batches-rsp
     Route::put('/{id}', [JobBatchesRspController::class, 'update']);   // change old job-batches-rsp
+    Route::put('/jobpost/{JobPostingId}', [JobBatchesRspController::class, 'Unoccupied']);   // change old job-batches-rsp
 
     Route::delete('/{id}', [JobBatchesRspController::class, 'destroy']);
     Route::get('/{PositionID}/{ItemNo}', [JobBatchesRspController::class, 'show']);

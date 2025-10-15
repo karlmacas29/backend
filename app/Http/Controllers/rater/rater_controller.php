@@ -198,6 +198,7 @@ class rater_controller extends Controller
     //     ]);
     // }
 
+
     public function showScoresWithHistory($jobpostId)
     {
         // ✅ Ensure job post exists
@@ -227,6 +228,7 @@ class rater_controller extends Controller
             'rating_score.total_qs',
             'rating_score.grand_total',
             'rating_score.ranking',
+            'rating_score.rater_name',
             'nPersonalInfo.firstname',
             'nPersonalInfo.lastname',
             'nPersonalInfo.image_path',
@@ -386,107 +388,17 @@ class rater_controller extends Controller
     }
 
 
-
-    // // rater criteria - fetching the applicant information   and criteria of the job_post
-    // public function get_criteria_applicant($id)
-    // {
-    //     // Get criteria for the selected job post
-    //     $criteria = criteria_rating::with(['educations', 'experiences', 'trainings', 'performances', 'behaviorals'])
-    //         ->where('job_batches_rsp_id', $id)
-    //         ->get();
-
-    //     // Get applicants with personal info and nested relationships
-    //     $submissions = Submission::with([
-    //         'nPersonalInfo.education',
-    //         'nPersonalInfo.work_experience',
-    //         'nPersonalInfo.training',
-    //         'nPersonalInfo.eligibity',
-    //         'nPersonalInfo.rating_score', // <-- Add this line
-    //     ])
-    //         ->where('job_batches_rsp_id', $id)
-    //         ->where('status', 'qualified') // Only qualified applicants
-    //         ->get();
-
-    //     // Format applicants
-    //     $applicants = $submissions->map(function ($submission) {
-    //         $info = $submission->nPersonalInfo;
-
-    //         return [
-    //             'id' => $submission->id,
-    //             'nPersonalInfo_id' => $submission->nPersonalInfo_id,
-    //             'ControlNo' => $submission->ControlNo,
-    //             'firstname' => $info->firstname ?? '',
-    //             'lastname' => $info->lastname ?? '',
-    //             // Rating score
-    //             'rating_score' => [
-    //                 'education_score' => $info->rating_score->education_score ?? null,
-    //                 'experience_score' => $info->rating_score->experience_score ?? null,
-    //                 'training_score' => $info->rating_score->training_score ?? null,
-    //                 'performance_score' => $info->rating_score->performance_score ?? null,
-    //                 'behavioral_score' => $info->rating_score->behavioral_score ?? null,
-    //                 'total_qs' => $info->rating_score->total_qs ?? null,
-    //                 'grand_total' => $info->rating_score->grand_total ?? null,
-    //                 'ranking' => $info->rating_score->ranking ?? null,
-    //             ],
-    //             'education' => $info->education->map(function ($edu) {
-    //                 return [
-    //                     'school_name' => $edu->school_name,
-    //                     'degree' => $edu->degree,
-    //                     'attendance_from' => $edu->attendance_from,
-    //                     'attendance_to' => $edu->attendance_to,
-    //                     'year_graduated' => $edu->year_graduated,
-    //                     'scholarship' => $edu->scholarship,
-    //                     'level' => $edu->level,
-    //                 ];
-    //             }),
-    //             'work_experience' => $info->work_experience->map(function ($work) {
-    //                 return [
-    //                     'position_title' => $work->position_title,
-    //                     'department' => $work->department,
-    //                     'work_date_from' => $work->work_date_from,
-    //                     'work_date_to' => $work->work_date_to,
-    //                     'monthly_salary' => $work->monthly_salary,
-    //                     'status_of_appointment' => $work->status_of_appointment,
-    //                     'government_service' => $work->government_service,
-    //                 ];
-    //             }),
-    //             'training' => $info->training->map(function ($train) {
-    //                 return [
-    //                     'training_title' => $train->training_title,
-    //                     'inclusive_date_from' => $train->inclusive_date_from,
-    //                     'inclusive_date_to' => $train->inclusive_date_to,
-    //                     'number_of_hours' => $train->number_of_hours,
-    //                     'type' => $train->type,
-    //                     'conducted_by' => $train->conducted_by,
-    //                 ];
-    //             }),
-    //             'eligibity' => $info->eligibity->map(function ($elig) {
-    //                 return [
-    //                     'eligibility' => $elig->eligibility,
-    //                     'rating' => $elig->rating,
-    //                     'date_of_examination' => $elig->date_of_examination,
-    //                     'place_of_examination' => $elig->place_of_examination,
-    //                     'license_number' => $elig->license_number,
-    //                     'date_of_validity' => $elig->date_of_validity,
-    //                 ];
-    //             }),
-    //         ];
-    //     });
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'criteria' => $criteria,
-    //         'applicants' => $applicants,
-    //     ]);
-    // }
     public function get_criteria_applicant($id)
     {
+
+        $userId = Auth::id(); // ✅ get current logged-in rater
+
         // Get criteria
         $criteria = criteria_rating::with(['educations', 'experiences', 'trainings', 'performances', 'behaviorals'])
             ->where('job_batches_rsp_id', $id)
             ->get();
 
-        // Get applicants with required relationships
+        // Get applicants with relationships
         $submissions = Submission::where('job_batches_rsp_id', $id)
             ->with([
                 'nPersonalInfo.education',
@@ -494,15 +406,14 @@ class rater_controller extends Controller
                 'nPersonalInfo.training',
                 'nPersonalInfo.eligibity',
                 'nPersonalInfo.rating_score',
-                'nPersonalInfo.draft_score',
+                // ⚠️ Don’t eager-load all draft scores (they belong to multiple raters)
             ])
             ->where('status', 'qualified')
             ->get();
 
-        $applicants = $submissions->map(function ($submission) {
+        $applicants = $submissions->map(function ($submission) use ($userId) {
             $info = $submission->nPersonalInfo;
 
-            // ✅ Fallback if no nPersonalInfo_id but ControlNo exists
             if (!$info && $submission->ControlNo) {
                 $xPDS = new \App\Http\Controllers\xPDSController();
                 $employeeData = $xPDS->getPersonalDataSheet(new \Illuminate\Http\Request([
@@ -520,60 +431,69 @@ class rater_controller extends Controller
                     'training' => $employeeJson['Training'] ?? [],
                 ];
 
-                // 🔎 fetch scores manually by ControlNo
                 $ratingScore = \App\Models\rating_score::where('ControlNo', $submission->ControlNo)->first();
-                $draftScore  = \App\Models\draft_score::where('ControlNo', $submission->ControlNo)->first();
+
+                // ✅ Only fetch draft_score for the logged-in rater
+                $draftScore  = \App\Models\draft_score::where('ControlNo', $submission->ControlNo)
+                    ->where('user_id', $userId)
+                    ->where('job_batches_rsp_id', $submission->job_batches_rsp_id) // 🔑 filter by current job post
+                    ->first();
             } else {
                 $ratingScore = $info->rating_score ?? null;
-                $draftScore  = $info->draft_score ?? null;
+
+                // ✅ Filter draft_score by rater
+                $draftScore = \App\Models\draft_score::where('nPersonalInfo_id', $submission->nPersonalInfo_id)
+                    ->where('user_id', $userId)
+                    ->where('job_batches_rsp_id', $submission->job_batches_rsp_id) // 🔑 filter by current job post
+                    ->first();
             }
 
             // 🔄 Standardize datasets (education, eligibility, training, experience)
             $educationData = collect($info['education'] ?? [])->map(function ($edu) {
                 return [
-                    'level'           => $edu['Education'] ?? $edu['level'] ?? 'N/A',
-                    'school_name'     => $edu['School'] ?? $edu['school_name'] ?? 'N/A',
-                    'degree'          => $edu['Degree'] ?? $edu['degree'] ?? 'N/A',
-                    'attendance_from' => $edu['DateAttend'] ?? $edu['attendance_from'] ?? 'N/A',
-                    'attendance_to'   => $edu['attendance_to'] ?? 'N/A',
-                    'year_graduated'  => $edu['year_graduated'] ?? 'N/A',
-                    'highest_units'   => $edu['NumUnits'] ?? $edu['highest_units'] ?? 'N/A',
-                    'scholarship'     => $edu['Honors'] ?? $edu['scholarship'] ?? 'N/A',
+                    'level'           => $edu['Education'] ?? $edu['level'] ?? null,
+                    'school_name'     => $edu['School'] ?? $edu['school_name'] ?? null,
+                    'degree'          => $edu['Degree'] ?? $edu['degree'] ?? null,
+                    'attendance_from' => $edu['DateAttend'] ?? $edu['attendance_from'] ?? null,
+                    'attendance_to'   => $edu['attendance_to'] ?? null,
+                    'year_graduated'  => $edu['year_graduated'] ?? null,
+                    'highest_units'   => $edu['NumUnits'] ?? $edu['highest_units'] ?? null,
+                    'scholarship'     => $edu['Honors'] ?? $edu['scholarship'] ?? null,
                 ];
             });
 
             $eligibityData = collect($info['eligibity'] ?? [])->map(function ($eli) {
                 return [
-                    'eligibility'          => $eli['CivilServe'] ?? $eli['eligibility'] ?? 'N/A',
-                    'rating'               => $eli['Rates'] ?? $eli['rating'] ?? 'N/A',
-                    'date_of_examination'  => $eli['Dates'] ?? $eli['date_of_examination'] ?? 'N/A',
-                    'place_of_examination' => $eli['Place'] ?? $eli['place_of_examination'] ?? 'N/A',
-                    'license_number'       => $eli['LNumber'] ?? $eli['license_number'] ?? 'N/A',
-                    'date_of_validity'     => $eli['LDate'] ?? $eli['date_of_validity'] ?? 'N/A',
+                    'eligibility'          => $eli['CivilServe'] ?? $eli['eligibility'] ?? null,
+                    'rating'               => $eli['Rates'] ?? $eli['rating'] ?? null,
+                    'date_of_examination'  => $eli['Dates'] ?? $eli['date_of_examination'] ?? null,
+                    'place_of_examination' => $eli['Place'] ?? $eli['place_of_examination'] ?? null,
+                    'license_number'       => $eli['LNumber'] ?? $eli['license_number'] ?? null,
+                    'date_of_validity'     => $eli['LDate'] ?? $eli['date_of_validity'] ?? null,
                 ];
             });
 
             $trainingData = collect($info['training'] ?? [])->map(function ($train) {
                 return [
-                    'training_title'      => $train['Training'] ?? $train['training_title'] ?? 'N/A',
-                    'inclusive_date_from' => $train['DateFrom'] ?? $train['inclusive_date_from'] ?? 'N/A',
-                    'inclusive_date_to'   => $train['DateTo'] ?? $train['inclusive_date_to'] ?? 'N/A',
-                    'number_of_hours'     => $train['NumHours'] ?? $train['number_of_hours'] ?? 'N/A',
-                    'type'                => $train['Type'] ?? $train['type'] ?? 'N/A',
-                    'conducted_by'        => $train['Conductor'] ?? $train['conducted_by'] ?? 'N/A',
+                    'training_title'      => $train['Training'] ?? $train['training_title'] ?? null,
+                    'inclusive_date_from' => $train['DateFrom'] ?? $train['inclusive_date_from'] ?? null,
+                    'inclusive_date_to'   => $train['DateTo'] ?? $train['inclusive_date_to'] ?? null,
+                    'number_of_hours'     => $train['NumHours'] ?? $train['number_of_hours'] ?? null,
+                    'type'                => $train['Type'] ?? $train['type'] ?? null,
+                    'conducted_by'        => $train['Conductor'] ?? $train['conducted_by'] ?? null,
                 ];
             });
 
             $experienceData = collect($info['work_experience'] ?? [])->map(function ($exp) {
                 return [
-                    'work_date_from'       => $exp['WFrom'] ?? $exp['work_date_from'] ?? 'N/A',
-                    'work_date_to'         => $exp['WTo'] ?? $exp['work_date_to'] ?? 'N/A',
-                    'position_title'       => $exp['WPosition'] ?? $exp['position_title'] ?? 'N/A',
-                    'department'           => $exp['WCompany'] ?? $exp['department'] ?? 'N/A',
-                    'monthly_salary'       => $exp['WSalary'] ?? $exp['monthly_salary'] ?? 'N/A',
-                    'salary_grade'         => $exp['WGrade'] ?? $exp['salary_grade'] ?? 'N/A',
-                    'status_of_appointment' => $exp['Status'] ?? $exp['status_of_appointment'] ?? 'N/A',
-                    'government_service'   => $exp['WGov'] ?? $exp['government_service'] ?? 'N/A',
+                    'work_date_from'       => $exp['WFrom'] ?? $exp['work_date_from'] ?? null,
+                    'work_date_to'         => $exp['WTo'] ?? $exp['work_date_to'] ?? null,
+                    'position_title'       => $exp['WPosition'] ?? $exp['position_title'] ?? null,
+                    'department'           => $exp['WCompany'] ?? $exp['department'] ?? null,
+                    'monthly_salary'       => $exp['WSalary'] ?? $exp['monthly_salary'] ?? null,
+                    'salary_grade'         => $exp['WGrade'] ?? $exp['salary_grade'] ?? null,
+                    'status_of_appointment' => $exp['Status'] ?? $exp['status_of_appointment'] ?? null,
+                    'government_service'   => $exp['WGov'] ?? $exp['government_service'] ?? null,
                 ];
             });
 
@@ -617,171 +537,6 @@ class rater_controller extends Controller
         ]);
     }
 
-    // public function get_criteria_applicant($id)// lastest old
-    // {
-    //     // Get criteria for the selected job post
-    //     $criteria = criteria_rating::with(['educations', 'experiences', 'trainings', 'performances', 'behaviorals'])
-    //         ->where('job_batches_rsp_id', $id)
-    //         ->get();
-
-    //     // Get applicants with required relationships
-    //     $submissions = Submission::where('job_batches_rsp_id', $id)
-    //         ->with([
-    //             'nPersonalInfo.education',
-    //             'nPersonalInfo.work_experience',
-    //             'nPersonalInfo.training',
-    //             'nPersonalInfo.eligibity',
-    //             'nPersonalInfo.rating_score',
-    //         'nPersonalInfo.draft_score',
-    //         ])
-    //         ->where('status', 'qualified') // Only qualified applicants
-    //         ->get();
-
-    //     $applicants = $submissions->map(function ($submission) use ($id) {
-    //         $info = $submission->nPersonalInfo;
-
-    //         // ✅ Fallback to xPDS if missing (same as get_applicant)
-    //         if (!$info && $submission->ControlNo) {
-    //             $xPDS = new \App\Http\Controllers\xPDSController();
-    //             $employeeData = $xPDS->getPersonalDataSheet(new \Illuminate\Http\Request([
-    //                 'controlno' => $submission->ControlNo
-    //             ]));
-
-    //             $employeeJson = $employeeData->getData(true);
-
-    //             $info = [
-    //                 'firstname' => $employeeJson['User'][0]['Firstname'] ?? '',
-    //                 'lastname' => $employeeJson['User'][0]['Surname'] ?? '',
-    //                 'education' => $employeeJson['Education'] ?? [],
-    //                 'eligibity' => $employeeJson['Eligibility'] ?? [],
-    //                 'work_experience' => $employeeJson['Experience'] ?? [],
-    //                 'training' => $employeeJson['Training'] ?? [],
-    //             ];
-    //         }
-
-    //         // 🔄 Standardize the 4 criteria datasets (same logic from get_applicant)
-    //         $educationData = collect($info['education'] ?? [])->map(function ($edu) {
-    //             return [
-    //                 'level'           => $edu['Education'] ?? $edu['level'] ?? 'N/A',
-    //                 'school_name'     => $edu['School'] ?? $edu['school_name'] ?? 'N/A',
-    //                 'degree'          => $edu['Degree'] ?? $edu['degree'] ?? 'N/A',
-    //                 'attendance_from' => $edu['DateAttend'] ?? $edu['attendance_from'] ?? 'N/A',
-    //                 'attendance_to'   => $edu['attendance_to'] ?? 'N/A',
-    //                 'year_graduated'  => $edu['year_graduated'] ?? 'N/A',
-    //                 'highest_units'   => $edu['NumUnits'] ?? $edu['highest_units'] ?? 'N/A',
-    //                 'scholarship'     => $edu['Honors'] ?? $edu['scholarship'] ?? 'N/A',
-    //             ];
-    //         });
-
-    //         $eligibityData = collect($info['eligibity'] ?? [])->map(function ($eli) {
-    //             return [
-    //                 'eligibility'         => $eli['CivilServe'] ?? $eli['eligibility'] ?? 'N/A',
-    //                 'rating'              => $eli['Rates'] ?? $eli['rating'] ?? 'N/A',
-    //                 'date_of_examination' => $eli['Dates'] ?? $eli['date_of_examination'] ?? 'N/A',
-    //                 'place_of_examination' => $eli['Place'] ?? $eli['place_of_examination'] ?? 'N/A',
-    //                 'license_number'      => $eli['LNumber'] ?? $eli['license_number'] ?? 'N/A',
-    //                 'date_of_validity'    => $eli['LDate'] ?? $eli['date_of_validity'] ?? 'N/A',
-    //             ];
-    //         });
-
-    //         $trainingData = collect($info['training'] ?? [])->map(function ($train) {
-    //             return [
-    //                 'training_title'      => $train['Training'] ?? $train['training_title'] ?? 'N/A',
-    //                 'inclusive_date_from' => $train['DateFrom'] ?? $train['inclusive_date_from'] ?? 'N/A',
-    //                 'inclusive_date_to'   => $train['DateTo'] ?? $train['inclusive_date_to'] ?? 'N/A',
-    //                 'number_of_hours'     => $train['NumHours'] ?? $train['number_of_hours'] ?? 'N/A',
-    //                 'type'                => $train['Type'] ?? $train['type'] ?? 'N/A',
-    //                 'conducted_by'        => $train['Conductor'] ?? $train['conducted_by'] ?? 'N/A',
-    //             ];
-    //         });
-
-    //         $experienceData = collect($info['work_experience'] ?? [])->map(function ($exp) {
-    //             return [
-    //                 'work_date_from'      => $exp['WFrom'] ?? $exp['work_date_from'] ?? 'N/A',
-    //                 'work_date_to'        => $exp['WTo'] ?? $exp['work_date_to'] ?? 'N/A',
-    //                 'position_title'      => $exp['WPosition'] ?? $exp['position_title'] ?? 'N/A',
-    //                 'department'          => $exp['WCompany'] ?? $exp['department'] ?? 'N/A',
-    //                 'monthly_salary'      => $exp['WSalary'] ?? $exp['monthly_salary'] ?? 'N/A',
-    //                 'salary_grade'        => $exp['WGrade'] ?? $exp['salary_grade'] ?? 'N/A',
-    //                 'status_of_appointment' => $exp['Status'] ?? $exp['status_of_appointment'] ?? 'N/A',
-    //                 'government_service'  => $exp['WGov'] ?? $exp['government_service'] ?? 'N/A',
-    //             ];
-    //         });
-
-    //         return [
-    //             'id' => $submission->id,
-    //             'nPersonalInfo_id' => $submission->nPersonalInfo_id,
-    //             'ControlNo' => $submission->ControlNo,
-    //             'firstname' => $info['firstname'] ?? '',
-    //             'lastname' => $info['lastname'] ?? '',
-    //             'rating_score' => [
-    //                 'education_score' => $info['rating_score']->education_score ?? null,
-    //                 'experience_score' => $info['rating_score']->experience_score ?? null,
-    //                 'training_score' => $info['rating_score']->training_score ?? null,
-    //                 'performance_score' => $info['rating_score']->performance_score ?? null,
-    //                 'behavioral_score' => $info['rating_score']->behavioral_score ?? null,
-    //                 'total_qs' => $info['rating_score']->total_qs ?? null,
-    //                 'grand_total' => $info['rating_score']->grand_total ?? null,
-    //                 'ranking' => $info['rating_score']->ranking ?? null,
-    //             ],
-
-    //             'draft_score' => [
-    //                 'education_score' => $info['draft_score']->education_score ?? null,
-    //                 'experience_score' => $info['draft_score']->experience_score ?? null,
-    //                 'training_score' => $info['draft_score']->training_score ?? null,
-    //                 'performance_score' => $info['draft_score']->performance_score ?? null,
-    //                 'behavioral_score' => $info['draft_score']->behavioral_score ?? null,
-    //                 'total_qs' => $info['draft_score']->total_qs ?? null,
-    //                 'grand_total' => $info['draft_score']->grand_total ?? null,
-    //                 'ranking' => $info['draft_score']->ranking ?? null,
-    //             ],
-    //             'education' => $educationData,
-    //             'work_experience' => $experienceData,
-    //             'training' => $trainingData,
-    //             'eligibity' => $eligibityData,
-    //         ];
-    //     });
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'criteria' => $criteria,
-    //         'applicants' => $applicants,
-    //     ]);
-    // }
-
-
-    // fetching the all rater on the admin table only will be fetch have role rater
-    // public function get_all_raters()
-    // {
-    //     try {
-    //         $users = User::where('role_id', 2)
-    //             ->orderBy('created_at', 'desc') // Order by latest created first
-    //             ->get()
-    //             ->map(function ($user) {
-    //                 return [
-    //                     'id' => $user->id,
-    //                     'name' => $user->name,
-    //                     'username' => $user->username,
-    //                     'job_batches_rsp' => $user->job_batches_rsp->pluck('Position')->implode(', '),
-    //                     'office' => $user->office,
-    //                     'created_at' => $user->created_at->format('Y-m-d H:i:s'), // Include created date
-    //                     'updated_at' => $user->updated_at->format('Y-m-d H:i:s'), // Include updated date
-    //                 ];
-    //             });
-
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'Raters retrieved successfully',
-    //             'data' => $users
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Failed to retrieve raters',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
     public function get_all_raters()
     {
         try {
@@ -860,7 +615,9 @@ class rater_controller extends Controller
     public function store_score(Request $request) // storing the score of the applicant
     {
         try {
-            $userId = Auth::id();
+            $user = Auth::user();
+            $userId = $user->id;
+            $raterName = $user->name; // get rater name from users table
             $data = $request->all();
 
             if (!is_array($data)) {
@@ -912,6 +669,7 @@ class rater_controller extends Controller
                     'total_qs' => 'required|numeric|min:0|max:75',
                     'grand_total' => 'required|numeric|min:0|max:100',
                     'ranking' => 'required|integer',
+
                 ]);
 
                 if ($validator->fails()) {
@@ -939,7 +697,9 @@ class rater_controller extends Controller
                     'grand_total' => $validated['grand_total'],
                     'ranking' => $validated['ranking'],
                     'evaluated_at' => now(),
-                    'submitted' => true
+                    'submitted' => true,
+                    'rater_name' => $raterName, // ✅ automatically assign rater's name
+
                 ]);
 
                 $results[] = $submission;
@@ -988,8 +748,11 @@ class rater_controller extends Controller
     public function draft_score(Request $request)
     {
         try {
-            $userId = Auth::id();
+            $user = Auth::user();
+            $userId = $user->id;
+            $raterName = $user->name; // get rater name from users table
             $data = $request->all();
+
 
             if (!is_array($data)) {
                 return response()->json([
@@ -1022,6 +785,8 @@ class rater_controller extends Controller
                     'total_qs' => 'nullable|numeric|min:0|max:75',
                     'grand_total' => 'nullable|numeric|min:0|max:100',
                     'ranking' => 'nullable|integer',
+
+
                 ]);
 
                 if ($validator->fails()) {
@@ -1051,6 +816,8 @@ class rater_controller extends Controller
                         'grand_total' => $validated['grand_total'] ,
                         'ranking' => $validated['ranking'] ,
                         'evaluated_at' => now(),
+                        'rater_name' => $raterName, // ✅ automatically assign rater's name
+
                     ]
                 );
 
