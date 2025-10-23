@@ -67,7 +67,7 @@ class ApplicantSubmissionController extends Controller
     //     }
     // }
 
-    public function applicant_store(Request $request)
+    public function applicant_store(Request $request) // old working
     {
         $validated = $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,xls,csv,xlsm',
@@ -146,53 +146,19 @@ class ApplicantSubmissionController extends Controller
                 'errors' => $e->failures()
             ], 422);
         } catch (\Exception $e) {
-            if (str_contains($e->getMessage(), 'Personal Information resubmit')) {
+            if (str_contains($e->getMessage(), 'Personal Information validation failed')) {
                 return response()->json([
-                    'message' => 'Personal Information resubmit — missing firstname or lastname.'
+                    'message' => $e->getMessage(),
                 ], 422);
             }
 
             return response()->json([
-                'message' => 'Failed to import Excel or ZIP file.',
+                'message' => 'Failed to import Excel file.',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
-    private function getImagesFromFolder($folderPath)
-    {
-        $images = [];
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
 
-        if (!is_dir($folderPath)) {
-            return $images;
-        }
-
-        $files = scandir($folderPath);
-
-        foreach ($files as $file) {
-            if ($file === '.' || $file === '..') {
-                continue;
-            }
-
-            $filePath = $folderPath . '/' . $file;
-
-            // Check if it's a file and has image extension
-            if (is_file($filePath)) {
-                $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-
-                if (in_array($extension, $allowedExtensions)) {
-                    $images[] = [
-                        'filename' => $file,
-                        'path' => $filePath,
-                        'relative_path' => str_replace(storage_path('app/public/'), '', $filePath),
-                        'url' => asset('storage/' . str_replace(storage_path('app/public/'), '', $filePath)),
-                    ];
-                }
-            }
-        }
-
-        return $images;
-    }
 
 
     // this function is to delete all applicant on the excel

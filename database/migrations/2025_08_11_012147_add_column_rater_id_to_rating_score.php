@@ -22,9 +22,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('rating_score', function (Blueprint $table) {
-            $table->dropForeign(['users_id']);
+            $table->dropForeign(['user_id']);
             // Then drop the column
-            $table->dropColumn('users_id');
+            $table->dropColumn('user_id');
         });
     }
 };

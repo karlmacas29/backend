@@ -41,6 +41,7 @@ class JobBatchesRsp extends Model
         'fileUpload',
         'status',
         'tblStructureDetails_ID',
+        'old_job_id'
 
 
     ];

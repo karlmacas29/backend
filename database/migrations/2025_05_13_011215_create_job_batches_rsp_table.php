@@ -21,9 +21,18 @@ return new class extends Migration
             $table->text('Section')->nullable();
             $table->text('Unit')->nullable();
             $table->text('Position');
+            $table->string('PageNo')->nullable();
+            $table->string('ItemNo')->nullable();
+            $table->string('level')->nullable();
             $table->timestamp('post_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->integer('PositionID')->nullable();
+            $table->string('SalaryGrade')->nullable();
+            $table->string('salaryMin')->nullable();
+            $table->string('salaryMax')->nullable();
             $table->boolean('isOpen')->default(true);
+            $table->enum('status', ['pending', 'complete', 'Occupied', 'Unoccupied', 'assessed', 'not started', 'rated', 'republished'])->default('pending');
+
             $table->timestamps(); // includes created_at and updated_at
         });
     }

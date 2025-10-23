@@ -126,16 +126,40 @@ class PersonalInformationSheet implements WithEvents
             ];
 
             // Validate personal info data
-            $validator = Validator::make($data, [
-                'lastname' => 'required',
-                'firstname' => 'required',
-                // Add other validation rules as needed
-            ]);
+            $validator = Validator::make(
+                $data,
+                [
+                    'lastname' => 'required',
+                    'firstname' => 'required',
+                    'email_address' => 'required',
+                    'cellphone_number' => 'required',
+                    'sex' => 'required',
+                    'date_of_birth' => 'required',
+                    'civil_status' => 'required',
+                ],
+                [
+                    'lastname.required' => 'Lastname is required in Personal Information sheet.',
+                    'firstname.required' => 'Firstname is required in Personal Information sheet.',
+                    'email_address.required' => 'Email address is required in Personal Information sheet.',
+                    // 'email_address.email' => 'Invalid email format in Personal Information sheet.',
+                    'cellphone_number.required' => 'Cellphone number is required in Personal Information sheet.',
+                    'sex.required' => 'Sex field is required in Personal Information sheet.',
+                    'date_of_birth.required' => 'Date of Birth is required in Personal Information sheet.',
+                    // 'date_of_birth.date' => 'Invalid Date of Birth format in Personal Information sheet.',
+                    'civil_status.required' => 'Civil Status is required in Personal Information sheet.',
+                ]
+            );
 
             if ($validator->fails()) {
-                throw new ValidationException($validator);
-                throw new \Exception('Personal Information resubmit — missing firstname or lastname.');
+                // Collect readable validation errors
+                $errors = $validator->errors()->all();
+
+                // Combine into one readable message
+                $errorMessage = 'Personal Information validation failed: ' . implode(' ', $errors);
+
+                throw new \Exception($errorMessage);
             }
+
 
             // Create personal info
             $personalInfo = nPersonal_info::create($data);

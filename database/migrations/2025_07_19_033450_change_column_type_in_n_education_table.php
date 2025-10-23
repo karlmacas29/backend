@@ -24,9 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('nEducation', function (Blueprint $table) {
-            $table->int('attendance_from')->nullable()->change();
-            $table->int('attendance_to')->nullable()->change();
-            $table->int('year_graduated')->nullable()->change();
+            $table->integer('attendance_from')->nullable()->change();
+            $table->integer('attendance_to')->nullable()->change();
+            $table->integer('year_graduated')->nullable()->change();
         //
         });
     }

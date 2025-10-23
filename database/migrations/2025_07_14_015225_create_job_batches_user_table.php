@@ -18,6 +18,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('job_batches_rsp_id')->constrained('job_batches_rsp')->onDelete('cascade');
+            $table->enum('status', ['pending', 'complete', 'Occupied', 'Unoccupied', 'assessed', 'not started', 'rated', 'republished'])
+                ->default('pending');
             $table->timestamps();
         });
     }

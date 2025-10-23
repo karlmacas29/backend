@@ -11,17 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Schema::dropIfExists('user_rsp_control');
-        Schema::create('user_rsp_control', function (Blueprint $table) {
+        // Schema::dropIfExists('logs');
+        Schema::create('logs', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->boolean('isFunded')->default(false);
-            $table->boolean('isUserM')->default(false);
-            $table->boolean('isRaterM')->default(false);
-            $table->boolean('isCriteria')->default(false);
-            $table->boolean('isDashboardStat')->default(false);
+            $table->string('username');
+            $table->string('actions'); // E.g., Logged In, Logged Out
+            $table->string('position')->nullable();
+            $table->timestamp('date_performed');
+            $table->string('user_agent');
+            $table->string('ip_address');
             $table->timestamps();
 
+            // Foreign key constraint
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
@@ -31,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_rsp_control');
+        Schema::dropIfExists('logs');
     }
 };

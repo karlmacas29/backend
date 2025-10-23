@@ -135,7 +135,7 @@ class JobBatchesRspController extends Controller
             $newStatus = $originalStatus;
 
             // 🚫 Skip manual statuses (do not override)
-            $manualStatuses = ['unoccupied', 'occupied', 'closed'];
+            $manualStatuses = ['unoccupied', 'occupied', 'closed', 'republished'];
 
             if (in_array($originalStatus, $manualStatuses)) {
                 continue; // Don't change status if manually set
@@ -815,46 +815,7 @@ class JobBatchesRspController extends Controller
         ])->findOrFail($job_post_id);
 
         return response()->json($job_post);
-    }
-
-    // public function job_post_update($job_post_id, Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'post_date' => 'required|date',
-    //         'end_date' => 'required|date',
-    //         // 'fileUpload' => 'required|mimes:pdf|max:5120', // optional update
-    //     ]);
-
-    //     $request->validate([
-    //         'fileUpload' => 'required|mimes:pdf|max:5120',
-    //     ]);
-
-    //     // Load job post with relationships
-    //     $jobPost = JobBatchesRsp::with(['criteria', 'plantilla'])
-    //         ->findOrFail($job_post_id);
-
-    //     // Handle file upload if present
-    //     if ($request->hasFile('fileUpload')) {
-    //         $file = $request->file('fileUpload');
-    //         $fileName = time() . '_' . $file->getClientOriginalName();
-    //         $filePath = $file->storeAs('plantilla_files', $fileName, 'public');
-
-    //         // Update plantilla file path
-    //         if ($jobPost->plantilla) {
-    //             $jobPost->plantilla->update([
-    //                 'fileUpload' => $filePath,
-    //             ]);
-    //         }
-    //     }
-
-    //     // Update main job post
-    //     $jobPost->update($validated);
-
-    //     return response()->json([
-    //         'message' => 'Job post updated successfully',
-    //         'jobpost' => $jobPost->load(['criteria', 'plantilla'])
-    //     ]);
-    // }
+        }
 
 
     public function store(Request $request)
@@ -907,8 +868,9 @@ class JobBatchesRspController extends Controller
             }
 
             DB::table('tblStructureDetails')
-                ->where('PositionID', $jobValidated['PositionID'])
-                ->where('ItemNo', $jobValidated['ItemNo'])
+                // ->where('PositionID', $jobValidated['PositionID'])
+                ->where('ID', $jobValidated['tblStructureDetails_ID'])
+                // ->where('ItemNo', $jobValidated['ItemNo'])
                 ->update(['PageNo' => $jobValidated['PageNo']]);
         }
 
@@ -962,8 +924,6 @@ class JobBatchesRspController extends Controller
             'PageNo' => 'required|string',
             'ItemNo' => 'required|string',
             'PositionID' => 'required|string',
-
-
             'tblStructureDetails_ID' => 'required|string',
         ]);
 
@@ -995,7 +955,7 @@ class JobBatchesRspController extends Controller
             // Update PageNo in tblStructureDetails
             DB::table('tblStructureDetails')
                 ->where('ID', $jobValidated['tblStructureDetails_ID'])
-                ->where('ItemNo', $jobValidated['ItemNo'])
+                // ->where('ItemNo', $jobValidated['ItemNo'])
                 ->update(['PageNo' => $jobValidated['PageNo']]);
         }
 
@@ -1043,76 +1003,63 @@ class JobBatchesRspController extends Controller
 
     public function republished(Request $request)
     {
-        // Validate basic fields for job batch
+        // ✅ Step 1: Validate Job Batch fields
         $jobValidated = $request->validate([
-            'Office' => 'nullable|string',
-            'Office2' => 'nullable|string',
-            'Group' => 'nullable|string',
-            'Division' => 'nullable|string',
-            'Section' => 'nullable|string',
-            'Unit' => 'nullable|string',
+            'Office' => 'required|nullable|string',
+            'Office2' => 'required|nullable|string',
+            'Group' => 'required|nullable|string',
+            'Division' => 'required|nullable|string',
+            'Section' => 'required|nullable|string',
+            'Unit' => 'required|nullable|string',
             'Position' => 'required|string',
             'PositionID' => 'nullable|integer',
             'isOpen' => 'boolean',
-            'post_date' => 'required|nullable|date',
-            'end_date' => 'required|nullable|date',
+            'post_date' => 'required|date',
+            'end_date' => 'required|date',
             'PageNo' => 'required|string',
             'ItemNo' => 'required|string',
-            'SalaryGrade' => 'nullable|string',
-            'salaryMin' => 'nullable|string',
-            'salaryMax' => 'nullable|string',
-            'level' => 'nullable|string',
-            'tblStructureDetails_ID' => 'nullable|string',
+            'SalaryGrade' => 'required|nullable|string',
+            'salaryMin' => 'required|nullable|string',
+            'salaryMax' => 'required|nullable|string',
+            'level' => 'required|nullable|string',
+            'tblStructureDetails_ID' => 'required|string',
+            'old_job_id' => 'required|integer',
         ]);
 
-        // Validate criteria if present
-        $criteriaValidated = $request->only(['Education', 'Eligibility', 'Training', 'Experience']);
+        // ✅ Step 2: Require criteria fields
+        $criteriaValidated = $request->validate([
+            'Education' => 'required|string',
+            'Eligibility' => 'required|string',
+            'Training' => 'required|string',
+            'Experience' => 'required|string',
+        ]);
 
-        // Validate file if present
+        // ✅ Step 3: Mark old job as Republished
+        JobBatchesRsp::where('id', $jobValidated['old_job_id'])
+            ->update(['status' => 'Republished']);
+
+        // ✅ Step 4: Validate file if uploaded
         if ($request->hasFile('fileUpload')) {
-            $fileValidated = $request->validate([
+            $request->validate([
                 'fileUpload' => 'required|mimes:pdf|max:5120',
             ]);
         }
 
-        // --- Step 1: Update PageNo if PageNo exists ---
-        // if ($request->has('PageNo') && $jobValidated['tblStructureDetails_ID'] && $jobValidated['ItemNo']) {
-        //     $exists = DB::table('tblStructureDetails')
-        //         ->where('PageNo', $jobValidated['PageNo'])
-        //         ->where('ItemNo', $jobValidated['ItemNo'])
-        //         ->where('ID', '<>', $jobValidated['tblStructureDetails_ID'])
-        //         ->exists();
-
-        //     if ($exists) {
-        //         return response()->json([
-        //             'status' => 'error',
-        //             'message' => 'Duplicate PageNo and ItemNo already exists in plantilla.'
-        //         ], 422);
-        //     }
-
-        //     DB::table('tblStructureDetails')
-        //         ->where('PositionID', $jobValidated['PositionID'])
-        //         ->where('ItemNo', $jobValidated['ItemNo'])
-        //         ->update(['PageNo' => $jobValidated['PageNo']]);
-        // }
-
-        // --- Step2: Create Job Post if new ---
+        // ✅ Step 5: Create new Job Post
         $jobBatch = JobBatchesRsp::create($jobValidated);
 
-        // Create criteria if exists
-        if (!empty($criteriaValidated)) {
-            $criteria = OnCriteriaJob::create([
-                'job_batches_rsp_id' => $jobBatch->id,
-                'PositionID' => $jobValidated['PositionID'] ?? null,
-                'ItemNo' => $jobValidated['ItemNo'] ?? null,
-                'Education' => $criteriaValidated['Education'] ?? null,
-                'Eligibility' => $criteriaValidated['Eligibility'] ?? null,
-                'Training' => $criteriaValidated['Training'] ?? null,
-                'Experience' => $criteriaValidated['Experience'] ?? null,
-            ]);
-        }
+        // ✅ Step 6: Create new Criteria (required)
+        $criteria = OnCriteriaJob::create([
+            'job_batches_rsp_id' => $jobBatch->id,
+            'PositionID' => $jobValidated['PositionID'] ?? null,
+            'ItemNo' => $jobValidated['ItemNo'] ?? null,
+            'Education' => $criteriaValidated['Education'],
+            'Eligibility' => $criteriaValidated['Eligibility'],
+            'Training' => $criteriaValidated['Training'],
+            'Experience' => $criteriaValidated['Experience'],
+        ]);
 
-        // Handle plantilla and file upload
+        // ✅ Step 7: Handle plantilla and file upload
         $plantilla = new OnFundedPlantilla();
         $plantilla->job_batches_rsp_id = $jobBatch->id;
         $plantilla->PositionID = $jobValidated['PositionID'] ?? null;
@@ -1127,11 +1074,12 @@ class JobBatchesRspController extends Controller
 
         $plantilla->save();
 
+        // ✅ Step 8: Response
         return response()->json([
             'status' => 'success',
-            'message' => 'Job post processed successfully',
+            'message' => 'Job post republished successfully',
             'job_post' => $jobBatch,
-            'criteria' => $criteria ?? null,
+            'criteria' => $criteria,
             'plantilla' => $plantilla
         ], 201);
     }

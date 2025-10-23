@@ -43,7 +43,7 @@ class ApplicantHiringService
                 }
 
                 $family = $applicant->family;
-                $personal_declarations = $applicant->personal_declarations;
+                $personal_declarations = $applicant->personal_declarations->first(); // ✅ fix
                 $existingControlNo = $applicant->control_no ?? $applicant->controlno ?? $applicant->ControlNo ?? $submission->ControlNo ?? null;
 
                 // If internal, use existing, else generate new
@@ -145,7 +145,7 @@ class ApplicantHiringService
             'SpouseName'   => $family->spouse_name ?? null,
             'Occupation'   => $family->spouse_occupation ?? null,
 
-            'Q1' =>  $personal_declarations->a_third_degreee_answer  ?? null,
+            'Q1' =>  $personal_declarations->a_third_degree_answer  ?? null,
             'R1' =>  $personal_declarations->{'34_if_yes'} ?? null,
 
             'Q2' =>  $personal_declarations->a_found_guilty  ?? null,
@@ -307,6 +307,8 @@ class ApplicantHiringService
 
     private function updatePlantillaStructure($jobPost, $controlNo)
     {
+
+        $tblStructureDetails_ID = $jobPost->tblStructureDetails_ID;
         $itemNo = $jobPost->ItemNo;
         $pageNo = $jobPost->PageNo;
 
@@ -317,9 +319,14 @@ class ApplicantHiringService
         }
         DB::table('tempRegAppointmentReorg')->where('ControlNo', $controlNo)->delete();
 
+        // $designation = DB::table('yDesignation') // codes // descripstions // status // Grade
+        //     ->select('Codes', 'Descriptions', 'Status')
+        //     ->where('Descriptions', $jobPost->Position)
+        //     ->first();
         $designation = DB::table('yDesignation')
             ->select('Codes', 'Descriptions', 'Status')
             ->where('Descriptions', $jobPost->Position)
+            ->where('Status', 'REGULAR') // always prefer Regular
             ->first();
 
         $office = DB::table('yOffice')
@@ -341,42 +348,65 @@ class ApplicantHiringService
         $rateDay  = $rateMon > 0 ? $rateMon / 22 : 0;
         $rateYear = $rateMon * 12;
 
+        $Division = DB::table('yDivision')
+            ->where('Descriptions', $jobPost->Division)
+            ->orWhere('Codes', $jobPost->Division)
+            ->first();
+
+        $DivCode = $Division->Codes ?? '00000';
+
+
+        $Section = DB::table('ySection')
+            ->where('Descriptions', $jobPost->Section)
+            ->orWhere('Codes', $jobPost->Section)
+            ->first();
+
+        $SecCode = $Section->Codes ?? '00000';
+
+        $Unit = DB::table('yUnit')
+            ->where('Descriptions', $jobPost->Unit)
+            ->orWhere('Codes', $jobPost->Unit)
+            ->first();
+
+        $UnitCode =    $Unit->Codes ?? '00000';
+
         DB::table('xService')
             ->where('ControlNo', $controlNo)
             ->where('ToDate', '>', $fromDate)
             ->update(['ToDate' => Carbon::parse($fromDate)->subDay()]);
 
         DB::table('xService')->insert([
-            'ControlNo'    => $controlNo,
-            'FromDate'     => $fromDate->format('Y-m-d H:i:s'),
-            'ToDate'       => $toDate->format('Y-m-d H:i:s'),
-            'DesigCode'    => $designation->Codes ?? '00000',
-            'Designation'  => $designation->Descriptions ?? $jobPost->Position,
-            'StatCode'     => '00001',
+            'ControlNo'    => $controlNo, // 1
+            'FromDate'     => $fromDate->format('Y-m-d H:i:s'), // 1
+            'ToDate'       => $toDate->format('Y-m-d H:i:s'), // 1
+            'DesigCode'    => $designation->Codes ?? '00000', // 1
+            'Designation'  => $designation->Descriptions ?? $jobPost->Position, // 1
+            'StatCode'     => '00001', // 1
             'Status'       => 'REGULAR',
-            'OffCode'      => $officeCode ?? '00000',
-            'Office'       => $jobPost->Office ?? 'NONE',
+            'OffCode'      => $officeCode ?? '00000', // 1
+            'Office'       => $jobPost->Office ?? 'NONE',  // 1
             'BranCode'     => '00001',
             'Branch'       => 'LGU-TAGUM',
             'LVRemarks'    => '',
-            'RateDay'      => $rateDay,
-            'RateMon'      => $rateMon,
-            'RateYear'     => $rateYear,
+            'RateDay'      => $rateDay, // 1
+            'RateMon'      => $rateMon, // 1
+            'RateYear'     => $rateYear, // 1
             'SepDate'      => '',
             'SepCause'     => '',
             'AppCode'      => '0',
-            'DivCode'      => $jobPost->DivCode ?? null,
-            'Divisions'    => $jobPost->Division ?? null,
-            'SecCode'      => $jobPost->SecCode ?? null,
-            'Sections'     => $jobPost->Section ?? null,
-            'PlantCode'    => $jobPost->PlantCode ?? null,
-            'Renew'        => $jobPost->Renew ?? null,
-            'Grades'       => $jobPost->SalaryGrade,
+            'DivCode'      => $DivCode ?? null, // 1
+            'Divisions'    => $jobPost->Division ?? null, // 1
+            'SecCode'      => $SecCode ?? null, // 1
+            'Sections'     => $jobPost->Section ?? null, // 1
+            'PlantCode'    => $jobPost->PlantCode ?? null, // 1
+            'Renew'        => $jobPost->Renew ?? null, // 1
+            'Grades'       => $jobPost->SalaryGrade ?? null, // 1
             'Steps'        => 1,
             'Charges'      => '',
         ]);
 
         $structure = DB::table('tblStructureDetails')
+            ->where('ID', $jobPost->tblStructureDetails_ID)
             ->where('PageNo', $jobPost->PageNo)
             ->where('ItemNo', $jobPost->ItemNo)
             ->first();
@@ -385,22 +415,44 @@ class ApplicantHiringService
 
         DB::table('tempRegAppointmentReorg')->insert([
             // 'ID'            => $nextId,
-            'ControlNo'     => $controlNo,
-            'DesigCode'     => $designation->Codes ?? null,
-            'NewDesignation' => $designation->Descriptions ?? $jobPost->Position,
-            'Designation'   => $designation->Descriptions ?? $jobPost->Position,
-            'SG'            => $jobPost->SalaryGrade,
+            'ControlNo'     => $controlNo,//1
+            'DesigCode'     => $designation->Codes ?? null, //1
+            'NewDesignation' => $designation->Descriptions ?? $jobPost->Position, //1
+            'Designation'   => $designation->Descriptions ?? $jobPost->Position, //1
+            'SG'            => $jobPost->SalaryGrade, //1
             'Step'          => 1,
-            'Status'        => $designation->Status,
-            'OffCode'       => $jobPost->OfficeCode,
+            'Status'        => $designation->Status, //1
+            'OffCode'       => $officeCode, //1
             'NewOffice'     => $jobPost->Office,
             'Office'        => $jobPost->Office,
-            'MRate'         => $rateMon,
-            'Official'      => '0',
+            'MRate'         => $rateMon, //1
+            'Official'      => 0,
             'Renew'         => 'APPOINTMENT',
             'ItemNo'        => $itemNo,
             'Pages'         => $pageNo,
             'StructureID'   => $structure->StructureID ?? null,
+            'DivCode' => $DivCode ?? null, // 1
+            'SecCode' => $SecCode ?? null, // 1
+            // 'groupcode',//
+            // 'group',//
+            'unitcode' =>     $UnitCode ?? null,
+            'unit' => $jobPost->Unit ?? null,
+            // 'sepdate',
+            // 'sepcause',
+            // 'vicename',
+            // 'vicecause'
+
+
+
+        ]);
+
+        DB::table('posting_date')->insert([
+            'ControlNo'     => $controlNo, //1
+            'posting_daate' =>$jobPost->post_date,
+            'end_date' => $jobPost->end_date,
+            'job_batches_rsp_id' =>$jobPost->id
+
+
         ]);
     }
 }

@@ -9,20 +9,20 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::table('job_batches_rsp', function (Blueprint $table) {
-            $table->string('level')->nullable()->change();
-        });
-    }
+    // public function up(): void
+    // {
+    //     Schema::table('job_batches_rsp', function (Blueprint $table) {
+    //         $table->string('level')->nullable()->change();
+    //     });
+    // }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::table('job_batches_rsp', function (Blueprint $table) {
-            $table->integer('level')->nullable()->change();
-        });
-    }
+    // /**
+    //  * Reverse the migrations.
+    //  */
+    // public function down(): void
+    // {
+    //     Schema::table('job_batches_rsp', function (Blueprint $table) {
+    //         $table->integer('level')->nullable()->change();
+    //     });
+    // }
 };

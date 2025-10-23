@@ -9,20 +9,20 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::table('user_rsp_control', function (Blueprint $table) {
-            $table->boolean('isDashboardStat')->default(false);
-        });
-    }
+    // public function up(): void
+    // {
+    //     Schema::table('user_rsp_control', function (Blueprint $table) {
+    //         $table->boolean('isDashboardStat')->default(false);
+    //     });
+    // }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::table('user_rsp_control', function (Blueprint $table) {
-            $table->boolean('isDashboardStat')->default(false);
-        });
-    }
+    // /**
+    //  * Reverse the migrations.
+    //  */
+    // public function down(): void
+    // {
+    //     Schema::table('user_rsp_control', function (Blueprint $table) {
+    //         $table->boolean('isDashboardStat')->default(false);
+    //     });
+    // }
 };
