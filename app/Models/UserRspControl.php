@@ -19,7 +19,7 @@ class UserRspControl extends Model
         'viewJobpostAccess',
         'modifyJobpostAccess',
 
-        'viewAcitivtyLogs',
+        'viewActivityLogs',
         'userManagement',
         'viewRater',
         'modifyRater',

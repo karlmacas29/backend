@@ -13,7 +13,7 @@ class UsersController extends Controller
     public function getAuthenticatedUser(Request $request)
     {
         // Get the authenticated user with relationships in a single query
-        $user = $request->user()->load(['rspControl:id,user_id,viewDashboardstat,viewPlantillaAccess,modifyPlantillaAccess,viewJobpostAccess,modifyJobpostAccess,viewAcitivtyLogs,userManagement,viewRater,modifyRater,viewCriteria,modifyCriteria,viewReport']);
+        $user = $request->user()->load(['rspControl:id,user_id,viewDashboardstat,viewPlantillaAccess,modifyPlantillaAccess,viewJobpostAccess,modifyJobpostAccess,viewActivityLogs,userManagement,viewRater,modifyRater,viewCriteria,modifyCriteria,viewReport']);
 
         if (!$user) {
             return response()->json(['message' => 'Token expired or invalid'], 401);
@@ -35,7 +35,7 @@ class UsersController extends Controller
 
                 'modifyJobpostAccess' => optional($user->rspControl)->modifyJobpostAccess ?? false,
 
-                'viewAcitivtyLogs' => optional($user->rspControl)->viewAcitivtyLogs ?? false,
+                'viewActivityLogs' => optional($user->rspControl)->viewActivityLogs ?? false,
 
                 'userManagement' => optional($user->rspControl)->userManagement ?? false,
                 'viewRater' => optional($user->rspControl)->viewRater ?? false,

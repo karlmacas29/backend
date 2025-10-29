@@ -38,7 +38,7 @@ class UserSeeder extends Seeder
             'modifyPlantillaAccess' => true,
             'viewJobpostAccess' => true,
             'modifyJobpostAccess' => true,
-            'viewAcitivtyLogs' => true,
+            'viewActivityLogs' => true,
             'userManagement' => true,
             'viewRater' => true,
             'modifyRater' => true,

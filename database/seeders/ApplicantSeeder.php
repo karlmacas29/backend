@@ -11,7 +11,7 @@ class ApplicantSeeder extends Seeder
 {
     public function run()
     {
-        nPersonal_info::factory(10)
+        nPersonal_info::factory(500)
             ->create()
             ->each(function ($applicant) {
 

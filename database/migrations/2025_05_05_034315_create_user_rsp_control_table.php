@@ -24,7 +24,7 @@ return new class extends Migration
             $table->boolean('viewJobpostAccess')->default(false);
             $table->boolean('modifyJobpostAccess')->default(false);
 
-            $table->boolean('viewAcitivtyLogs')->default(false);
+            $table->boolean('viewActivityLogs')->default(false);
             $table->boolean('userManagement')->default(false);
 
             $table->boolean('viewRater')->default(false);

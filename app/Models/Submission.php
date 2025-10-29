@@ -42,32 +42,7 @@ class Submission extends Model
     {
         return $this->belongsTo(xPersonal::class, 'ControlNo', 'ControlNo');
     }
-    // public function children()
-    // {
-    //     return $this->belongsTo(Children::class, 'nPersonalInfo_id');
-    // }
 
-    // public function education()
-    // {
-    //     return $this->belongsTo(Education_background::class, 'nPersonalInfo_id');
-    // }
-
-    // public function family()
-    // {
-    //     return $this->belongsTo(nFamily::class, 'nPersonalInfo_id');
-    // }
-    // protected static function booted()
-    // {
-    //     static::creating(function ($submission) {
-    //         if (is_null($submission->status)) {
-    //             $submission->status = 'pending';
-    //         }
-    //     });
-    // }
-    // public function eligibity()
-    // {
-    //     return $this->belongsTo(Civil_service_eligibity::class, 'nPersonalInfo_id');
-    // }
 
     public function jobPost()
     {
@@ -79,5 +54,24 @@ class Submission extends Model
         return $this->belongsTo(JobBatchesRsp::class, 'job_batches_rsp_id', 'id');
     }
 
+    protected static function booted()
+    {
+        // Prevent duplicate submissions for the same email and job
+        static::creating(function ($submission) {
+            $personalInfo = nPersonal_info::find($submission->nPersonalInfo_id);
+
+            if ($personalInfo && $personalInfo->email_address) {
+                $existingSubmission = Submission::whereHas('nPersonalInfo', function ($query) use ($personalInfo) {
+                    $query->where('email_address', $personalInfo->email_address);
+                })->where('job_batches_rsp_id', $submission->job_batches_rsp_id)
+                    ->where('nPersonalInfo_id', '!=', $submission->nPersonalInfo_id)
+                    ->exists();
+
+                if ($existingSubmission) {
+                    throw new \Exception('An application with this email address already exists for this job position.');
+                }
+            }
+        });
+    }
 }
 
