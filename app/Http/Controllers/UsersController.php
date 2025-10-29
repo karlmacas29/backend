@@ -13,7 +13,7 @@ class UsersController extends Controller
     public function getAuthenticatedUser(Request $request)
     {
         // Get the authenticated user with relationships in a single query
-        $user = $request->user()->load(['rspControl:id,user_id,isFunded,isUserM,isRaterM,isCriteria,isDashboardStat']);
+        $user = $request->user()->load(['rspControl:id,user_id,viewDashboardstat,viewPlantillaAccess,modifyPlantillaAccess,viewJobpostAccess,modifyJobpostAccess,viewAcitivtyLogs,userManagement,viewRater,modifyRater,viewCriteria,modifyCriteria,viewReport']);
 
         if (!$user) {
             return response()->json(['message' => 'Token expired or invalid'], 401);
@@ -27,11 +27,26 @@ class UsersController extends Controller
             'position' => $user->position,
             'active' => $user->active,
             'permissions' => [
-                'isFunded' => optional($user->rspControl)->isFunded ?? false,
-                'isUserM' => optional($user->rspControl)->isUserM ?? false,
-                'isRaterM' => optional($user->rspControl)->isRaterM ?? false,
-                'isCriteria' => optional($user->rspControl)->isCriteria ?? false,
-                'isDashboardStat' => optional($user->rspControl)->isDashboardStat ?? false,
+                'viewDashboardstat' => optional($user->rspControl)->viewDashboardstat ?? false,
+                'viewPlantillaAccess' => optional($user->rspControl)->viewPlantillaAccess ?? false,
+
+                'modifyPlantillaAccess' => optional($user->rspControl)->modifyPlantillaAccess ?? false,
+                'viewJobpostAccess' => optional($user->rspControl)->viewJobpostAccess ?? false,
+
+                'modifyJobpostAccess' => optional($user->rspControl)->modifyJobpostAccess ?? false,
+
+                'viewAcitivtyLogs' => optional($user->rspControl)->viewAcitivtyLogs ?? false,
+
+                'userManagement' => optional($user->rspControl)->userManagement ?? false,
+                'viewRater' => optional($user->rspControl)->viewRater ?? false,
+
+                'modifyRater' => optional($user->rspControl)->modifyRater ?? false,
+
+                'viewCriteria' => optional($user->rspControl)->viewCriteria?? false,
+
+                'modifyCriteria' => optional($user->rspControl)->modifyCriteria ?? false,
+                'viewReport' => optional($user->rspControl)->viewReport ?? false,
+
             ],
         ];
 

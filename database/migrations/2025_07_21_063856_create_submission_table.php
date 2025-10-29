@@ -15,7 +15,7 @@ return new class extends Migration
 
         Schema::create('submission', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('nPersonalInfo_id')->constrained('nPersonalInfo')->onDelete('cascade');
+            $table->foreignId('nPersonalInfo_id')->nullable()->constrained('nPersonalInfo')->onDelete('cascade');
             $table->string('ControlNo')->nullable()->after('nPersonalInfo_id');
             $table->foreignId('job_batches_rsp_id')->constrained('job_batches_rsp')->onDelete('cascade');
             $table->string('education_remark')->nullable();

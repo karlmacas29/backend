@@ -6,19 +6,20 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\xPDSController;
+use App\Http\Controllers\RaterController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\CriteriaController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PlantillaController;
 use App\Http\Controllers\RaterAuthController;
 use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\ViewActiveController;
 use App\Http\Controllers\AppointmentController;
-use App\Http\Controllers\rater\rater_controller;
-use App\Http\Controllers\Api\PlantillaController;
 use App\Http\Controllers\DesignationQSController;
 use App\Http\Controllers\JobBatchesRspController;
 use App\Http\Controllers\OnCriteriaJobController;
-use App\Http\Controllers\Api\ViewActiveController;
+use App\Http\Controllers\ExportApplicantController;
 use App\Http\Controllers\StructureDetailController;
 use App\Http\Controllers\OnFundedPlantillaController;
 use App\Http\Controllers\ApplicantSubmissionController;
@@ -31,14 +32,25 @@ Route::get('/mail-test', function () {
         return '❌ Mail error: ' . $e->getMessage();
     }
 });
+// testing route
 
-Route::post('/hire/{submissionId}', [AppointmentController::class, 'hireApplicant']);
+
+Route::post('/submissions/multiple', [ExportApplicantController::class, 'storeMultiple']);
+
+
+
+
+//
+Route::get('/test', [JobBatchesRspController::class, 'index']); // fetching all job post
+Route::get('/export/applicant/{job_post_id}', [ExportApplicantController::class, 'history_applicant_all']); // fetching all job post
+
+Route::post('/hire/{submissionId}', [AppointmentController::class, 'hireApplicant']); // hire an applicant external or internal
 Route::delete('/delete', [ApplicantSubmissionController::class, 'deleteAllUsers']);
 
 Route::get('/plantilla/status', [DashboardController::class, 'plantilla_number']);
 Route::get('/activity_log', [LogController::class, 'activityLogs']);
 
-Route::post('/xPDS', [xPDSController::class, 'getPersonalDataSheet']);
+Route::post('/xPDS', [xPDSController::class, 'getPersonalDataSheet']);  // pds of internal
 Route::get('/employee/{ControlNo}', [EmployeeController::class, 'applied_employee']);
 Route::get('/employee/applicant/xpds', [xPDSController::class, 'getPersonalDataSheet']);
 Route::get('/logs', [LogController::class, 'index']);
@@ -53,23 +65,27 @@ Route::delete('/job/delete/{id}', [JobBatchesRspController::class, 'destroy']); 
 Route::post('/job-post/{job_batches_id}/', [JobBatchesRspController::class, 'update']);
 Route::get('/job-post', [JobBatchesRspController::class, 'job_post']); // fetching all job post
 Route::post('/job-post/store', [JobBatchesRspController::class, 'store']);
+Route::get('/job-post/republished/', [JobBatchesRspController::class, 'getRepublishHistory']); // fetching all job post
+
 
 Route::post('/login', [AuthController::class, 'Token_Login']);
 Route::get('/role', [AuthController::class, 'get_role']);
 Route::post('/registration', [AuthController::class, 'Token_Register']);
+
+
 Route::middleware('auth:sanctum')->post('/logs/auth', [LogController::class, 'logAuth']);
 
 Route::prefix('applicant')->group(function () {
     Route::post('/submissions', [ApplicantSubmissionController::class, 'applicant_store']); // for external applicant with zip file
     Route::get('/submissions/index', [ApplicantSubmissionController::class, 'index']);
-    Route::post('/employee', [ApplicantSubmissionController::class, 'employee_applicant']); // for employyee qpplicant
+    Route::post('/employee', [ApplicantSubmissionController::class, 'employee_applicant']); // for employyee applicant
     Route::delete('/read', [ApplicantSubmissionController::class, 'read_excel']);
     Route::post('/image', [ApplicantSubmissionController::class, 'store_image']);
     // Route::delete('/delete', [ApplicantSubmissionController::class, 'deleteAllUsers']);
 });
 
 Route::prefix('rater')->group(function () {
-    Route::get('/name', [rater_controller::class, 'get_rater_usernames']);
+    Route::get('/name', [RaterController::class, 'get_rater_usernames']);
     Route::post('/login', [RaterAuthController::class, 'Raters_Login']);
 });
 
@@ -112,31 +128,31 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::prefix('rater')->group(function () {
-        Route::get('/assigned-job-batches', [rater_controller::class, 'getAssignedJobs']);
+        Route::get('/assigned-job-batches', [RaterController::class, 'getAssignedJobs']);
         Route::get('/', [UsersController::class, 'getAuthenticatedrater']);
-        // Route::get('/show/{jobpostId}', [rater_controller::class, 'showScores']);
+        // Route::get('/show/{jobpostId}', [RaterController::class, 'showScores']);
         Route::post('/logout', [RaterAuthController::class, 'Rater_logout']);
         Route::get('/users', [AuthController::class, 'getAllUsers']);
-        Route::get('/assigned-job-batches', [rater_controller::class, 'getAssignedJobs']);
+        Route::get('/assigned-job-batches', [RaterController::class, 'getAssignedJobs']);
         Route::get('/', [UsersController::class, 'getAuthenticatedrater']);
         Route::delete('/{id}', [RaterAuthController::class, 'deleteUser']);
-        Route::get('/criteria/applicant/{id}', [rater_controller::class, 'get_criteria_applicant']);
-        Route::get('/show/{jobpostId}', [rater_controller::class, 'showScoresWithHistory']);
+        Route::get('/criteria/applicant/{id}', [RaterController::class, 'get_criteria_applicant']);
+        Route::get('/show/{jobpostId}', [RaterController::class, 'showScoresWithHistory']);
         Route::post('/edit/{id}', [RaterAuthController::class, 'editRater']);
         Route::post('/logout', [RaterAuthController::class, 'Rater_logout']);
         Route::post('/changepassword', [RaterAuthController::class, 'change_password']);
         Route::post('/register', [RaterAuthController::class, 'RatersRegister']);
-        Route::get('/list', [rater_controller::class, 'get_all_raters']);
-        Route::get('/applicant/history/score/{applicantId}', [rater_controller::class, 'applicant_history_score']);
-        Route::get('/{raterId}', [rater_controller::class, 'view']);
+        Route::get('/list', [RaterController::class, 'get_all_raters']);
+        Route::get('/applicant/history/score/{applicantId}', [RaterController::class, 'applicant_history_score']);
+        Route::get('/{raterId}', [RaterController::class, 'view']);
     });
 
     Route::prefix('rating')->group(function () {
-        Route::delete('/score/{id}', [rater_controller::class, 'delete']);
-        Route::get('/index', [rater_controller::class, 'index']);
+        Route::delete('/score/{id}', [RaterController::class, 'delete']);
+        Route::get('/index', [RaterController::class, 'index']);
         Route::delete('/delete/{id}', [SubmissionController::class, 'delete']);
-        Route::post('/draft', [rater_controller::class, 'draft_score']); // draft score for applicant rating score
-        Route::post('/score', [rater_controller::class, 'store_score']); // final submission of the applicant score
+        Route::post('/draft', [RaterController::class, 'draft_score']); // draft score for applicant rating score
+        Route::post('/score', [RaterController::class, 'store_score']); // final submission of the applicant score
     });
 
     Route::prefix('appointment')->group(function () {

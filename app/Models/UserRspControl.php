@@ -13,16 +13,20 @@ class UserRspControl extends Model
 
     protected $fillable = [
         'user_id',
-        'isFunded',
-        'isUserM',
-        'isRaterM',
-        'isCriteria',
-        'isDashboardStat',
+        'viewDashboardstat',
+        'viewPlantillaAccess',
+        'modifyPlantillaAccess',
+        'viewJobpostAccess',
+        'modifyJobpostAccess',
 
-        'isJobCreate',
-        'isJobEdit',
-        'isJobView',
-        'isJobDelete',
+        'viewAcitivtyLogs',
+        'userManagement',
+        'viewRater',
+        'modifyRater',
+
+        'viewCriteria',
+        'modifyCriteria',
+        'viewReport'
     ];
 
     // In UserRspControl.php

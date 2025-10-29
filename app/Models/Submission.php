@@ -25,13 +25,22 @@ class Submission extends Model
         'eligibility_remark',
          'status',
         'ControlNo',
-        
+
     ];
     public $timestamps = true; // or just remove if not set
 
     public function nPersonalInfo()
     {
         return $this->belongsTo(nPersonal_info::class, 'nPersonalInfo_id');
+    }
+    public function ControlNo() // external applicants
+    {
+        return $this->belongsTo(xPersonal::class, 'ControlNo', 'ControlNo');
+    }
+
+    public function xPersonal() // external applicants
+    {
+        return $this->belongsTo(xPersonal::class, 'ControlNo', 'ControlNo');
     }
     // public function children()
     // {
@@ -69,5 +78,6 @@ class Submission extends Model
     {
         return $this->belongsTo(JobBatchesRsp::class, 'job_batches_rsp_id', 'id');
     }
+
 }
 

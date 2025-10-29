@@ -15,7 +15,7 @@ class ChildrenFactory extends Factory
         return [
             'child_name' => $this->faker->name,
             'birth_date' => $this->faker->date(),
-            'nPersonalInfo_id' => nPersonal_info::factory(), // ✅ Correct way
+            // 'nPersonalInfo_id' => nPersonal_info::factory(), // ✅ Correct way
         ];
     }
 }

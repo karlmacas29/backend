@@ -133,4 +133,20 @@ class JobBatchesRsp extends Model
     {
         return $this->hasMany(Submission::class, 'job_batches_rsp_id', 'id');
     }
+    // This gets the previous job post
+    public function previousJob()
+    {
+        return $this->belongsTo(JobBatchesRsp::class, 'old_job_id');
+    }
+
+    // This gets all republished jobs that came from this post
+    public function republishedJobs()
+    {
+        return $this->hasMany(JobBatchesRsp::class, 'old_job_id');
+    }
+
+    public function nextJob()
+    {
+        return $this->hasOne(JobBatchesRsp::class, 'old_job_id');
+    }
 }

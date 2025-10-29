@@ -144,31 +144,31 @@ class ApplicantHiringService
             'MaidenName'   => $family->spouse_middlename ?? null,
             'SpouseName'   => $family->spouse_name ?? null,
             'Occupation'   => $family->spouse_occupation ?? null,
+           // need to fix identify the  what is the q-r
+            'Q1' =>  $personal_declarations->{'question_34a'} ?? null,
+            'R1' =>  $personal_declarations->{'response_34'} ?? null,
 
-            'Q1' =>  $personal_declarations->a_third_degree_answer  ?? null,
-            'R1' =>  $personal_declarations->{'34_if_yes'} ?? null,
+            'Q2' =>  $personal_declarations->{'question_34b'}  ?? null,
+            'R2' =>  $personal_declarations->{'response_34'} ?? null,
 
-            'Q2' =>  $personal_declarations->a_found_guilty  ?? null,
-            'R2' =>  $personal_declarations->guilty_yes  ?? null,
+            'Q3' =>  $personal_declarations->{'question_35a'} ?? null,
+            'R3' =>  $personal_declarations->{'response_35a'} ?? null,
 
-            'Q3' =>  $personal_declarations->b_criminally_charged  ?? null,
-            'R3' =>  $personal_declarations->case_date_filed  ?? null,
+            'Q4' =>  $personal_declarations->{'question_36'}  ?? null,
+            'R4' =>  $personal_declarations->{'response_36'}  ?? null,
 
-            'Q4' =>  $personal_declarations->{'36_convited_answer'}  ?? null,
-            'R4' =>  $personal_declarations->{'36_if_yes'}  ?? null,
+            'Q5' =>  $personal_declarations->{'question_37'}  ?? null,
+            'R5' =>  $personal_declarations->{'response_37'}  ?? null,
 
-            'Q5' =>  $personal_declarations->{'37_service'}  ?? null,
-            'R5' =>  $personal_declarations->{'37_if_yes'}  ?? null,
+            'Q6' =>  $personal_declarations->{'question_39'} ?? null,
+            'R6' =>  $personal_declarations->{'response_39'}   ?? null,
 
-            'Q6' =>  $personal_declarations->a_candidate  ?? null,
-            'R6' =>  $personal_declarations->candidate_yes  ?? null,
+            'Q7' =>  $personal_declarations->{'question_40a'} ?? null,
+            'R7' =>  $personal_declarations->{'response_40a'}  ?? null,
 
-            'Q7' =>  $personal_declarations->b_resigned ?? null,
-            'R7' =>  $personal_declarations->b_resigned_yes  ?? null,
-
-            'R11' => $personal_declarations->{'39_if_yes'} ?? null,
-            'Q11' =>  $personal_declarations->{'39_status'}?? null,
-            'Q22' =>  $personal_declarations->a_indigenous  ?? null,
+            'R11' => $personal_declarations->{'question_40b'} ?? null,
+            'Q11' =>  $personal_declarations->{'response_40b'}?? null,
+            'Q22' =>  $personal_declarations->{'question_40c'} ?? null,
         ]);
     }
 
@@ -442,8 +442,6 @@ class ApplicantHiringService
             // 'vicename',
             // 'vicecause'
 
-
-
         ]);
 
         DB::table('posting_date')->insert([
@@ -451,8 +449,6 @@ class ApplicantHiringService
             'posting_daate' =>$jobPost->post_date,
             'end_date' => $jobPost->end_date,
             'job_batches_rsp_id' =>$jobPost->id
-
-
         ]);
     }
 }

@@ -40,79 +40,19 @@ class JobBatchesRspController extends Controller
         // Only fetch jobs where end_post is today or later (still active)
         $today = Carbon::today();
         $activeJobs = JobBatchesRsp::whereDate('end_date', '>=', $today)
-            ->orderBy('post_date', 'asc') // Optional: you can change this to 'created_at' if preferred
+            ->orderBy('post_date', 'asc')
+            // ->whereRaw('LOWER(status) != ?', ['republished']) // ✅ exclude republished // Optional: you can change this to 'created_at' if preferred
             ->get();
 
         return response()->json($activeJobs);
     }
 
 
-    // public function job_post()
-    // {
-    //     $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
-    //         ->withCount([
-    //             'submissions as total_applicants',
-    //             'submissions as qualified_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['qualified']);
-    //             },
-    //             'submissions as unqualified_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['unqualified']);
-    //             },
-    //             'submissions as pending_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['pending']);
-    //             },
-
-    //         'submissions as hired_count' => function ($query) {
-    //             $query->whereRaw('LOWER(status) = ?', ['Hired']);
-    //         },
-    //         ])
-    //         ->get();
-
-    //     foreach ($jobPosts as $job) {
-    //         $originalStatus = $job->status;
-
-    //         if ($job->hired_count >= 1) {
-    //             $newStatus = 'Occupied';
-    //         } elseif ($job->qualified_count > 0 || $job->unqualified_count > 0) {
-    //             // Some applicants already assessed
-    //             $newStatus = $job->pending_count > 0 ? 'pending' : 'assessed';
-    //         } else {
-    //             // No assessments yet
-    //             $newStatus = 'not started';
-    //         }
-    //         if ($originalStatus !== $newStatus) {
-    //             $job->status = $newStatus;
-    //             $job->save();
-    //         }
-    //     }
-
-    //     // Reload with updated status + counts
-    //     $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
-    //         ->withCount([
-    //             'submissions as total_applicants',
-    //             'submissions as qualified_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['qualified']);
-    //             },
-    //             'submissions as unqualified_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['unqualified']);
-    //             },
-    //             'submissions as pending_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['pending']);
-    //             },
-
-    //         'submissions as hired_count' => function ($query) {
-    //             $query->whereRaw('LOWER(status) = ?', ['Hired']);
-    //         },
-
-    //         ])
-    //         ->get();
-
-    //     return response()->json($jobPosts);
-    // }
-
     public function job_post()
     {
-        $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
+        // 🔹 Fetch job posts EXCLUDING republished ones
+        $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status','end_date')
+            // ->whereRaw('LOWER(status) != ?', ['republished']) // ✅ exclude republished
             ->withCount([
                 'submissions as total_applicants',
                 'submissions as qualified_count' => function ($query) {
@@ -136,14 +76,13 @@ class JobBatchesRspController extends Controller
 
             // 🚫 Skip manual statuses (do not override)
             $manualStatuses = ['unoccupied', 'occupied', 'closed', 'republished'];
-
             if (in_array($originalStatus, $manualStatuses)) {
-                continue; // Don't change status if manually set
+                continue;
             }
 
-            // ✅ Check if all raters completed their rating
+            // ✅ Check if all raters have completed their rating
             $allRatersComplete = \App\Models\Job_batches_user::where('job_batches_rsp_id', $job->id)
-                ->exists() && // must have raters
+                ->exists() &&
                 !\App\Models\Job_batches_user::where('job_batches_rsp_id', $job->id)
                     ->where('status', '!=', 'complete')
                     ->exists();
@@ -158,14 +97,16 @@ class JobBatchesRspController extends Controller
                 $newStatus = 'not started';
             }
 
+            // ✅ Update only if changed
             if ($originalStatus !== $newStatus) {
                 $job->status = $newStatus;
                 $job->save();
             }
         }
 
-        // Reload updated list
-        $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
+        // 🔄 Reload updated list (still excluding republished)
+        $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status' ,'end_date')
+            // ->whereRaw('LOWER(status) != ?', ['republished']) // ✅ exclude republished again
             ->withCount([
                 'submissions as total_applicants',
                 'submissions as qualified_count' => function ($query) {
@@ -187,76 +128,6 @@ class JobBatchesRspController extends Controller
     }
 
 
-    // public function job_post()
-    // {
-    //     // Fetch all job posts with counts
-    //     $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
-    //         ->withCount([
-    //             'submissions as total_applicants',
-    //             'submissions as qualified_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['qualified']);
-    //             },
-    //             'submissions as unqualified_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['unqualified']);
-    //             },
-    //             'submissions as pending_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['pending']);
-    //             },
-    //             'submissions as hired_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['hired']);
-    //             },
-    //         ])
-    //         ->get();
-
-    //     foreach ($jobPosts as $job) {
-    //         $originalStatus = $job->status;
-
-    //         // 🔍 Check if all raters assigned to this job have completed their rating
-    //         $allRatersComplete = \App\Models\Job_batches_user::where('job_batches_rsp_id', $job->id)
-    //             ->exists() && // ensure there are assigned raters
-    //             !\App\Models\Job_batches_user::where('job_batches_rsp_id', $job->id)
-    //                 ->where('status', '!=', 'complete')
-    //                 ->exists();
-
-    //         if ($allRatersComplete) {
-    //             $newStatus = 'Rated';
-    //         } elseif ($job->hired_count >= 1) {
-    //             $newStatus = 'Occupied';
-    //         } elseif ($job->qualified_count > 0 || $job->unqualified_count > 0) {
-    //             $newStatus = $job->pending_count > 0 ? 'pending' : 'assessed';
-    //         } else {
-    //             $newStatus = 'not started';
-    //         }
-
-    //         // Only update if status has changed
-    //         if ($originalStatus !== $newStatus) {
-    //             $job->status = $newStatus;
-    //             $job->save();
-    //         }
-    //     }
-
-    //     // Reload updated list
-    //     $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status')
-    //         ->withCount([
-    //             'submissions as total_applicants',
-    //             'submissions as qualified_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['qualified']);
-    //             },
-    //             'submissions as unqualified_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['unqualified']);
-    //             },
-    //             'submissions as pending_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['pending']);
-    //             },
-    //             'submissions as hired_count' => function ($query) {
-    //                 $query->whereRaw('LOWER(status) = ?', ['hired']);
-    //             },
-    //         ])
-    //         ->get();
-
-    //     return response()->json($jobPosts);
-    // }
-
     public function job_list()
 
     {
@@ -277,92 +148,6 @@ class JobBatchesRspController extends Controller
     }
 
 
-//     public function store(Request $request)
-//     {
-//         // ✅ Validate job batch fields
-//         $jobValidated = $request->validate([
-//             'Office' => 'nullable|string',
-//             'Office2' => 'nullable|string',
-//             'Group' => 'nullable|string',
-//             'Division' => 'nullable|string',
-//             'Section' => 'nullable|string',
-//             'Unit' => 'nullable|string',
-//             'Position' => 'required|string',
-//             'PositionID' => 'nullable|integer',
-//             'isOpen' => 'boolean',
-//             'post_date' => 'nullable|date',
-//             'end_date' => 'nullable|date',
-//             'PageNo' => 'required|string',
-//             'ItemNo' => 'required|nullable|string',
-//             'SalaryGrade' => 'nullable|string',
-//             'salaryMin' => 'nullable|string',
-//             'salaryMax' => 'nullable|string',
-//             'level' => 'nullable|string',
-//             'tblStructureDetails_ID' => 'required|nullable|string',
-
-//         ]);
-
-//         // ✅ Validate criteria fields separately
-//         $criteriaValidated = $request->validate([
-//             'Education'   => 'required|string',
-//             'Eligibility' => 'required|string',
-//             'Training'    => 'required|string',
-//             'Experience'  => 'required|string',
-//         ]);
-
-//         // ✅ Validate file
-//         $fileValidated = $request->validate([
-//             'fileUpload' => 'required|mimes:pdf|max:5120',
-//         ]);
-//         $exists = vwplantillastructure::where('PageNo', $jobValidated['PageNo'])
-//             ->where('ItemNo', $jobValidated['ItemNo'])
-//             ->where('ID','<>', $jobValidated['tblStructureDetails_ID'])
-//             ->exists();
-
-//         if ($exists) {
-//             return response()->json([
-//                 'status' => 'error',
-//                 'message' => 'Duplicate PageNo and ItemNo already exists in plantilla.'
-//             ], 422);
-//         }
-
-//             // ✅ Create the job post (only job batch fields go here)
-//             $jobBatch = JobBatchesRsp::create($jobValidated);
-
-//         // ✅ Create related criteria (Education, etc. go here)
-//         $criteria = OnCriteriaJob::create([
-//             'job_batches_rsp_id' => $jobBatch->id,
-//             'PositionID' => $jobValidated['PositionID'] ?? null,
-//             'ItemNo'     => $jobValidated['ItemNo'] ?? null,
-//             'Education'  => $criteriaValidated['Education'],
-//             'Eligibility' => $criteriaValidated['Eligibility'],
-//             'Training'   => $criteriaValidated['Training'],
-//             'Experience' => $criteriaValidated['Experience'],
-//         ]);
-
-//         // ✅ Create related plantilla and handle file upload
-//         $plantilla = new OnFundedPlantilla();
-//         $plantilla->job_batches_rsp_id = $jobBatch->id;
-//         $plantilla->PositionID = $jobValidated['PositionID'] ?? null;
-//         $plantilla->ItemNo = $jobValidated['ItemNo'] ?? null;
-
-//         if ($request->hasFile('fileUpload')) {
-//             $file = $request->file('fileUpload');
-//             $fileName = time() . '_' . $file->getClientOriginalName();
-//             $filePath = $file->storeAs('plantilla_files', $fileName, 'public');
-//             $plantilla->fileUpload = $filePath;
-//         }
-//         $plantilla->save();
-
-//         // ✅ Return response
-//         return response()->json([
-//             'status'   => 'success',
-//             'message'  => 'Job post created successfully',
-//             'job_post' => $jobBatch,
-//             'criteria' => $criteria,
-//             'plantilla' => $plantilla
-//         ], 201);
-// }
 
     public function show($positionId, $itemNo): JsonResponse
     {
@@ -376,37 +161,6 @@ class JobBatchesRspController extends Controller
 
         return response()->json($jobBatch);
     }
-    // public function show($jobpostId): JsonResponse
-    // {
-    //     $jobBatch = JobBatchesRsp::where('job_batches_rsp_id', $jobpostId)->get();
-
-    //     if (!$jobBatch) {
-    //         return response()->json(['error' => 'No matching record found'], 404);
-    //     }
-
-    //     return response()->json($jobBatch);
-    // }
-
-    // Update only post_date and end_date
-    // public function update(Request $request, $id)
-    // {
-    //     $validated = $request->validate([
-    //         'post_date' => 'required|date',
-    //         'end_date' => 'required|date',
-    //     ]);
-
-    //     $jobPost = JobBatchesRsp::findOrFail($id);
-    //     $jobPost->update([
-    //         'post_date' => $validated['post_date'],
-    //         'end_date' => $validated['end_date'],
-    //     ]);
-
-    //     return response()->json([
-    //         'message' => 'Dates updated successfully.',
-    //         'data' => $jobPost,
-    //     ]);
-    // }
-
 
     // Delete
     public function destroy($id)
@@ -801,21 +555,52 @@ class JobBatchesRspController extends Controller
             'total_applicants' => $totalApplicants,
             'applicants' => $applicants,
         ]);
-        // ->header("Content-Type", "application/json") // correct header
-        // ->header("Access-Control-Allow-Origin", "http://localhost:9000"); // allow any origin for downloads;
+
     }
+
 
 
     public function job_post_view($job_post_id)
     {
-        // ✅ Fetch job post with related data
-        $job_post = JobBatchesRsp::with([
-            'criteria',   // Criteria related to the job
-            'plantilla',  // Funded plantilla records
-        ])->findOrFail($job_post_id);
+        // ✅ Fetch job post with relations
+        $job_post = JobBatchesRsp::with(['criteria', 'plantilla'])->findOrFail($job_post_id);
 
-        return response()->json($job_post);
+        // ✅ Get complete history (both previous and next reposts)
+        $history = $this->getFullJobHistory($job_post);
+
+        // ✅ Convert to array and clean up nested relations
+        $job_post_array = $job_post->toArray();
+        unset($job_post_array['previous_job'], $job_post_array['next_job']);
+
+        // ✅ Return structured response
+        return response()->json(array_merge($job_post_array, [
+            'history' => $history
+        ]));
+    }
+
+    private function getFullJobHistory($job)
+    {
+        $history = [];
+
+        // 1️⃣ Go backwards (older reposts)
+        $current = $job;
+        while ($current->previousJob) {
+            $current = $current->previousJob;
         }
+
+        // 2️⃣ From the oldest, go forward (to latest reposts)
+        while ($current) {
+            $history[] = [
+                'id' => $current->id,
+                'post_date' => $current->post_date,
+                'end_date' => $current->end_date,
+            ];
+
+            $current = $current->nextJob ?? null; // move forward
+        }
+
+        return $history; // always ordered oldest → latest
+    }
 
 
     public function store(Request $request)
@@ -1005,12 +790,12 @@ class JobBatchesRspController extends Controller
     {
         // ✅ Step 1: Validate Job Batch fields
         $jobValidated = $request->validate([
-            'Office' => 'required|nullable|string',
-            'Office2' => 'required|nullable|string',
-            'Group' => 'required|nullable|string',
-            'Division' => 'required|nullable|string',
-            'Section' => 'required|nullable|string',
-            'Unit' => 'required|nullable|string',
+            'Office' => 'required|string',
+            'Office2' => 'nullable|string',
+            'Group' => 'nullable|string',
+            'Division' => 'nullable|string',
+            'Section' => 'nullable|string',
+            'Unit' => 'nullable|string',
             'Position' => 'required|string',
             'PositionID' => 'nullable|integer',
             'isOpen' => 'boolean',
@@ -1018,20 +803,20 @@ class JobBatchesRspController extends Controller
             'end_date' => 'required|date',
             'PageNo' => 'required|string',
             'ItemNo' => 'required|string',
-            'SalaryGrade' => 'required|nullable|string',
-            'salaryMin' => 'required|nullable|string',
-            'salaryMax' => 'required|nullable|string',
-            'level' => 'required|nullable|string',
+            'SalaryGrade' => 'nullable|string',
+            'salaryMin' => 'nullable|string',
+            'salaryMax' => 'nullable|string',
+            'level' => 'nullable|string',
             'tblStructureDetails_ID' => 'required|string',
             'old_job_id' => 'required|integer',
         ]);
 
         // ✅ Step 2: Require criteria fields
         $criteriaValidated = $request->validate([
-            'Education' => 'required|string',
-            'Eligibility' => 'required|string',
-            'Training' => 'required|string',
-            'Experience' => 'required|string',
+            'Education' => 'nullable|string',
+            'Eligibility' => 'nullable|string',
+            'Training' => 'nullable|string',
+            'Experience' => 'nullable|string',
         ]);
 
         // ✅ Step 3: Mark old job as Republished
@@ -1053,10 +838,10 @@ class JobBatchesRspController extends Controller
             'job_batches_rsp_id' => $jobBatch->id,
             'PositionID' => $jobValidated['PositionID'] ?? null,
             'ItemNo' => $jobValidated['ItemNo'] ?? null,
-            'Education' => $criteriaValidated['Education'],
-            'Eligibility' => $criteriaValidated['Eligibility'],
-            'Training' => $criteriaValidated['Training'],
-            'Experience' => $criteriaValidated['Experience'],
+            'Education' => $criteriaValidated['Education'] ?? null,
+            'Eligibility' => $criteriaValidated['Eligibility'] ?? null,
+            'Training' => $criteriaValidated['Training'] ?? null,
+            'Experience' => $criteriaValidated['Experience'] ?? null,
         ]);
 
         // ✅ Step 7: Handle plantilla and file upload
@@ -1083,5 +868,7 @@ class JobBatchesRspController extends Controller
             'plantilla' => $plantilla
         ], 201);
     }
+
+
 }
 

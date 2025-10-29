@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\EmailApi;
 use App\Models\Submission;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\excel\nPersonal_info;
 use Illuminate\Support\Facades\Mail;
@@ -13,13 +14,10 @@ class SubmissionController extends Controller
 {
 
 
-
-
-    // updating the status of the applicant if this applicant are qualified to rate
-    // this function for applicant that qualified to rate or not
+    // // updating the status of the applicant if this applicant are qualified to rate
     // public function evaluation(Request $request, $id)
     // {
-    //     // Validate the incoming request
+    //     // ✅ Validate input
     //     $validated = $request->validate([
     //         'status' => 'required|string',
     //         'education_remark' => 'nullable|string',
@@ -28,84 +26,114 @@ class SubmissionController extends Controller
     //         'eligibility_remark' => 'nullable|string',
     //     ]);
 
-    //     // Find the submission record by ID
+    //     // ✅ Find submission
     //     $submission = Submission::findOrFail($id);
 
-    //     // Update the submission fields
-    //     $submission->status = $validated['status'];
-    //     $submission->education_remark = $validated['education_remark'] ?? 'N/A';
-    //     $submission->experience_remark = $validated['experience_remark'] ??  'N/A';
-    //     $submission->training_remark = $validated['training_remark'] ??  'N/A';
-    //     $submission->eligibility_remark = $validated['eligibility_remark'] ??  'N/A';
-    //     $submission->save();
+    //     // ✅ Update submission
+    //     $submission->update([
+    //         'status' => $validated['status'],
+    //         'education_remark' => $validated['education_remark'] ?? 'N/A',
+    //         'experience_remark' => $validated['experience_remark'] ?? 'N/A',
+    //         'training_remark' => $validated['training_remark'] ?? 'N/A',
+    //         'eligibility_remark' => $validated['eligibility_remark'] ?? 'N/A',
+    //     ]);
+
+    //     // ✅ Find applicant (internal or external)
+    //     $applicant = nPersonal_info::where('id', $submission->nPersonalInfo_id)->first();
+    //     $applicantExternal = DB::table('xPersonalAddt')->where('ControlNo', $submission->ControlNo)->first();
+    //     $applicantName = DB::table('xPersonal')->where('ControlNo', $submission->ControlNo)->first();
+    //     $activeApplicant = $applicant ?? $applicantExternal;
+
+    //     if (!$activeApplicant) {
+    //         Log::warning("⚠️ No applicant found for submission ID: {$id}");
+    //         return response()->json([
+    //             'message' => 'Submission updated, but applicant not found for email notification.',
+    //             'data' => $submission
+    //         ]);
+    //     }
+
+    //     // ✅ Log applicant info
+    //     Log::info('Applicant record:', [$activeApplicant]);
+
+    //     // ✅ Detect email field
+    //     $email = $activeApplicant->email_address
+    //         ?? $activeApplicant->emailAdd
+    //         ?? $activeApplicant->EmailAdd
+    //         ?? null;
+
+    //     // ✅ Detect applicant full name
+    //     $fullname = '';
+    //     if ($applicant) {
+    //         $fullname = trim("{$applicant->firstname} {$applicant->lastname}");
+    //     } elseif ($applicantName) {
+    //         $fullname = trim("{$applicantName->Firstname} {$applicantName->Surname}");
+    //     }
+
+    //     // ✅ Fetch job details
+    //     $job = \App\Models\JobBatchesRsp::find($submission->job_batches_rsp_id);
+    //     $position = $job->Position ?? 'the applied position';
+    //     $office = $job->Office ?? 'the corresponding office';
+
+    //     Log::info("📧 Email info: {$email}, Name: {$fullname}, Job: {$position}, Office: {$office}");
+
+    //     if (!empty($email)) {
+    //         $subject = "Application Status Update ";
+
+    //         // ✅ Build remarks section
+    //         $remarks = "
+    //         <br><br><strong>Evaluation Remarks:</strong><br>
+    //         Education: {$submission->education_remark}<br>
+    //         Experience: {$submission->experience_remark}<br>
+    //         Training: {$submission->training_remark}<br>
+    //         Eligibility: {$submission->eligibility_remark}<br>
+    //     ";
+
+    //         // ✅ Message content based on status
+    //         switch (strtolower($submission->status)) {
+    //             case 'qualified':
+    //                 $message = "
+    //                 Dear {$fullname},<br><br>
+    //                 Congratulations! You have been qualified for the next stage of evaluation
+    //                 for the position of <strong>{$position}</strong> under <strong>{$office}</strong>.<br>
+    //                 Please stay tuned for further instructions.
+    //                 {$remarks}
+    //             ";
+    //                 break;
+
+    //             case 'unqualified':
+    //                 $message = "
+    //                 Dear {$fullname},<br><br>
+    //                 We appreciate your effort in applying for the position of <strong>{$position}</strong>
+    //                 under <strong>{$office}</strong>. However, after evaluation, your application
+    //                 did not meet the required qualifications.
+    //                 {$remarks}
+    //             ";
+    //                 break;
+
+    //             default:
+    //                 $message = "
+    //                 Dear {$fullname},<br><br>
+    //                 Your application status for the position of <strong>{$position}</strong>
+    //                 under <strong>{$office}</strong> has been updated to: <strong>{$submission->status}</strong>.
+    //                 {$remarks}
+    //             ";
+    //                 break;
+    //         }
+
+    //         // ✅ Send email
+    //         Mail::to($email)->queue(new EmailApi($message, $subject));
+    //         Log::info("✅ Email queued for: {$email}");
+    //     } else {
+    //         $identifier = $activeApplicant->ControlNo ?? $activeApplicant->id ?? 'Unknown';
+    //         Log::warning("⚠️ Applicant has no email address. Identifier: {$identifier}");
+    //     }
 
     //     return response()->json([
-    //         'message' => 'Evaluation successfully sent.',
+    //         'message' => 'Evaluation successfully saved and email notification processed.',
     //         'data' => $submission
     //     ]);
     // }
 
-
-    public function evaluation(Request $request, $id)
-    {
-        // Validate the incoming request
-        $validated = $request->validate([
-            'status' => 'required|string',
-            'education_remark' => 'nullable|string',
-            'experience_remark' => 'nullable|string',
-            'training_remark' => 'nullable|string',
-            'eligibility_remark' => 'nullable|string',
-        ]);
-
-        // Find the submission record by ID
-        $submission = Submission::findOrFail($id);
-
-        // Update the submission fields
-        $submission->status = $validated['status'];
-        $submission->education_remark = $validated['education_remark'] ?? 'N/A';
-        $submission->experience_remark = $validated['experience_remark'] ??  'N/A';
-        $submission->training_remark = $validated['training_remark'] ??  'N/A';
-        $submission->eligibility_remark = $validated['eligibility_remark'] ??  'N/A';
-        $submission->save();
-
-        // --- Find the applicant’s info ---
-        $applicant = nPersonal_info::where('id', $id)->first();
-        // ⚠️ adjust the key if your foreign key is different (e.g., applicant_control_no)
-        Log::info('Applicant ID:', [$id]);
-        Log::info('Applicant record:', [$applicant]);
-        Log::info('Applicant email:', [$applicant->email_address ?? 'no email']);
-
-        if ($applicant && $applicant->email_address) {
-            // Determine email subject and message
-            $subject = "Application Status Update - RSP System";
-
-            if (strtolower($submission->status) === 'qualified') {
-                $message = "Congratulations! You have been qualified for the next stage of evaluation. Please stay tuned for further instructions.";
-            } elseif (strtolower($submission->status) === 'unqualified') {
-                $message = "We appreciate your effort in applying. However, after evaluation, your application did not meet the required qualifications.";
-            } else {
-                $message = "Your application status has been updated to: {$submission->status}.";
-            }
-
-            // Send email
-            Mail::to($applicant->email_address)->queue(new EmailApi($message, $subject));
-        }
-
-        return response()->json([
-            'message' => 'Evaluation successfully sent and email notification delivered.',
-            'data' => $submission
-        ]);
-    }
-
-    // fetching the all data on submission table
-    // public function index()
-    // {
-
-    //     $data = Submission::all();
-    //     return response()->json([
-    //         'data' => $data
-    //     ]);
-    // }
 
     // deleting applicant on the job_post he/she applicant
     public function delete($id)
@@ -126,4 +154,98 @@ class SubmissionController extends Controller
         ]);
     }
 
+    public function evaluation(Request $request, $id)
+    {
+        // ✅ Validate input
+        $validated = $request->validate([
+            'status' => 'required|string',
+            'education_remark' => 'nullable|string',
+            'experience_remark' => 'nullable|string',
+            'training_remark' => 'nullable|string',
+            'eligibility_remark' => 'nullable|string',
+        ]);
+
+        // ✅ Update submission in one call
+        $submission = Submission::findOrFail($id);
+        $submission->update([
+            'status' => $validated['status'],
+            'education_remark' => $validated['education_remark'] ?? 'N/A',
+            'experience_remark' => $validated['experience_remark'] ?? 'N/A',
+            'training_remark' => $validated['training_remark'] ?? 'N/A',
+            'eligibility_remark' => $validated['eligibility_remark'] ?? 'N/A',
+        ]);
+
+        // ✅ Fetch applicant and job in one shot
+        $applicant = nPersonal_info::find($submission->nPersonalInfo_id);
+
+        $externalApplicant = DB::table('xPersonalAddt')
+            ->join('xPersonal', 'xPersonalAddt.ControlNo', '=', 'xPersonal.ControlNo')
+            ->where('xPersonalAddt.ControlNo', $submission->ControlNo)
+            ->select('xPersonalAddt.*', 'xPersonal.Firstname', 'xPersonal.Surname', 'xPersonalAddt.EmailAdd')
+            ->first();
+
+        $activeApplicant = $applicant ?? $externalApplicant;
+
+        if (!$activeApplicant) {
+            Log::warning("⚠️ No applicant found for submission ID: {$id}");
+            return response()->json([
+                'message' => 'Submission updated, but applicant not found for email notification.',
+                'data' => $submission
+            ]);
+        }
+
+        // ✅ Determine email and full name
+        $email = $applicant->email_address ?? $externalApplicant->EmailAdd ?? null;
+        $fullname = $applicant
+            ? trim("{$applicant->firstname} {$applicant->lastname}")
+            : trim("{$externalApplicant->Firstname} {$externalApplicant->Surname}");
+
+        // ✅ Fetch job details
+        $job = \App\Models\JobBatchesRsp::find($submission->job_batches_rsp_id);
+        $position = $job->Position ?? 'the applied position';
+        $office = $job->Office ?? 'the corresponding office';
+
+        if (!empty($email)) {
+            $subject = "Application Status Update";
+
+            $remarks = "
+            <br><br><strong>Evaluation Remarks:</strong><br>
+            Education: {$submission->education_remark}<br>
+            Experience: {$submission->experience_remark}<br>
+            Training: {$submission->training_remark}<br>
+            Eligibility: {$submission->eligibility_remark}<br>
+        ";
+
+            $statusLower = strtolower($submission->status);
+            $message = match ($statusLower) {
+                'qualified' => "
+                Dear {$fullname},<br><br>
+                Congratulations! You have been qualified for the next stage of evaluation
+                for the position of <strong>{$position}</strong> under <strong>{$office}</strong>.<br>
+                Please stay tuned for further instructions.
+                {$remarks}
+            ",
+                'unqualified' => "
+                Dear {$fullname},<br><br>
+                We appreciate your effort in applying for the position of <strong>{$position}</strong>
+                under <strong>{$office}</strong>. However, after evaluation, your application
+                did not meet the required qualifications.
+                {$remarks}
+            ",
+                default => "
+                Dear {$fullname},<br><br>
+                Your application status for the position of <strong>{$position}</strong>
+                under <strong>{$office}</strong> has been updated to: <strong>{$submission->status}</strong>.
+                {$remarks}
+            ",
+            };
+
+            Mail::to($email)->queue(new EmailApi($message, $subject));
+        }
+
+        return response()->json([
+            'message' => 'Evaluation successfully saved and email notification processed.',
+            'data' => $submission
+        ]);
+    }
 }

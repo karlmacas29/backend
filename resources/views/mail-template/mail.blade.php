@@ -24,7 +24,7 @@
         }
 
         .header {
-            background-color: #007bff;
+            background-color: #1d8d07;
             color: white;
             text-align: center;
             padding: 20px;
@@ -82,15 +82,12 @@
         </div>
 
         <div class="content">
-            <h4>Hello,</h4>
-            <p>{{ $mailmessage }}</p>
-
-            {{-- Example: Optional CTA Button --}}
-            {{-- <a href="{{ $actionUrl ?? '#' }}" class="btn">View Details</a> --}}
+            {{-- <h4>Hello,</h4> --}}
+             <p>{!! $mailmessage !!}</p>
         </div>
 
         <div class="footer">
-            <p>&copy; {{ date('Y') }} RSP System. All rights reserved.</p>
+            <p>&copy; {{ date('Y') }} Recruitment, Selection and Placement. All rights reserved.</p>
         </div>
     </div>
 </body>

@@ -15,11 +15,24 @@ return new class extends Migration
         Schema::create('user_rsp_control', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->boolean('isFunded')->default(false);
-            $table->boolean('isUserM')->default(false);
-            $table->boolean('isRaterM')->default(false);
-            $table->boolean('isCriteria')->default(false);
-            $table->boolean('isDashboardStat')->default(false);
+
+            $table->boolean('viewDashboardstat')->default(false);
+
+            $table->boolean('viewPlantillaAccess')->default(false);
+            $table->boolean('modifyPlantillaAccess')->default(false);
+
+            $table->boolean('viewJobpostAccess')->default(false);
+            $table->boolean('modifyJobpostAccess')->default(false);
+
+            $table->boolean('viewAcitivtyLogs')->default(false);
+            $table->boolean('userManagement')->default(false);
+
+            $table->boolean('viewRater')->default(false);
+            $table->boolean('modifyRater')->default(false);
+
+            $table->boolean('viewCriteria')->default(false);
+            $table->boolean('modifyCriteria')->default(false);
+            $table->boolean('viewReport')->default(false);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

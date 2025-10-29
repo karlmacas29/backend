@@ -9,34 +9,34 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::table('submission', function (Blueprint $table) {
-            // 1. Drop the existing foreign key
-            $table->dropForeign(['nPersonalInfo_id']);
+    // public function up(): void
+    // {
+    //     Schema::table('submission', function (Blueprint $table) {
+    //         // 1. Drop the existing foreign key
+    //         $table->dropForeign(['nPersonalInfo_id']);
 
-            // 2. Make column nullable
-            $table->unsignedBigInteger('nPersonalInfo_id')->nullable()->change();
+    //         // 2. Make column nullable
+    //         $table->unsignedBigInteger('nPersonalInfo_id')->nullable()->change();
 
-            // 3. Re-add foreign key constraint
-            $table->foreign('nPersonalInfo_id')
-                ->references('id')
-                ->on('nPersonalInfo')
-                ->nullOnDelete();
-        });
-    }
+    //         // 3. Re-add foreign key constraint
+    //         $table->foreign('nPersonalInfo_id')
+    //             ->references('id')
+    //             ->on('nPersonalInfo')
+    //             ->nullOnDelete();
+    //     });
+    // }
 
-    public function down(): void
-    {
-        Schema::table('submission', function (Blueprint $table) {
-            $table->dropForeign(['nPersonalInfo_id']);
+    // public function down(): void
+    // {
+    //     Schema::table('submission', function (Blueprint $table) {
+    //         $table->dropForeign(['nPersonalInfo_id']);
 
-            $table->unsignedBigInteger('nPersonalInfo_id')->nullable(false)->change();
+    //         $table->unsignedBigInteger('nPersonalInfo_id')->nullable(false)->change();
 
-            $table->foreign('nPersonalInfo_id')
-                ->references('id')
-                ->on('nPersonalInfo')
-                ->onDelete('cascade');
-        });
-    }
+    //         $table->foreign('nPersonalInfo_id')
+    //             ->references('id')
+    //             ->on('nPersonalInfo')
+    //             ->onDelete('cascade');
+    //     });
+    // }
 };

@@ -5,7 +5,7 @@ namespace Database\Factories;
 use App\Models\excel\nFamily;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class NFamilyFactory extends Factory
+class FamilyFactory extends Factory
 {
     protected $model = nFamily::class;
 

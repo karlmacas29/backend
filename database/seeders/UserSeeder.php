@@ -33,11 +33,18 @@ class UserSeeder extends Seeder
         // Insert corresponding user_rsp_control
        DB::table('user_rsp_control')->insert([
             'user_id' => $userId,
-            'isFunded' => true,
-            'isUserM' => true,
-            'isRaterM' => true,
-            'isCriteria' => true,
-            'isDashboardStat' => true,
+            'viewDashboardstat' => true,
+            'viewPlantillaAccess' => true,
+            'modifyPlantillaAccess' => true,
+            'viewJobpostAccess' => true,
+            'modifyJobpostAccess' => true,
+            'viewAcitivtyLogs' => true,
+            'userManagement' => true,
+            'viewRater' => true,
+            'modifyRater' => true,
+            'viewCriteria' => true,
+            'modifyCriteria' => true,
+            'viewReport'  => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

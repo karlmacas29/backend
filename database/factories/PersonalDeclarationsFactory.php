@@ -12,36 +12,36 @@ class PersonalDeclarationsFactory extends Factory
     public function definition(): array
     {
         return [
-            'a_third_degree_answer' => $this->faker->boolean,
-            'b_fourth_degree_answer' => $this->faker->boolean,
-            '34_if_yes' => $this->faker->optional()->sentence,
+            'question_34a' => $this->faker->boolean,
+            'question_34b' => $this->faker->boolean,
+            'response_34' => $this->faker->optional()->sentence,
 
-            'a_found_guilty' => $this->faker->boolean,
-            'guilty_yes' => $this->faker->optional()->sentence,
-            'b_criminally_charged' => $this->faker->boolean,
-            'case_date_filed' => $this->faker->optional()->date(),
-            'case_status' => $this->faker->optional()->word,
+            'question_35a' => $this->faker->boolean,
+            'response_35a' => $this->faker->optional()->sentence,
+            'question_35b' => $this->faker->boolean,
+            'response_35b_date' => $this->faker->optional()->date(),
+            'response_35b_status' => $this->faker->optional()->word,
 
-            '36_convited_answer' => $this->faker->boolean,
-            '36_if_yes' => $this->faker->optional()->sentence,
+            'question_36' => $this->faker->boolean,
+            'response_36' => $this->faker->optional()->sentence,
 
-            '37_service' => $this->faker->boolean,
-            '37_if_yes' => $this->faker->optional()->sentence,
+            'question_37' => $this->faker->boolean,
+            'response_37' => $this->faker->optional()->sentence,
 
-            'a_candidate' => $this->faker->boolean,
-            'candidate_yes' => $this->faker->optional()->sentence,
-            'b_resigned' => $this->faker->boolean,
-            'resigned_yes' => $this->faker->optional()->sentence,
+            'question_38a' => $this->faker->boolean,
+            'response_38a' => $this->faker->optional()->sentence,
+            'question_38b' => $this->faker->boolean,
+            'response_38b' => $this->faker->optional()->sentence,
 
-            '39_status' => $this->faker->boolean,
-            '39_if_yes' => $this->faker->optional()->sentence,
+            'question_39' => $this->faker->boolean,
+            'response_39' => $this->faker->optional()->sentence,
 
-            'a_indigenous' => $this->faker->boolean,
-            'indigenous_yes' => $this->faker->optional()->sentence,
-            'b_disability' => $this->faker->boolean,
-            'disability_yes' => $this->faker->optional()->sentence,
-            'c_solo' => $this->faker->boolean,
-            'solo_parent_yes' => $this->faker->optional()->sentence,
+            'question_40a' => $this->faker->boolean,
+            'response_40a' => $this->faker->optional()->sentence,
+            'question_40b' => $this->faker->boolean,
+            'response_40b' => $this->faker->optional()->sentence,
+            'question_40c' => $this->faker->boolean,
+            'response_40c' => $this->faker->optional()->sentence,
 
             'nPersonalInfo_id' => null,
         ];

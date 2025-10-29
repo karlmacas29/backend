@@ -61,6 +61,7 @@ class RatingService
             'grand_total' => number_format($grand_total, 2, '.', ''),
         ];
     }
+    
     public static function addRanking(array $applicants)
     {
         // Sort applicants by grand_total (descending)

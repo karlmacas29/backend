@@ -3,11 +3,12 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 class EmailApi extends Mailable implements ShouldQueue
 {
@@ -33,7 +34,7 @@ class EmailApi extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            // from: new Address(),
+            from: new Address("tagumcityrsp@gmail.com", "Recruitment, Selection and Placement"),
           subject: $this->subject,
         );
     }
@@ -45,6 +46,11 @@ class EmailApi extends Mailable implements ShouldQueue
     {
         return new Content(
             view: 'mail-template.mail',
+            with: [
+                'mailmessage' => $this->mailmessage,
+                'subject' => $this->subject,
+            ],
+
         );
     }
 

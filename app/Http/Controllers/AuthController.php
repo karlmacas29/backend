@@ -13,9 +13,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Cookie;
+
 
 class AuthController extends Controller
 
@@ -49,15 +47,20 @@ class AuthController extends Controller
 
             if ($request->has('permissions')) {
                 $user->rspControl()->create([
-                    'isFunded' => $request->input('permissions.isFunded', false),
-                    'isUserM' => $request->input('permissions.isUserM', false),
-                    'isRaterM' => $request->input('permissions.isRaterM', false),
-                    'isCriteria' => $request->input('permissions.isCriteria', false),
-                    'isDashboardStat' => $request->input('permissions.isDashboardStat', false),
-                    'isJobCreate' => $request->input('permissions.isJobCreate', false),
-                    'isJobEdit' => $request->input('permissions.isJobEdit', false),
-                    'isJobView' => $request->input('permissions.isJobView', false),
-                    'isJobDelete' => $request->input('permissions.isJobDelete', false),
+                    'viewDashboardstat' => $request->input('permissions.viewDashboardstat', false),
+                    'viewPlantillaAccess' => $request->input('permissions.viewPlantillaAccess', false),
+                    'modifyPlantillaAccess' => $request->input('permissions.modifyPlantillaAccess', false),
+                    'viewJobpostAccess' => $request->input('permissions.viewJobpostAccess', false),
+                    'modifyJobpostAccess' => $request->input('permissions.modifyJobpostAccess', false),
+                    'viewAcitivtyLogs' => $request->input('permissions.viewAcitivtyLogs', false),
+                    'userManagement' => $request->input('permissions.userManagement', false),
+                    'viewRater' => $request->input('permissions.viewRater', false),
+                    'modifyRater' => $request->input('permissions.modifyRater', false),
+
+                    'viewCriteria' => $request->input('permissions.viewCriteria', false),
+                    'modifyCriteria' => $request->input('permissions.modifyCriteria', false),
+
+                    'viewReport' => $request->input('permissions.viewReport', false),
                 ]);
             }
 
@@ -282,15 +285,19 @@ class AuthController extends Controller
                 'name' => 'required|string|max:255',
                 'position' => 'required|string|max:255',
                 'active' => 'required|boolean',
-                'permissions.isFunded' => 'boolean',
-                'permissions.isUserM' => 'boolean',
-                'permissions.isRaterM' => 'boolean',
-                'permissions.isCriteria' => 'boolean',
-                'permissions.isDashboardStat' => 'boolean',
-                'permissions.isJobCreate' => 'boolean',
-                'permissions.isJobEdit' => 'boolean',
-                'permissions.isJobView' => 'boolean',
-                'permissions.isJobDelete' => 'boolean',
+                'permissions.viewDashboardstat' => 'boolean',
+                'permissions.viewPlantillaAccess' => 'boolean',
+                'permissions.modifyPlantillaAccess' => 'boolean',
+                'permissions.viewJobpostAccess' => 'boolean',
+                'permissions.modifyJobpostAccess' => 'boolean',
+                'permissions.viewAcitivtyLogs' => 'boolean',
+                'permissions.userManagement' => 'boolean',
+                'permissions.viewRaterManagement' => 'boolean',
+                'permissions.modifyRaterManagement' => 'boolean',
+                'permissions.viewCriteria' => 'boolean',
+                'permissions.modifyCriteria' => 'boolean',
+                'permissions.viewReport' => 'boolean',
+
 
 
             ];
@@ -322,28 +329,39 @@ class AuthController extends Controller
             if ($request->has('permissions')) {
                 if ($user->rspControl) {
                     $user->rspControl->update([
-                        'isFunded' => $request->input('permissions.isFunded', false),
-                        'isUserM' => $request->input('permissions.isUserM', false),
-                        'isRaterM' => $request->input('permissions.isRaterM', false),
-                        'isCriteria' => $request->input('permissions.isCriteria', false),
-                        'isDashboardStat' => $request->input('permissions.isDashboardStat', false),
-                        'isJobCreate' => $request->input('permissions.isJobCreate', false),
-                        'isJobEdit' => $request->input('permissions.isJobEdit', false),
-                        'isJobView' => $request->input('permissions.isJobView', false),
-                        'isJobDelete' => $request->input('permissions.isJobDelete', false),
+                        'viewDashboardstat' => $request->input('permissions.viewDashboardstat', false),
+                        'viewPlantillaAccess' => $request->input('permissions.viewPlantillaAccess', false),
+                        'modifyPlantillaAccess' => $request->input('permissions.modifyPlantillaAccess', false),
+                        'viewJobpostAccess' => $request->input('permissions.viewJobpostAccess', false),
+                        'modifyJobpostAccess' => $request->input('permissions.modifyJobpostAccess', false),
+                        'viewAcitivtyLogs' => $request->input('permissions.viewAcitivtyLogs', false),
+                        'userManagement' => $request->input('permissions.userManagement', false),
+                        'viewRater' => $request->input('permissions.viewRater', false),
+                        'modifyRater' => $request->input('permissions.modifyRater', false),
+
+                        'viewCriteria' => $request->input('permissions.viewCriteria', false),
+                        'modifyCriteria' => $request->input('permissions.modifyCriteria', false),
+
+                        'viewReport' => $request->input('permissions.viewReport', false),
+
 
                     ]);
                 } else {
                     $user->rspControl()->create([
-                        'isFunded' => $request->input('permissions.isFunded', false),
-                        'isUserM' => $request->input('permissions.isUserM', false),
-                        'isRaterM' => $request->input('permissions.isRaterM', false),
-                        'isCriteria' => $request->input('permissions.isCriteria', false),
-                        'isDashboardStat' => $request->input('permissions.isDashboardStat', false),
-                        'isJobCreate' => $request->input('permissions.isJobCreate', false),
-                        'isJobEdit' => $request->input('permissions.isJobEdit', false),
-                        'isJobView' => $request->input('permissions.isJobView', false),
-                        'isJobDelete' => $request->input('permissions.isJobDelete', false),
+                        'viewDashboardstat' => $request->input('permissions.viewDashboardstat', false),
+                        'viewPlantillaAccess' => $request->input('permissions.viewPlantillaAccess', false),
+                        'modifyPlantillaAccess' => $request->input('permissions.modifyPlantillaAccess', false),
+                        'viewJobpostAccess' => $request->input('permissions.viewJobpostAccess', false),
+                        'modifyJobpostAccess' => $request->input('permissions.modifyJobpostAccess', false),
+                        'viewAcitivtyLogs' => $request->input('permissions.viewAcitivtyLogs', false),
+                        'userManagement' => $request->input('permissions.userManagement', false),
+                        'viewRater' => $request->input('permissions.viewRater', false),
+                        'modifyRater' => $request->input('permissions.modifyRater', false),
+
+                        'viewCriteria' => $request->input('permissions.viewCriteria', false),
+                        'modifyCriteria' => $request->input('permissions.modifyCriteria', false),
+
+                        'viewReport' => $request->input('permissions.viewReport', false),
 
                     ]);
                 }
