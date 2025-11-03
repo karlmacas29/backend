@@ -876,6 +876,92 @@ class JobBatchesRspController extends Controller
         ], 200);
     }
 
+    // public function republished(Request $request)
+    // {
+    //     // ✅ Step 1: Validate Job Batch fields
+    //     $jobValidated = $request->validate([
+    //         'Office' => 'required|string',
+    //         'Office2' => 'nullable|string',
+    //         'Group' => 'nullable|string',
+    //         'Division' => 'nullable|string',
+    //         'Section' => 'nullable|string',
+    //         'Unit' => 'nullable|string',
+    //         'Position' => 'required|string',
+    //         'PositionID' => 'nullable|integer',
+    //         'isOpen' => 'boolean',
+    //         'post_date' => 'required|date',
+    //         'end_date' => 'required|date',
+    //         'PageNo' => 'required|string',
+    //         'ItemNo' => 'required|string',
+    //         'SalaryGrade' => 'nullable|string',
+    //         'salaryMin' => 'nullable|string',
+    //         'salaryMax' => 'nullable|string',
+    //         'level' => 'nullable|string',
+    //         'tblStructureDetails_ID' => 'required|string',
+    //         'old_job_id' => 'required|integer',
+    //     ]);
+
+    //     // ✅ Step 2: Require criteria fields
+    //     $criteriaValidated = $request->validate([
+    //         'Education' => 'nullable|string',
+    //         'Eligibility' => 'nullable|string',
+    //         'Training' => 'nullable|string',
+    //         'Experience' => 'nullable|string',
+    //     ]);
+
+    //     // ✅ Step 3: Mark old job as Republished
+    //     JobBatchesRsp::where('id', $jobValidated['old_job_id'])
+    //         ->update(['status' => 'Republished']);
+
+    //     // ✅ Step 4: Validate file if uploaded
+    //     if ($request->hasFile('fileUpload')) {
+    //         $request->validate([
+    //             'fileUpload' => 'required|mimes:pdf|max:5120',
+    //         ]);
+    //     }
+
+    //     // ✅ Step 5: Create new Job Post
+    //     $jobBatch = JobBatchesRsp::create($jobValidated);
+
+    //     // ✅ Step 6: Create new Criteria (required)
+    //     $criteria = OnCriteriaJob::create([
+    //         'job_batches_rsp_id' => $jobBatch->id,
+    //         'PositionID' => $jobValidated['PositionID'] ?? null,
+    //         'ItemNo' => $jobValidated['ItemNo'] ?? null,
+    //         'Education' => $criteriaValidated['Education'] ?? null,
+    //         'Eligibility' => $criteriaValidated['Eligibility'] ?? null,
+    //         'Training' => $criteriaValidated['Training'] ?? null,
+    //         'Experience' => $criteriaValidated['Experience'] ?? null,
+    //     ]);
+    //     $plantillaValidated = $request->validate([
+    //         'fileUpload' => 'required|mimes:pdf|max:5120', // 👈 file required here
+
+    //     ]);
+
+    //     // ✅ Step 7: Handle plantilla and file upload
+    //     $plantilla = new OnFundedPlantilla();
+    //     $plantilla->job_batches_rsp_id = $jobBatch->id;
+    //     $plantilla->PositionID = $jobValidated['PositionID'] ?? null;
+    //     $plantilla->ItemNo = $jobValidated['ItemNo'] ?? null;
+
+    //     if ($request->hasFile('fileUpload')) {
+    //         $file = $request->file('fileUpload');
+    //         $fileName = time() . '_' . $file->getClientOriginalName();
+    //         $filePath = $file->storeAs('plantilla_files', $fileName, 'public');
+    //         $plantilla->fileUpload = $filePath;
+    //     }
+
+    //     $plantilla->save();
+
+    //     // ✅ Step 8: Response
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => 'Job post republished successfully',
+    //         'job_post' => $jobBatch,
+    //         'criteria' => $criteria,
+    //         'plantilla' => $plantilla
+    //     ], 201);
+    // }
     public function republished(Request $request)
     {
         // ✅ Step 1: Validate Job Batch fields
@@ -901,7 +987,7 @@ class JobBatchesRspController extends Controller
             'old_job_id' => 'required|integer',
         ]);
 
-        // ✅ Step 2: Require criteria fields
+        // ✅ Step 2: Validate criteria fields
         $criteriaValidated = $request->validate([
             'Education' => 'nullable|string',
             'Eligibility' => 'nullable|string',
@@ -909,21 +995,19 @@ class JobBatchesRspController extends Controller
             'Experience' => 'nullable|string',
         ]);
 
-        // ✅ Step 3: Mark old job as Republished
+        // ✅ Step 3: Validate file (required even if not in JobBatchesRsp)
+        $fileValidated = $request->validate([
+            'fileUpload' => 'required|mimes:pdf|max:5120',
+        ]);
+
+        // ✅ Step 4: Mark old job as Republished
         JobBatchesRsp::where('id', $jobValidated['old_job_id'])
             ->update(['status' => 'Republished']);
-
-        // ✅ Step 4: Validate file if uploaded
-        if ($request->hasFile('fileUpload')) {
-            $request->validate([
-                'fileUpload' => 'required|mimes:pdf|max:5120',
-            ]);
-        }
 
         // ✅ Step 5: Create new Job Post
         $jobBatch = JobBatchesRsp::create($jobValidated);
 
-        // ✅ Step 6: Create new Criteria (required)
+        // ✅ Step 6: Create new Criteria
         $criteria = OnCriteriaJob::create([
             'job_batches_rsp_id' => $jobBatch->id,
             'PositionID' => $jobValidated['PositionID'] ?? null,
@@ -935,21 +1019,18 @@ class JobBatchesRspController extends Controller
         ]);
 
         // ✅ Step 7: Handle plantilla and file upload
-        $plantilla = new OnFundedPlantilla();
-        $plantilla->job_batches_rsp_id = $jobBatch->id;
-        $plantilla->PositionID = $jobValidated['PositionID'] ?? null;
-        $plantilla->ItemNo = $jobValidated['ItemNo'] ?? null;
+        $file = $request->file('fileUpload');
+        $fileName = time() . '_' . $file->getClientOriginalName();
+        $filePath = $file->storeAs('plantilla_files', $fileName, 'public');
 
-        if ($request->hasFile('fileUpload')) {
-            $file = $request->file('fileUpload');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('plantilla_files', $fileName, 'public');
-            $plantilla->fileUpload = $filePath;
-        }
+        $plantilla = OnFundedPlantilla::create([
+            'job_batches_rsp_id' => $jobBatch->id,
+            'PositionID' => $jobValidated['PositionID'] ?? null,
+            'ItemNo' => $jobValidated['ItemNo'] ?? null,
+            'fileUpload' => $filePath,
+        ]);
 
-        $plantilla->save();
-
-        // ✅ Step 8: Response
+        // ✅ Step 8: Return response
         return response()->json([
             'status' => 'success',
             'message' => 'Job post republished successfully',
@@ -958,7 +1039,5 @@ class JobBatchesRspController extends Controller
             'plantilla' => $plantilla
         ], 201);
     }
-
-
 }
 
