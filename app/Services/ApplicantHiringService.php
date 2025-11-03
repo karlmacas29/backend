@@ -16,9 +16,6 @@ class ApplicantHiringService
 
 {
 
-
-
-
     public function hireApplicant($submissionId)
     {
         DB::beginTransaction();
