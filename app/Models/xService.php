@@ -24,6 +24,10 @@ class xService extends Model
     {
         return $this->hasMany(vwActive::class, 'ControlNo', 'ControlNo');
     }
+    public function posting_date()
+    {
+        return $this->hasMany(posting_date::class, 'ControlNo', 'ControlNo');
+    }
 
     public function xPersonal()
     {

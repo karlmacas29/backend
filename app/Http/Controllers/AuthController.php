@@ -75,11 +75,11 @@ class AuthController extends Controller
                     'username' => $user->username,
                     'position' => $user->position,
                     'active' => $user->active,
-                    'role' => 'Admin',
+                    'role' =>  $user->role_id,
                     'ip' => request()->ip(),
                     'user_agent' => request()->header('User-Agent'),
                 ])
-                ->log("Admin '{$user->name}' was registered successfully by '" . Auth::user()?->name . "'.");
+                ->log("'{$user->name}' was registered successfully by '" . Auth::user()?->name . "'.");
 
             DB::commit();
 
@@ -168,17 +168,18 @@ class AuthController extends Controller
         $cookie = cookie('admin_token', $token, 60 * 24, null, null, true, true, false, 'None');
 
         if ($user instanceof \App\Models\User) {
+            $user->load('role'); // make sure the role is loaded
             activity($user->name)
                 ->causedBy($user)
                 ->performedOn($user)
                 ->withProperties([
                     'username' => $user->username,
-                    'role' => $user->role?->role_name,
+                    'role' => $user->role?->name,
                     'office' => $user->office,
                     'ip' => $request->ip(),
                     'user_agent' => $request->header('User-Agent'),
                 ])
-                ->log("Admin '{$user->name}' logged in successfully.");
+                ->log("'{$user->name}' logged in successfully.");
         }
 
 
@@ -218,7 +219,7 @@ class AuthController extends Controller
                     'ip' => $request->ip(),
                     'user_agent' => $request->header('User-Agent'),
                 ])
-                ->log("Admin '{$user->name}' logout successfully.");
+                ->log("'{$user->name}' logout successfully.");
         }
 
         return response([

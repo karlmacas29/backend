@@ -23,6 +23,30 @@ use Illuminate\Support\Facades\Validator;
 class RaterController extends Controller
 {
 
+    // public function view($raterId)
+    // {
+    //     $rater = User::select('id', 'name', 'position', 'office')
+    //         ->with(['job_batches_rsp' => function ($query) {
+    //             $query->select(
+    //                 'job_batches_rsp.id',
+    //                 'job_batches_rsp.Office',
+    //                 'job_batches_rsp.Position'
+    //             )->withCount('submissions');
+    //         }])
+    //         ->findOrFail($raterId);
+
+    //     // remove pivot column
+    //     $rater->job_batches_rsp->makeHidden(['pivot']);
+
+    //     // rename submissions_count → applicant
+    //     $rater->job_batches_rsp->each(function ($job) {
+    //         $job->applicant = $job->submissions_count;
+    //         unset($job->submissions_count);
+    //     });
+
+    //     return response()->json($rater);
+    // }
+
     public function view($raterId)
     {
         $rater = User::select('id', 'name', 'position', 'office')
@@ -31,20 +55,30 @@ class RaterController extends Controller
                     'job_batches_rsp.id',
                     'job_batches_rsp.Office',
                     'job_batches_rsp.Position'
-                )->withCount('submissions');
+                )
+                    ->withCount('submissions')
+                    ->withPivot('status');
             }])
             ->findOrFail($raterId);
 
-        // remove pivot column
-        $rater->job_batches_rsp->makeHidden(['pivot']);
-
-        // rename submissions_count → applicant
-        $rater->job_batches_rsp->each(function ($job) {
-            $job->applicant = $job->submissions_count;
-            unset($job->submissions_count);
+        // ✅ Map job posts to desired output format
+        $rater->job_batches_rsp = $rater->job_batches_rsp->map(function ($job) {
+            return [
+                'id' => $job->id,
+                'Office' => $job->Office,
+                'Position' => $job->Position,
+                'applicant' => (string) $job->submissions_count,
+                'status' => $job->pivot->status, // ✅ consistent field
+            ];
         });
 
-        return response()->json($rater);
+        return response()->json([
+            'id' => $rater->id,
+            'name' => $rater->name,
+            'position' => $rater->position,
+            'office' => $rater->office,
+            'job_batches_rsp' => $rater->job_batches_rsp
+        ]);
     }
 
 
@@ -384,20 +418,69 @@ class RaterController extends Controller
         ]);
     }
 
+    // public function get_all_raters()
+    // {
+    //     try {
+    //         $users = User::where('role_id', 2)
+    //             ->with(['job_batches_rsp' => function ($q) {
+    //                 $q->select('job_batches_rsp.id', 'job_batches_rsp.Position');
+    //             }])
+    //             ->orderBy('created_at', 'desc')
+    //             ->get()
+    //             ->map(function ($user) {
+    //                 $pendingCount = $user->job_batches_rsp()
+    //                     ->wherePivot('status', 'pending')
+    //                     ->count();
+
+    //                 $completeCount = $user->job_batches_rsp()
+    //                     ->wherePivot('status', 'complete')
+    //                     ->count();
+
+    //                 return [
+    //                     'id' => $user->id,
+    //                     'name' => $user->name,
+    //                     'username' => $user->username,
+    //                     'job_batches_rsp' => $user->job_batches_rsp->pluck('Position')->implode(', '),
+    //                     'office' => $user->office,
+    //                     'pending' => $pendingCount,
+    //                     'active' => $user->active,
+    //                     'completed' => $completeCount,
+    //                     'created_at' => $user->created_at->format('Y-m-d H:i:s'),
+    //                     'updated_at' => $user->updated_at->format('Y-m-d H:i:s'),
+    //                 ];
+    //             });
+
+    //         return response()->json([
+    //             'status' => true,
+    //             'message' => 'Raters retrieved successfully',
+    //             'data' => $users
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Failed to retrieve raters',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
     public function get_all_raters()
     {
         try {
             $users = User::where('role_id', 2)
                 ->with(['job_batches_rsp' => function ($q) {
-                    $q->select('job_batches_rsp.id', 'job_batches_rsp.Position');
+                    // Fetch only job posts assigned to the rater that are still pending
+                    $q->select('job_batches_rsp.id', 'job_batches_rsp.Position')
+                        ->wherePivot('status', 'pending');
                 }])
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($user) {
+                    // Count only pending jobs
                     $pendingCount = $user->job_batches_rsp()
                         ->wherePivot('status', 'pending')
                         ->count();
 
+                    // Count complete jobs (for info)
                     $completeCount = $user->job_batches_rsp()
                         ->wherePivot('status', 'complete')
                         ->count();
@@ -406,6 +489,7 @@ class RaterController extends Controller
                         'id' => $user->id,
                         'name' => $user->name,
                         'username' => $user->username,
+                        // Only pending job titles shown
                         'job_batches_rsp' => $user->job_batches_rsp->pluck('Position')->implode(', '),
                         'office' => $user->office,
                         'pending' => $pendingCount,
@@ -570,6 +654,23 @@ class RaterController extends Controller
 
             DB::commit();
 
+            //  Log activity
+            if ($user instanceof \App\Models\User) {
+                activity($user->name)
+                    ->causedBy($user)
+                    ->performedOn($user)
+                    ->withProperties([
+                        'username' => $user->username,
+                        'role' => $user->role?->role_name,
+                        'office' => $user->office,
+                        'ip' => $request->ip(),
+                        'user_agent' => $request->header('User-Agent'),
+                        'job_batches_rsp_id' => $jobBatchId,
+                        'submitted_count' => count($results),
+                    ])
+                    ->log("Rater {$user->name} submitted scores for job post ID: {$jobBatchId}.");
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Successfully created all records.',
@@ -671,6 +772,24 @@ class RaterController extends Controller
                 $results[] = $submission;
             }
 
+            // Log activity after
+            if ($user instanceof \App\Models\User) {
+                $jobBatchIds = collect($results)->pluck('job_batches_rsp_id')->unique()->join(', ');
+                activity($user->name)
+                    ->causedBy($user)
+                    ->performedOn($user)
+                    ->withProperties([
+                        'username' => $user->username,
+                        'role' => $user->role?->role_name,
+                        'office' => $user->office,
+                        'ip' => $request->ip(),
+                        'user_agent' => $request->header('User-Agent'),
+                        'job_batches_rsp_ids' => $jobBatchIds,
+                        'saved_count' => count($results),
+                    ])
+                    ->log("Rater {$user->name} saved draft scores for job post batch ID: {$jobBatchIds}.");
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Draft saved successfully.',
@@ -709,5 +828,16 @@ class RaterController extends Controller
             'status' => true,
             'message' => 'Submission deleted successfully.'
         ]);
+    }
+
+
+    public function jobListAssigned()
+    {
+        // ✅ Fetch only job posts excluding 'unoccupied' and 'occupied'
+        $jobs = JobBatchesRsp::select('id', 'Office', 'Position', 'status')
+            ->whereNotIn('status', ['unoccupied', 'occupied','republished'])
+            ->get();
+
+        return response()->json($jobs);
     }
 }

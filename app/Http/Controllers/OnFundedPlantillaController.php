@@ -195,23 +195,48 @@ class OnFundedPlantillaController extends Controller
      * @param  string  $positionID
      * @return \Illuminate\Http\Response
      */
-    public function showByFunded($positionID, $itemNO)
+    // public function showByFunded($positionID, $itemNO)
+    // {
+    //     $plantilla = OnFundedPlantilla::where('PositionID', $positionID)
+    //         ->where('ItemNo', $itemNO)
+    //         ->first();
+
+    //     if (!$plantilla) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Plantilla record not found for the given PositionID and ItemNo'
+    //         ], 404);
+    //     }
+
+    //     if (!$plantilla->fileUpload) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'No file associated with this Plantilla record for the given PositionID and ItemNo'
+    //         ], 404);
+    //     }
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'data' => $plantilla
+    //     ]);
+    // }
+
+    public function showByFunded($JobpostId) // jobpost fle
     {
-        $plantilla = OnFundedPlantilla::where('PositionID', $positionID)
-            ->where('ItemNo', $itemNO)
-            ->first();
+      $plantilla = OnFundedPlantilla::findOrFail($JobpostId);
+
 
         if (!$plantilla) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Plantilla record not found for the given PositionID and ItemNo'
+                'message' => 'Plantilla record not found for the given JobpostId'
             ], 404);
         }
 
         if (!$plantilla->fileUpload) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'No file associated with this Plantilla record for the given PositionID and ItemNo'
+                'message' => 'No file associated with this Plantilla record for the given JobpostId'
             ], 404);
         }
 

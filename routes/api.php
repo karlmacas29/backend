@@ -37,7 +37,9 @@ Route::get('/mail-test', function () {
 
 Route::post('/submissions/multiple', [ExportApplicantController::class, 'storeMultiple']);
 
+Route::get('/rater/job/list', [RaterController::class, 'jobListAssigned']);
 
+Route::get('/on-funded-plantilla/by-funded/{JobpostId}', [OnFundedPlantillaController::class, 'showByFunded']);
 
 
 //
@@ -57,7 +59,7 @@ Route::get('/logs', [LogController::class, 'index']);
 
 Route::get('/office', [PlantillaController::class, 'arrangement']); // this is for the modal fetching  fetching the employye
 Route::get('/active', [PlantillaController::class, 'vwActiveGet']);
-Route::get('/on-funded-plantilla/by-funded/{positionID}/{itemNO}', [OnFundedPlantillaController::class, 'showByFunded']);
+// Route::get('/on-funded-plantilla/by-funded/{positionID}/{itemNO}', [OnFundedPlantillaController::class, 'showByFunded']); //1
 // Route::post('/store/criteria', [CriteriaController::class, 'store']);
 Route::get('/view/criteria/{job_batches_rsp_id}', [CriteriaController::class, 'view_criteria']);
 
@@ -70,7 +72,6 @@ Route::get('/job-post/republished/', [JobBatchesRspController::class, 'getRepubl
 
 Route::post('/login', [AuthController::class, 'Token_Login']);
 Route::get('/role', [AuthController::class, 'get_role']);
-Route::post('/registration', [AuthController::class, 'Token_Register']);
 
 
 Route::middleware('auth:sanctum')->post('/logs/auth', [LogController::class, 'logAuth']);
@@ -110,11 +111,14 @@ Route::prefix('on-criteria-job')->group(function () {
     Route::post('/', [OnCriteriaJobController::class, 'store']); // change old on-criteria-job
     Route::post('/{id}', [OnCriteriaJobController::class, 'update']);
     Route::delete('/{id}', [OnCriteriaJobController::class, 'destroy']);
-    Route::get('/{PositionID}/{ItemNo}', [OnCriteriaJobController::class, 'show']);
+    // Route::get('/{PositionID}/{ItemNo}', [OnCriteriaJobController::class, 'show']);
 });
 
 // Protected routes that require authentication
 Route::middleware('auth:sanctum')->group(function () {
+
+
+    Route::post('/registration', [AuthController::class, 'Token_Register']);
 
     Route::get('/user', [UsersController::class, 'getAuthenticatedUser']);
     Route::post('/store/criteria', [CriteriaController::class, 'store']);
@@ -145,6 +149,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/list', [RaterController::class, 'get_all_raters']);
         Route::get('/applicant/history/score/{applicantId}', [RaterController::class, 'applicant_history_score']);
         Route::get('/{raterId}', [RaterController::class, 'view']);
+        // Route::get('job/list', [RaterController::class, 'jobListAssigned']);
     });
 
     Route::prefix('rating')->group(function () {

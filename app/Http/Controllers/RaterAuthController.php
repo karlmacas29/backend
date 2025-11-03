@@ -59,7 +59,7 @@ class RaterAuthController extends Controller
                 'ip' => $request->ip(),
                 'user_agent' => $request->header('User-Agent'),
             ])
-            ->log("Rater '{$rater->name}' was registered successfully by '{$authUser?->name}'.");
+            ->log("Rater {$rater->name} was registered successfully by '{$authUser?->name}'.");
 
         return response()->json([
             'status' => true,
@@ -152,7 +152,7 @@ class RaterAuthController extends Controller
                 'ip' => $request->ip(),
                 'user_agent' => $request->header('User-Agent'),
             ])
-            ->log("Rater '{$rater->name}' was updated by '{$authUser?->name}'.");
+            ->log("Rater {$rater->name} was updated by '{$authUser?->name}'.");
 
         return response()->json([
             'status' => true,
@@ -253,7 +253,7 @@ class RaterAuthController extends Controller
                     'ip' => $request->ip(),
                     'user_agent' => $request->header('User-Agent'),
                 ])
-                ->log("Rater '{$user->name}' logged in successfully.");
+                ->log("Rater {$user->name} logged in successfully.");
         }
 
 
@@ -301,6 +301,23 @@ class RaterAuthController extends Controller
         // Update password
         $rater->password = Hash::make($request->new_password);
         $rater->save();
+
+
+        // ✅ Log activity using Spatie Activitylog
+        if ($rater instanceof \App\Models\User) {
+            activity($rater->name)
+                ->causedBy($rater)
+                ->performedOn($rater)
+                ->withProperties([
+                    'username' => $rater->username,
+                    'role' => $rater->role?->role_name,
+                    'office' => $rater->office,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->header('User-Agent'),
+                ])
+                ->log("Rater {$rater->name} changed their password.");
+        }
+
 
         return response()->json([
             'status' => true,
@@ -379,7 +396,7 @@ class RaterAuthController extends Controller
                     'ip' => $request->ip(),
                     'user_agent' => $request->header('User-Agent'),
                 ])
-                ->log("Rater '{$user->name}' logout successfully.");
+                ->log("Rater {$user->name} logout successfully.");
 
         }
         return response([

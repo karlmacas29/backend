@@ -2,14 +2,23 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Mail\EmailApi;
 use App\Models\Submission;
 use App\Models\JobBatchesRsp;
 use App\Models\TempRegHistory;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ApplicantHiringService
+
+
 {
+
+
+
+
     public function hireApplicant($submissionId)
     {
         DB::beginTransaction();
@@ -30,11 +39,10 @@ class ApplicantHiringService
 
             $applicant = $submission->nPersonalInfo;
 
-            // Case 1: Already employee (no nPersonalInfo_id, but has ControlNo)
+            // Case 1: Already employee
             if (!$applicant && $submission->ControlNo) {
                 $finalControlNo = $submission->ControlNo;
             } else {
-                // External applicant (has nPersonalInfo)
                 if (!$applicant) {
                     return response()->json([
                         'success' => false,
@@ -43,10 +51,9 @@ class ApplicantHiringService
                 }
 
                 $family = $applicant->family;
-                $personal_declarations = $applicant->personal_declarations->first(); // ✅ fix
+                $personal_declarations = $applicant->personal_declarations->first();
                 $existingControlNo = $applicant->control_no ?? $applicant->controlno ?? $applicant->ControlNo ?? $submission->ControlNo ?? null;
 
-                // If internal, use existing, else generate new
                 $finalControlNo = $existingControlNo ?? $this->generateControlNo();
 
                 if (!$existingControlNo) {
@@ -61,8 +68,6 @@ class ApplicantHiringService
                     $this->insertNonAcademic($applicant->skills, $finalControlNo);
                     $this->insertOrganization($applicant->skills, $finalControlNo);
                     $this->insertReferences($applicant->references, $finalControlNo);
-
-                    // $this->insertPersonalInfo($applicant, $finalControlNo);
                 }
             }
 
@@ -76,18 +81,54 @@ class ApplicantHiringService
                 ], 400);
             }
 
-            // Make sure column name matches your DB schema
             $jobPost->update(['status' => 'Occupied']);
             $submission->update(['status' => 'Hired']);
 
             // Update plantilla structure
             $this->updatePlantillaStructure($jobPost, $finalControlNo);
 
+            // ✅ Send email notification to the hired applicant
+            $externalApplicant = DB::table('xPersonalAddt')
+                ->join('xPersonal', 'xPersonalAddt.ControlNo', '=', 'xPersonal.ControlNo')
+                ->where('xPersonalAddt.ControlNo', $submission->ControlNo)
+                ->select('xPersonalAddt.*', 'xPersonal.Firstname', 'xPersonal.Surname', 'xPersonalAddt.EmailAdd')
+                ->first();
+
+            $activeApplicant = $applicant ?? $externalApplicant;
+
+            if ($activeApplicant) {
+                $email = $applicant->email_address ?? $externalApplicant->EmailAdd ?? null;
+                $fullname = $applicant
+                    ? trim("{$applicant->firstname} {$applicant->lastname}")
+                    : trim("{$externalApplicant->Firstname} {$externalApplicant->Surname}");
+
+                $position = $jobPost->Position ?? 'the applied position';
+                $office = $jobPost->Office ?? 'the corresponding office';
+
+                if (!empty($email)) {
+                    $subject = "🎉 Congratulations! You're Hired!";
+                    $message = "
+                    Dear {$fullname},<br><br>
+                    We are delighted to inform you that you have been <strong>officially hired</strong>
+                    for the position of <strong>{$position}</strong> under <strong>{$office}</strong>.<br><br>
+                    Please expect further instructions regarding your onboarding and necessary documentation.<br><br>
+                    Congratulations once again and welcome to the team!<br><br>
+                    Best regards,<br>
+                    <strong>Human Resource Department</strong>
+                ";
+
+                    // Send email
+                    Mail::to($email)->queue(new EmailApi($message, $subject));
+                }
+            } else {
+                Log::warning("⚠️ No applicant email found for hired submission ID: {$submissionId}");
+            }
+
             DB::commit();
 
             return response()->json([
                 'success'    => true,
-                'message'    => 'Applicant hired successfully and plantilla updated.',
+                'message'    => 'Applicant hired successfully, plantilla updated, and email sent.',
                 'control_no' => $finalControlNo,
                 'job_post'   => $jobPost->id,
             ]);
@@ -101,6 +142,97 @@ class ApplicantHiringService
             ], 500);
         }
     }
+    // public function hireApplicant($submissionId)
+    // {
+    //     DB::beginTransaction();
+
+    //     try {
+    //         $submission = Submission::with([
+    //             'nPersonalInfo.children',
+    //             'nPersonalInfo.family',
+    //             'nPersonalInfo.work_experience',
+    //             'nPersonalInfo.eligibity',
+    //             'nPersonalInfo.education',
+    //             'nPersonalInfo.voluntary_work',
+    //             'nPersonalInfo.training',
+    //             'nPersonalInfo.references',
+    //             'nPersonalInfo.skills',
+    //             'nPersonalInfo.personal_declarations'
+    //         ])->findOrFail($submissionId);
+
+    //         $applicant = $submission->nPersonalInfo;
+
+    //         // Case 1: Already employee (no nPersonalInfo_id, but has ControlNo)
+    //         if (!$applicant && $submission->ControlNo) {
+    //             $finalControlNo = $submission->ControlNo;
+    //         } else {
+    //             // External applicant (has nPersonalInfo)
+    //             if (!$applicant) {
+    //                 return response()->json([
+    //                     'success' => false,
+    //                     'message' => 'Applicant personal info not found.'
+    //                 ], 404);
+    //             }
+
+    //             $family = $applicant->family;
+    //             $personal_declarations = $applicant->personal_declarations->first(); // ✅ fix
+    //             $existingControlNo = $applicant->control_no ?? $applicant->controlno ?? $applicant->ControlNo ?? $submission->ControlNo ?? null;
+
+    //             // If internal, use existing, else generate new
+    //             $finalControlNo = $existingControlNo ?? $this->generateControlNo();
+
+    //             if (!$existingControlNo) {
+    //                 $this->insertPersonalInfo($applicant, $family,  $personal_declarations, $finalControlNo);
+    //                 $this->insertChildren($applicant->children, $finalControlNo);
+    //                 $this->insertWorkExperience($applicant->work_experience, $finalControlNo);
+    //                 $this->insertEligibility($applicant->eligibity, $finalControlNo);
+    //                 $this->insertEducation($applicant->education, $finalControlNo);
+    //                 $this->insertVoluntaryWork($applicant->voluntary_work, $finalControlNo);
+    //                 $this->insertTraining($applicant->training, $finalControlNo);
+    //                 $this->insertSkills($applicant->skills, $finalControlNo);
+    //                 $this->insertNonAcademic($applicant->skills, $finalControlNo);
+    //                 $this->insertOrganization($applicant->skills, $finalControlNo);
+    //                 $this->insertReferences($applicant->references, $finalControlNo);
+
+    //                 // $this->insertPersonalInfo($applicant, $finalControlNo);
+    //             }
+    //         }
+
+    //         // Update job post and submission status
+    //         $jobPost = JobBatchesRsp::findOrFail($submission->job_batches_rsp_id);
+
+    //         if ($jobPost->status === 'Occupied') {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'This job post is already occupied.'
+    //             ], 400);
+    //         }
+
+    //         // Make sure column name matches your DB schema
+    //         $jobPost->update(['status' => 'Occupied']);
+    //         $submission->update(['status' => 'Hired']);
+
+    //         // Update plantilla structure
+    //         $this->updatePlantillaStructure($jobPost, $finalControlNo);
+
+    //         DB::commit();
+
+    //         return response()->json([
+    //             'success'    => true,
+    //             'message'    => 'Applicant hired successfully and plantilla updated.',
+    //             'control_no' => $finalControlNo,
+    //             'job_post'   => $jobPost->id,
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Error hiring applicant',
+    //             'error'   => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 
     // --- Private helper methods for modularity ---
 
@@ -427,7 +559,7 @@ class ApplicantHiringService
             'Office'        => $jobPost->Office,
             'MRate'         => $rateMon, //1
             'Official'      => 0,
-            'Renew'         => 'APPOINTMENT',
+            'Renew'         => 'REAPPOINTMENT PURSUANT TO RA6656',
             'ItemNo'        => $itemNo,
             'Pages'         => $pageNo,
             'StructureID'   => $structure->StructureID ?? null,
@@ -446,7 +578,7 @@ class ApplicantHiringService
 
         DB::table('posting_date')->insert([
             'ControlNo'     => $controlNo, //1
-            'posting_daate' =>$jobPost->post_date,
+            'post_date' =>$jobPost->post_date,
             'end_date' => $jobPost->end_date,
             'job_batches_rsp_id' =>$jobPost->id
         ]);

@@ -174,6 +174,10 @@ class PlantillaController extends Controller
                     'active' => function ($query) {
                         $query->select(['ControlNo', 'Name4', 'Sex']); // specify columns from vwplantillastructure
                     },
+
+                'posting_date' => function ($query) {
+                    $query->select(['ControlNo', 'post_date', 'end_date']); // specify columns from vwplantillastructure
+                },
                     'tempRegAppointments' => function ($query) {
                         $query->select([
                             'ControlNo',

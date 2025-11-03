@@ -37,13 +37,13 @@ class OnCriteriaJobController extends Controller
     }
 
     // // Read single
-    public function show($PositionID, $ItemNo)
-    {
-        $criteria = OnCriteriaJob::where('PositionID', $PositionID)
-            ->where('ItemNo', $ItemNo)
-            ->firstOrFail();
-        return response()->json($criteria);
-    }
+    // public function show($PositionID, $ItemNo)
+    // {
+    //     $criteria = OnCriteriaJob::where('PositionID', $PositionID)
+    //         ->where('ItemNo', $ItemNo)
+    //         ->firstOrFail();
+    //     return response()->json($criteria);
+    // }
 
     // Update
     public function update(Request $request, $id)

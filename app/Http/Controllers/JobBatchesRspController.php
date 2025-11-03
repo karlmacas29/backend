@@ -41,7 +41,7 @@ class JobBatchesRspController extends Controller
         $today = Carbon::today();
         $activeJobs = JobBatchesRsp::whereDate('end_date', '>=', $today)
             ->orderBy('post_date', 'asc')
-            // ->whereRaw('LOWER(status) != ?', ['republished']) // ✅ exclude republished // Optional: you can change this to 'created_at' if preferred
+            ->whereNotIn('status', ['unoccupied', 'occupied', 'republished'])
             ->get();
 
         return response()->json($activeJobs);
@@ -51,8 +51,8 @@ class JobBatchesRspController extends Controller
     public function job_post()
     {
         // 🔹 Fetch job posts EXCLUDING republished ones
-        $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status','end_date')
-            // ->whereRaw('LOWER(status) != ?', ['republished']) // ✅ exclude republished
+        $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status','end_date', 'tblStructureDetails_ID')
+            ->whereRaw('LOWER(status) != ?', ['republished']) // ✅ exclude republished
             ->withCount([
                 'submissions as total_applicants',
                 'submissions as qualified_count' => function ($query) {
@@ -74,7 +74,7 @@ class JobBatchesRspController extends Controller
             $originalStatus = strtolower($job->status);
             $newStatus = $originalStatus;
 
-            // 🚫 Skip manual statuses (do not override)
+            // Skip manual statuses (do not override)
             $manualStatuses = ['unoccupied', 'occupied', 'closed', 'republished'];
             if (in_array($originalStatus, $manualStatuses)) {
                 continue;
@@ -105,8 +105,8 @@ class JobBatchesRspController extends Controller
         }
 
         // 🔄 Reload updated list (still excluding republished)
-        $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status' ,'end_date')
-            // ->whereRaw('LOWER(status) != ?', ['republished']) // ✅ exclude republished again
+        $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status' ,'end_date' ,'tblStructureDetails_ID')
+            ->whereRaw('LOWER(status) != ?', ['republished']) // ✅ exclude republished again
             ->withCount([
                 'submissions as total_applicants',
                 'submissions as qualified_count' => function ($query) {
@@ -128,6 +128,7 @@ class JobBatchesRspController extends Controller
     }
 
 
+
     public function job_list()
 
     {
@@ -147,6 +148,30 @@ class JobBatchesRspController extends Controller
         return response()->json($jobsWithDetails);
     }
 
+    // public function job_list()
+    // {
+    //     // Get all job posts with criteria, assigned raters, and status
+    //     $jobs = JobBatchesRsp::with(['criteriaRatings', 'users:id,name'])
+    //         ->select('id', 'office', 'isOpen', 'Position', 'PositionID', 'ItemNo', 'status') // include actual status
+    //         ->where('status', '!=', 'occupied')
+    //         ->get();
+
+    //     // Add criteria status and assigned raters to each job
+    //     $jobsWithDetails = $jobs->map(function ($job) {
+    //         // Add a computed field for criteria presence
+    //         $job->criteria_status = $job->criteriaRatings->isNotEmpty() ? 'created' : 'no criteria';
+
+    //         // Include users as assigned raters
+    //         $job->assigned_raters = $job->users;
+
+    //         // Clean up relations if desired
+    //         unset($job->users, $job->criteriaRatings);
+
+    //         return $job;
+    //     });
+
+    //     return response()->json($jobsWithDetails);
+    // }
 
 
     public function show($positionId, $itemNo): JsonResponse
@@ -560,10 +585,74 @@ class JobBatchesRspController extends Controller
 
 
 
+    // public function job_post_view($job_post_id)
+    // {
+    //     // ✅ Fetch job post with relations
+    //     $job_post = JobBatchesRsp::with(['criteria', 'plantilla'])->findOrFail($job_post_id);
+
+    //     // ✅ Get complete history (both previous and next reposts)
+    //     $history = $this->getFullJobHistory($job_post);
+
+    //     // ✅ Convert to array and clean up nested relations
+    //     $job_post_array = $job_post->toArray();
+    //     unset($job_post_array['previous_job'], $job_post_array['next_job']);
+
+    //     // ✅ Return structured response
+    //     return response()->json(array_merge($job_post_array, [
+    //         'history' => $history
+    //     ]));
+    // }
     public function job_post_view($job_post_id)
     {
         // ✅ Fetch job post with relations
-        $job_post = JobBatchesRsp::with(['criteria', 'plantilla'])->findOrFail($job_post_id);
+        $job_post = JobBatchesRsp::with(['criteria', 'plantilla'])
+            ->withCount([
+                'submissions as total_applicants',
+                'submissions as qualified_count' => function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['qualified']);
+                },
+                'submissions as unqualified_count' => function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['unqualified']);
+                },
+                'submissions as pending_count' => function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['pending']);
+                },
+                'submissions as hired_count' => function ($query) {
+                    $query->whereRaw('LOWER(status) = ?', ['hired']);
+                },
+            ])
+            ->findOrFail($job_post_id);
+
+        // ✅ Check if all raters completed their rating
+        $allRatersComplete = \App\Models\Job_batches_user::where('job_batches_rsp_id', $job_post->id)
+            ->exists() &&
+            !\App\Models\Job_batches_user::where('job_batches_rsp_id', $job_post->id)
+                ->where('status', '!=', 'complete')
+                ->exists();
+
+        $originalStatus = strtolower($job_post->status);
+        $newStatus = $originalStatus;
+
+        // ✅ Skip manual statuses
+        $manualStatuses = ['unoccupied', 'occupied', 'closed', 'republished'];
+        if (!in_array($originalStatus, $manualStatuses)) {
+            if ($allRatersComplete) {
+                $newStatus = 'rated';
+            } elseif ($job_post->hired_count >= 1) {
+                $newStatus = 'occupied';
+            } elseif ($job_post->qualified_count > 0 || $job_post->unqualified_count > 0) {
+                // ✅ If there’s at least one qualified or unqualified applicant
+                $newStatus = $job_post->pending_count > 0 ? 'pending' : 'assessed';
+            } else {
+                $newStatus = 'not started';
+            }
+
+            // ✅ Update only if status changed
+            if ($originalStatus !== $newStatus) {
+                $job_post->status = $newStatus;
+                $job_post->save();
+            }
+        }
 
         // ✅ Get complete history (both previous and next reposts)
         $history = $this->getFullJobHistory($job_post);
@@ -574,9 +663,10 @@ class JobBatchesRspController extends Controller
 
         // ✅ Return structured response
         return response()->json(array_merge($job_post_array, [
-            'history' => $history
+            'history' => $history,
         ]));
     }
+
 
     private function getFullJobHistory($job)
     {
