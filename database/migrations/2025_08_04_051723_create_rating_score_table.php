@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('rating_score', function (Blueprint $table) {
 
             $table->id();
-            $table->foreignId('nPersonalInfo_id')->constrained('nPersonalInfo')->onDelete('cascade');
+            $table->foreignId('nPersonalInfo_id')->nullable()->constrained('nPersonalInfo')->onDelete('cascade');
             $table->foreignId('job_batches_rsp_id')->nullable()->constrained('job_batches_rsp')->onDelete('cascade');
             $table->string('education_score')->nullable();
             $table->decimal('experience_score')->nullable();

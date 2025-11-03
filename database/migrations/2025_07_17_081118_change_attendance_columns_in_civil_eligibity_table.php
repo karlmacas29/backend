@@ -24,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('nCivilServiceEligibity', function (Blueprint $table) {
-            $table->decimal('rating',14 ,12)->nullable()->change(); // revert to decimal
+            $table->decimal('rating',8 ,2)->nullable()->change(); // revert to decimal
             $table->string('date_of_examination')->nullable()->change(); // was date
             $table->string('date_of_validity')->nullable()->change(); // was date
         });
