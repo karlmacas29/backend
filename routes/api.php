@@ -40,7 +40,12 @@ Route::prefix('rater')->group(function () {
 Route::post('/login', [AuthController::class, 'Token_Login']);
 Route::get('/role', [AuthController::class, 'get_role']);
 
+Route::prefix('applicant')->group(function () {
+    Route::post('/submissions', [ApplicantSubmissionController::class, 'applicant_store']); // for external applicant with zip file
+    Route::post('/employee', [ApplicantSubmissionController::class, 'employee_applicant']); // for employyee applicant
 
+
+});
 
 // Protected routes that require authentication
 Route::middleware('auth:sanctum')->group(function () {
@@ -172,9 +177,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     Route::prefix('applicant')->group(function () {
-        Route::post('/submissions', [ApplicantSubmissionController::class, 'applicant_store']); // for external applicant with zip file
+        // Route::post('/submissions', [ApplicantSubmissionController::class, 'applicant_store']); // for external applicant with zip file
         Route::get('/submissions/index', [ApplicantSubmissionController::class, 'index']);
-        Route::post('/employee', [ApplicantSubmissionController::class, 'employee_applicant']); // for employyee applicant
+        // Route::post('/employee', [ApplicantSubmissionController::class, 'employee_applicant']); // for employyee applicant
         Route::delete('/read', [ApplicantSubmissionController::class, 'read_excel']);
         Route::post('/image', [ApplicantSubmissionController::class, 'store_image']);
     });
