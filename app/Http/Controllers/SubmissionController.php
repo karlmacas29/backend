@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Mail\EmailApi;
 use App\Models\Submission;
 use Illuminate\Http\Request;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\excel\nPersonal_info;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Auth\Events\Validated;
 
 class SubmissionController extends Controller
 {
@@ -248,4 +250,109 @@ class SubmissionController extends Controller
             'data' => $submission
         ]);
     }
+
+
+    public function sendEmailApplicantBatch(Request $request) // send an email to all applicants of a specific job post for Qualified and Unqualified status
+    {
+        $validated = $request->validate([
+            'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+        ]);
+
+        $jobId = $validated['job_batches_rsp_id'];
+
+        // ✅ Get all applicants for that job with Qualified or Unqualified status
+        $submissions = Submission::where('job_batches_rsp_id', $jobId)
+            ->with('nPersonalInfo') // eager load relation
+            ->whereIn('status', ['Qualified', 'Unqualified'])
+            ->get();
+
+        if ($submissions->isEmpty()) {
+            return response()->json([
+                'message' => 'No applicants found with Qualified or Unqualified status for this job post.'
+            ], 404);
+        }
+
+        // ✅ Get job details for context
+        $job = \App\Models\JobBatchesRsp::find($jobId);
+        $position = $job->Position ?? 'the applied position';
+        $office = $job->Office ?? 'the corresponding office';
+
+        $count = 0;
+
+        foreach ($submissions as $submission) {
+            $applicant = $submission->nPersonalInfo;
+
+            // Check for internal or external applicant
+            $externalApplicant = DB::table('xPersonalAddt')
+                ->join('xPersonal', 'xPersonalAddt.ControlNo', '=', 'xPersonal.ControlNo')
+                ->where('xPersonalAddt.ControlNo', $submission->ControlNo)
+                ->select('xPersonalAddt.*', 'xPersonal.Firstname', 'xPersonal.Surname', 'xPersonalAddt.EmailAdd')
+                ->first();
+
+            $activeApplicant = $applicant ?? $externalApplicant;
+
+            if (!$activeApplicant) {
+                Log::warning("⚠️ No applicant found for submission ID: {$submission->id}");
+                continue;
+            }
+
+            $email = $applicant->email_address ?? $externalApplicant->EmailAdd ?? null;
+            $fullname = $applicant
+                ? trim("{$applicant->firstname} {$applicant->lastname}")
+                : trim("{$externalApplicant->Firstname} {$externalApplicant->Surname}");
+
+            if (empty($email)) {
+                Log::warning("⚠️ Applicant {$fullname} has no email address.");
+                continue;
+            }
+
+            $remarks = "
+            <br><br><strong>Evaluation Remarks:</strong><br>
+            Education: {$submission->education_remark}<br>
+            Experience: {$submission->experience_remark}<br>
+            Training: {$submission->training_remark}<br>
+            Eligibility: {$submission->eligibility_remark}<br>
+        ";
+
+            $statusLower = strtolower($submission->status);
+            $subject = "Application Status Update";
+
+            // ✅ Email content based on status
+            $message = match ($statusLower) {
+                'qualified' => "
+                Dear {$fullname},<br><br>
+                Congratulations! You have been qualified for the next stage of evaluation
+                for the position of <strong>{$position}</strong> under <strong>{$office}</strong>.<br>
+                Please stay tuned for further instructions.
+                {$remarks}
+            ",
+                'unqualified' => "
+                Dear {$fullname},<br><br>
+                We appreciate your effort in applying for the position of <strong>{$position}</strong>
+                under <strong>{$office}</strong>. However, after evaluation, your application
+                did not meet the required qualifications.
+                {$remarks}
+            ",
+                default => "
+                Dear {$fullname},<br><br>
+                Your application status for the position of <strong>{$position}</strong>
+                under <strong>{$office}</strong> has been updated to: <strong>{$submission->status}</strong>.
+                {$remarks}
+            ",
+            };
+            try {
+                Mail::to($email)->queue(new EmailApi($message, $subject));
+                Log::info("📧 Queued email for {$fullname} ({$email}) with status: {$submission->status}");
+                $count++;
+            } catch (\Exception $e) {
+                Log::error("❌ Failed to queue email for {$fullname} ({$email}): {$e->getMessage()}");
+            }
+        }
+
+        return response()->json([
+            'message' => "Email notifications sent to {$count} applicant(s) for this job post.",
+        ]);
+    }
+
+   
 }

@@ -81,22 +81,18 @@ class RaterController extends Controller
         ]);
     }
 
-
-
-    public function showScoresWithHistory($jobpostId)
+    public function showScores($jobpostId)
     {
-        // ✅ Ensure job post exists
         $jobpost = JobBatchesRsp::findOrFail($jobpostId);
 
-        // ✅ Count assigned and completed raters
-        $totalAssigned = Job_batches_user::where('job_batches_rsp_id', $jobpostId)->whereHas('user', function ($active) {
-            $active->where('active', 1);
-        })->count();
+        $totalAssigned = Job_batches_user::where('job_batches_rsp_id', $jobpostId)
+            ->whereHas('user', fn($q) => $q->where('active', 1))
+            ->count();
+
         $totalCompleted = Job_batches_user::where('job_batches_rsp_id', $jobpostId)
             ->where('status', 'complete')
             ->count();
 
-        // 🔹 Step 1: Fetch ALL scores (per rater) including ControlNo
         $allScores = rating_score::select(
             'rating_score.id',
             'rating_score.user_id as rater_id',
@@ -112,108 +108,55 @@ class RaterController extends Controller
             'rating_score.total_qs',
             'rating_score.grand_total',
             'rating_score.ranking',
-            'rating_score.rater_name',
             'nPersonalInfo.firstname',
             'nPersonalInfo.lastname',
             'nPersonalInfo.image_path',
             'submission.id as submission_id'
         )
-
             ->leftJoin('nPersonalInfo', 'nPersonalInfo.id', '=', 'rating_score.nPersonalInfo_id')
             ->leftJoin('users', 'users.id', '=', 'rating_score.user_id')
             ->leftJoin('submission', function ($join) {
                 $join->on('submission.job_batches_rsp_id', '=', 'rating_score.job_batches_rsp_id')
-                    ->where(function ($q) {
-                        $q->whereColumn('submission.nPersonalInfo_id', 'rating_score.nPersonalInfo_id')
-                            ->orWhereColumn('submission.ControlNo', 'rating_score.ControlNo');
-                    });
+                    ->whereColumn('submission.nPersonalInfo_id', 'rating_score.nPersonalInfo_id');
             })
             ->where('rating_score.job_batches_rsp_id', $jobpostId)
             ->get();
 
-        // 🔹 Step 2: Group scores by applicant (use nPersonalInfo_id if exists, otherwise ControlNo)
-        $scoresByApplicant = $allScores->groupBy(function ($row) {
-            return $row->nPersonalInfo_id ?: 'control_' . $row->ControlNo;
-        });
+        // Group by applicant
+        $scoresByApplicant = $allScores->groupBy(fn($row) => $row->nPersonalInfo_id ?: 'control_' . $row->ControlNo);
 
-        $results = [];
+        $applicants = [];
 
         foreach ($scoresByApplicant as $applicantKey => $scoreRows) {
             $firstRow = $scoreRows->first();
 
-            // ✅ Case 1: Applicant has nPersonalInfo record
-            if ($firstRow->nPersonalInfo_id) {
-                $firstname = $firstRow->firstname;
-                $lastname = $firstRow->lastname;
+            // Build image URL if exists
+            // $imageUrl = $firstRow->image_path ? config('app.url') . '/storage/' . $firstRow->image_path : null;
 
-                // Build image URL if exists
-                $imageUrl = null;
-                if ($firstRow->image_path && Storage::disk('public')->exists($firstRow->image_path)) {
-                    $baseUrl = config('app.url');
-                    $imageUrl = $baseUrl . '/storage/' . $firstRow->image_path;
-                }
-            }
-            // ✅ Case 2: Applicant only has ControlNo (no nPersonalInfo_id)
-            else {
-                $xPDS = new \App\Http\Controllers\xPDSController();
-                $employeeData = $xPDS->getPersonalDataSheet(new \Illuminate\Http\Request([
-                    'controlno' => $firstRow->ControlNo
-                ]));
-
-                $employeeJson = $employeeData->getData(true);
-                $firstname = $employeeJson['User'][0]['Firstname'] ?? '';
-                $lastname = $employeeJson['User'][0]['Surname'] ?? '';
-                $imageUrl = $employeeJson['User'][0]['Pics'] ?? null;
-            }
-
-            // 🔹 Step 3: Compute applicant’s final score
-            $scoresArray = $scoreRows->map(function ($row) {
-                return [
-                    'education'   => (float) $row->education,
-                    'experience'  => (float) $row->experience,
-                    'training'    => (float) $row->training,
-                    'performance' => (float) $row->performance,
-                    'bei'         => (float) $row->bei,
-                ];
-            })->toArray();
+            // Compute final score
+            $scoresArray = $scoreRows->map(fn($row) => [
+                'education'   => (float)$row->education,
+                'experience'  => (float)$row->experience,
+                'training'    => (float)$row->training,
+                'performance' => (float)$row->performance,
+                'bei'         => (float)$row->bei,
+            ])->toArray();
 
             $computed = RatingService::computeFinalScore($scoresArray);
 
-            $applicantData = array_merge(
-                [
-                    'submission_id'     => (string) $firstRow->submission_id,
-                    'nPersonalInfo_id'   => (string) $firstRow->nPersonalInfo_id,
-                    'ControlNo'          => $firstRow->ControlNo,
-                    'firstname'          => $firstname,
-                    'lastname'           => $lastname,
-                    'image_url'          => $imageUrl,
-                    'job_batches_rsp_id' => (string) $firstRow->job_batches_rsp_id,
-                ],
-                $computed,
-                [
-                    'history' => $scoreRows->map(function ($item) {
-                        return [
-                            'id'            => $item->id,
-                            'rater_id'      => $item->rater_id,
-                            'rater_name'    => $item->rater_name,
-                            'education'     => $item->education,
-                            'experience'    => $item->experience,
-                            'training'      => $item->training,
-                            'performance'   => $item->performance,
-                            'bei'           => $item->bei,
-                            'total_qs'      => $item->total_qs,
-                            'grand_total'   => $item->grand_total,
-                            'ranking'       => $item->ranking,
-                        ];
-                    })
-                ]
-            );
-
-            $results[$applicantKey] = $applicantData;
+            $applicants[$applicantKey] = [
+                'submission_id'     => (string)$firstRow->submission_id,
+                'nPersonalInfo_id'  => (string)$firstRow->nPersonalInfo_id,
+                'ControlNo'         => $firstRow->ControlNo,
+                'firstname'         => $firstRow->firstname,
+                'lastname'          => $firstRow->lastname,
+                // 'image_url'         => $imageUrl,
+                'job_batches_rsp_id' => (string)$firstRow->job_batches_rsp_id,
+            ] + $computed; // include only aggregate/final score, no history
         }
 
-        // 🔹 Step 4: Rank applicants for this job post
-        $rankedApplicants = RatingService::addRanking(array_values($results));
+        // Rank applicants by grand_total
+        $rankedApplicants = RatingService::addRanking(array_values($applicants));
 
         return response()->json([
             'jobpost_id'      => $jobpostId,
@@ -222,6 +165,211 @@ class RaterController extends Controller
             'applicants'      => $rankedApplicants
         ]);
     }
+
+    public function showApplicantHistory($applicantId)
+    {
+        // Fetch history for applicant (using nPersonalInfo_id or ControlNo fallback)
+        $historyRecords = rating_score::select(
+            'rating_score.id',
+            'rating_score.user_id as rater_id',
+            'rating_score.rater_name',
+            'rating_score.nPersonalInfo_id',
+            'rating_score.ControlNo',
+            'rating_score.education_score as education',
+            'rating_score.experience_score as experience',
+            'rating_score.training_score as training',
+            'rating_score.performance_score as performance',
+            'rating_score.behavioral_score as bei',
+            'rating_score.total_qs',
+            'rating_score.grand_total',
+            'rating_score.ranking',
+            'nPersonalInfo.firstname',
+            'nPersonalInfo.lastname',
+            'nPersonalInfo.image_path'
+        )
+            ->leftJoin('nPersonalInfo', 'nPersonalInfo.id', '=', 'rating_score.nPersonalInfo_id')
+            ->where(function ($q) use ($applicantId) {
+                $q->where('rating_score.nPersonalInfo_id', $applicantId)
+                    ->orWhere('rating_score.ControlNo', $applicantId);
+            })
+            ->get();
+
+        if ($historyRecords->isEmpty()) {
+            return response()->json(['message' => 'No applicant history found'], 404);
+        }
+
+        // Applicant info from first matching row
+        $first = $historyRecords->first();
+
+        $imageUrl = $first->image_path
+            ? config('app.url') . '/storage/' . $first->image_path
+            : null;
+
+        return response()->json([
+            'applicant' => [
+                'nPersonalInfo_id' => (string)$first->nPersonalInfo_id,
+                'ControlNo'        => $first->ControlNo,
+                'firstname'        => $first->firstname,
+                'lastname'         => $first->lastname,
+                'image_url'        => $imageUrl
+            ],
+            'history' => $historyRecords->map(fn($row) => [
+                'id'          => $row->id,
+                'rater_id'    => $row->rater_id,
+                'rater_name'  => $row->rater_name,
+                'education'   => $row->education,
+                'experience'  => $row->experience,
+                'training'    => $row->training,
+                'performance' => $row->performance,
+                'bei'         => $row->bei,
+                'total_qs'    => $row->total_qs,
+                'grand_total' => $row->grand_total,
+                'ranking'     => $row->ranking,
+            ])
+        ]);
+    }
+
+
+    // public function showScoresWithHistory($jobpostId)
+    // {
+    //     // ✅ Ensure job post exists
+    //     $jobpost = JobBatchesRsp::findOrFail($jobpostId);
+
+    //     // ✅ Count assigned and completed raters
+    //     $totalAssigned = Job_batches_user::where('job_batches_rsp_id', $jobpostId)->whereHas('user', function ($active) {
+    //         $active->where('active', 1);
+    //     })->count();
+    //     $totalCompleted = Job_batches_user::where('job_batches_rsp_id', $jobpostId)
+    //         ->where('status', 'complete')
+    //         ->count();
+
+    //     // 🔹 Step 1: Fetch ALL scores (per rater) including ControlNo
+    //     $allScores = rating_score::select(
+    //         'rating_score.id',
+    //         'rating_score.user_id as rater_id',
+    //         'users.name as rater_name',
+    //         'rating_score.nPersonalInfo_id',
+    //         'rating_score.ControlNo',
+    //         'rating_score.job_batches_rsp_id',
+    //         'rating_score.education_score as education',
+    //         'rating_score.experience_score as experience',
+    //         'rating_score.training_score as training',
+    //         'rating_score.performance_score as performance',
+    //         'rating_score.behavioral_score as bei',
+    //         'rating_score.total_qs',
+    //         'rating_score.grand_total',
+    //         'rating_score.ranking',
+    //         'rating_score.rater_name',
+    //         'nPersonalInfo.firstname',
+    //         'nPersonalInfo.lastname',
+    //         'nPersonalInfo.image_path',
+    //         'submission.id as submission_id'
+    //     )
+
+    //         ->leftJoin('nPersonalInfo', 'nPersonalInfo.id', '=', 'rating_score.nPersonalInfo_id')
+    //         ->leftJoin('users', 'users.id', '=', 'rating_score.user_id')
+    //         ->leftJoin('submission', function ($join) {
+    //             $join->on('submission.job_batches_rsp_id', '=', 'rating_score.job_batches_rsp_id')
+    //                 ->where(function ($q) {
+    //                     $q->whereColumn('submission.nPersonalInfo_id', 'rating_score.nPersonalInfo_id')
+    //                         ->orWhereColumn('submission.ControlNo', 'rating_score.ControlNo');
+    //                 });
+    //         })
+    //         ->where('rating_score.job_batches_rsp_id', $jobpostId)
+    //         ->get();
+
+    //     // 🔹 Step 2: Group scores by applicant (use nPersonalInfo_id if exists, otherwise ControlNo)
+    //     $scoresByApplicant = $allScores->groupBy(function ($row) {
+    //         return $row->nPersonalInfo_id ?: 'control_' . $row->ControlNo;
+    //     });
+
+    //     $results = [];
+
+    //     foreach ($scoresByApplicant as $applicantKey => $scoreRows) {
+    //         $firstRow = $scoreRows->first();
+
+    //         // ✅ Case 1: Applicant has nPersonalInfo record
+    //         if ($firstRow->nPersonalInfo_id) {
+    //             $firstname = $firstRow->firstname;
+    //             $lastname = $firstRow->lastname;
+
+    //             // Build image URL if exists
+    //             $imageUrl = null;
+    //             if ($firstRow->image_path && Storage::disk('public')->exists($firstRow->image_path)) {
+    //                 $baseUrl = config('app.url');
+    //                 $imageUrl = $baseUrl . '/storage/' . $firstRow->image_path;
+    //             }
+    //         }
+    //         // ✅ Case 2: Applicant only has ControlNo (no nPersonalInfo_id)
+    //         else {
+    //             $xPDS = new \App\Http\Controllers\xPDSController();
+    //             $employeeData = $xPDS->getPersonalDataSheet(new \Illuminate\Http\Request([
+    //                 'controlno' => $firstRow->ControlNo
+    //             ]));
+
+    //             $employeeJson = $employeeData->getData(true);
+    //             $firstname = $employeeJson['User'][0]['Firstname'] ?? '';
+    //             $lastname = $employeeJson['User'][0]['Surname'] ?? '';
+    //             $imageUrl = $employeeJson['User'][0]['Pics'] ?? null;
+    //         }
+
+    //         // 🔹 Step 3: Compute applicant’s final score
+    //         $scoresArray = $scoreRows->map(function ($row) {
+    //             return [
+    //                 'education'   => (float) $row->education,
+    //                 'experience'  => (float) $row->experience,
+    //                 'training'    => (float) $row->training,
+    //                 'performance' => (float) $row->performance,
+    //                 'bei'         => (float) $row->bei,
+    //             ];
+    //         })->toArray();
+
+    //         $computed = RatingService::computeFinalScore($scoresArray);
+
+    //         $applicantData = array_merge(
+    //             [
+    //                 'submission_id'     => (string) $firstRow->submission_id,
+    //                 'nPersonalInfo_id'   => (string) $firstRow->nPersonalInfo_id,
+    //                 'ControlNo'          => $firstRow->ControlNo,
+    //                 'firstname'          => $firstname,
+    //                 'lastname'           => $lastname,
+    //                 'image_url'          => $imageUrl,
+    //                 'job_batches_rsp_id' => (string) $firstRow->job_batches_rsp_id,
+    //             ],
+    //             $computed,
+    //             [
+    //                 'history' => $scoreRows->map(function ($item) {
+    //                     return [
+    //                         'id'            => $item->id,
+    //                         'rater_id'      => $item->rater_id,
+    //                         'rater_name'    => $item->rater_name,
+    //                         'education'     => $item->education,
+    //                         'experience'    => $item->experience,
+    //                         'training'      => $item->training,
+    //                         'performance'   => $item->performance,
+    //                         'bei'           => $item->bei,
+    //                         'total_qs'      => $item->total_qs,
+    //                         'grand_total'   => $item->grand_total,
+    //                         'ranking'       => $item->ranking,
+    //                     ];
+    //                 })
+    //             ]
+    //         );
+
+    //         $results[$applicantKey] = $applicantData;
+    //     }
+
+    //     // 🔹 Step 4: Rank applicants for this job post
+    //     $rankedApplicants = RatingService::addRanking(array_values($results));
+
+    //     return response()->json([
+    //         'jobpost_id'      => $jobpostId,
+    //         'total_assigned'  => $totalAssigned,
+    //         'total_completed' => $totalCompleted,
+    //         'applicants'      => $rankedApplicants
+    //     ]);
+    // }
+
 
 
     public function index()

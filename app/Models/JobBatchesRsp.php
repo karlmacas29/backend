@@ -34,14 +34,24 @@ class JobBatchesRsp extends Model
         'salaryMin',
         'salaryMax',
         'level',
-        'Education',
-        'Eligibility',
-        'Training',
-        'Experience',
-        'fileUpload',
+        // 'Education',
+        // 'Eligibility',
+        // 'Training',
+        // 'Experience',
+        // 'fileUpload',
         'status',
         'tblStructureDetails_ID',
+        // 'StructureID',
+        // 'OfficeID',
+        // 'OfficeID1',
+        // 'GroupID',
+        // 'StructureID',
+        // 'StructureID',
+        // 'StructureID',
+        // 'StructureID',
         'old_job_id'
+
+
 
 
     ];

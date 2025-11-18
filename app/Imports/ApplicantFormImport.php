@@ -7,6 +7,7 @@ use file;
 use App\Imports\nFamilySheet;
 use App\Imports\Work_experience_sheet;
 use App\Imports\PersonalInformationSheet;
+use App\Models\excel\nPersonal_info;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 
@@ -20,13 +21,13 @@ class ApplicantFormImport implements WithMultipleSheets
 
 
 
-    public function __construct($jobBatchId = null, $nPersonalInfoId = null, $fileName = null, $ImageValue = null)
+    public function __construct($jobBatchId = null, $nPersonalInfoId = null, $fileName = null, $ImageValue = null, )
     {
         $this->jobBatchId = $jobBatchId;
         $this->nPersonalInfoId = $nPersonalInfoId;
         $this->fileName = $fileName;
         $this->ImageValue = $ImageValue;
-
+      
     }
 
 
@@ -48,6 +49,7 @@ class ApplicantFormImport implements WithMultipleSheets
         ];
     }
 
+
     public function setPersonalInfoId($id){
          $this->nPersonalInfoId = $id;
     }
@@ -65,5 +67,7 @@ class ApplicantFormImport implements WithMultipleSheets
     {
         return $this->ImageValue;
     }
+
+
 }
 

@@ -64,6 +64,11 @@ class nPersonal_info extends Model
         'email_address',
     ];
 
+    // protected $casts = [
+    //     'date_of_birth' => 'date',
+    // ];
+
+
     protected static function newFactory()
     {
         return NPersonalInfoFactory::new();
@@ -76,7 +81,7 @@ class nPersonal_info extends Model
 
     public function children()
     {
-        return $this->hasMany(Children::class, 'nPersonalInfo_id','id');
+        return $this->hasMany(Children::class, 'nPersonalInfo_id', 'id');
     }
 
     public function education()
@@ -127,10 +132,12 @@ class nPersonal_info extends Model
         )->withTimestamps();
     }
 
+
     public function submission()
     {
         return $this->belongsTo(Submission::class, 'submission_id');
     }
+
     public function rating_score()
     {
         return $this->hasOne(rating_score::class, 'nPersonalInfo_id', 'id');
@@ -164,6 +171,3 @@ class nPersonal_info extends Model
     // {
     //     return $this->hasMany(Upload_file_image::class);
     // }
-
-
-

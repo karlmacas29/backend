@@ -131,7 +131,7 @@ class PersonalInformationSheet implements WithEvents
                 [
                     'lastname' => 'required',
                     'firstname' => 'required',
-                    'email_address' => 'required',
+                    'email_address' => 'required|email', // ✅ Removed unique validation
                     'cellphone_number' => 'required',
                     'sex' => 'required',
                     'date_of_birth' => 'required',
@@ -141,7 +141,7 @@ class PersonalInformationSheet implements WithEvents
                     'lastname.required' => 'Lastname is required in Personal Information sheet.',
                     'firstname.required' => 'Firstname is required in Personal Information sheet.',
                     'email_address.required' => 'Email address is required in Personal Information sheet.',
-                    // 'email_address.email' => 'Invalid email format in Personal Information sheet.',
+                    'email_address.email' => 'Invalid email format in Personal Information sheet.',
                     'cellphone_number.required' => 'Cellphone number is required in Personal Information sheet.',
                     'sex.required' => 'Sex field is required in Personal Information sheet.',
                     'date_of_birth.required' => 'Date of Birth is required in Personal Information sheet.',

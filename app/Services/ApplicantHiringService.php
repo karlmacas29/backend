@@ -5,22 +5,38 @@ namespace App\Services;
 use Carbon\Carbon;
 use App\Mail\EmailApi;
 use App\Models\Submission;
+use Illuminate\Http\Request;
 use App\Models\JobBatchesRsp;
 use App\Models\TempRegHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+
 class ApplicantHiringService
 
 
 {
 
-    public function hireApplicant($submissionId)
+
+
+    public function hireApplicant($submissionId,Request $request)
     {
         DB::beginTransaction();
-
         try {
+            // These methods exist on Illuminate\Http\Request
+            $request->validate([
+                'sepdate' => 'nullable|date',
+                'sepcause' => 'nullable|string|max:255',
+                'vicename' => 'nullable|string|max:255',
+                'vicecause' => 'nullable|string|max:255',
+            ]);
+
+            $sepdate = $request->input('sepdate');
+            $sepcause = $request->input('sepcause');
+            $vicename = $request->input('vicename');
+            $vicecause = $request->input('vicecause');
+
             $submission = Submission::with([
                 'nPersonalInfo.children',
                 'nPersonalInfo.family',
@@ -82,7 +98,7 @@ class ApplicantHiringService
             $submission->update(['status' => 'Hired']);
 
             // Update plantilla structure
-            $this->updatePlantillaStructure($jobPost, $finalControlNo);
+            $this->updatePlantillaStructure($jobPost, $finalControlNo, $sepdate, $sepcause, $vicename, $vicecause);
 
             // ✅ Send email notification to the hired applicant
             $externalApplicant = DB::table('xPersonalAddt')
@@ -139,99 +155,7 @@ class ApplicantHiringService
             ], 500);
         }
     }
-    // public function hireApplicant($submissionId)
-    // {
-    //     DB::beginTransaction();
 
-    //     try {
-    //         $submission = Submission::with([
-    //             'nPersonalInfo.children',
-    //             'nPersonalInfo.family',
-    //             'nPersonalInfo.work_experience',
-    //             'nPersonalInfo.eligibity',
-    //             'nPersonalInfo.education',
-    //             'nPersonalInfo.voluntary_work',
-    //             'nPersonalInfo.training',
-    //             'nPersonalInfo.references',
-    //             'nPersonalInfo.skills',
-    //             'nPersonalInfo.personal_declarations'
-    //         ])->findOrFail($submissionId);
-
-    //         $applicant = $submission->nPersonalInfo;
-
-    //         // Case 1: Already employee (no nPersonalInfo_id, but has ControlNo)
-    //         if (!$applicant && $submission->ControlNo) {
-    //             $finalControlNo = $submission->ControlNo;
-    //         } else {
-    //             // External applicant (has nPersonalInfo)
-    //             if (!$applicant) {
-    //                 return response()->json([
-    //                     'success' => false,
-    //                     'message' => 'Applicant personal info not found.'
-    //                 ], 404);
-    //             }
-
-    //             $family = $applicant->family;
-    //             $personal_declarations = $applicant->personal_declarations->first(); // ✅ fix
-    //             $existingControlNo = $applicant->control_no ?? $applicant->controlno ?? $applicant->ControlNo ?? $submission->ControlNo ?? null;
-
-    //             // If internal, use existing, else generate new
-    //             $finalControlNo = $existingControlNo ?? $this->generateControlNo();
-
-    //             if (!$existingControlNo) {
-    //                 $this->insertPersonalInfo($applicant, $family,  $personal_declarations, $finalControlNo);
-    //                 $this->insertChildren($applicant->children, $finalControlNo);
-    //                 $this->insertWorkExperience($applicant->work_experience, $finalControlNo);
-    //                 $this->insertEligibility($applicant->eligibity, $finalControlNo);
-    //                 $this->insertEducation($applicant->education, $finalControlNo);
-    //                 $this->insertVoluntaryWork($applicant->voluntary_work, $finalControlNo);
-    //                 $this->insertTraining($applicant->training, $finalControlNo);
-    //                 $this->insertSkills($applicant->skills, $finalControlNo);
-    //                 $this->insertNonAcademic($applicant->skills, $finalControlNo);
-    //                 $this->insertOrganization($applicant->skills, $finalControlNo);
-    //                 $this->insertReferences($applicant->references, $finalControlNo);
-
-    //                 // $this->insertPersonalInfo($applicant, $finalControlNo);
-    //             }
-    //         }
-
-    //         // Update job post and submission status
-    //         $jobPost = JobBatchesRsp::findOrFail($submission->job_batches_rsp_id);
-
-    //         if ($jobPost->status === 'Occupied') {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'This job post is already occupied.'
-    //             ], 400);
-    //         }
-
-    //         // Make sure column name matches your DB schema
-    //         $jobPost->update(['status' => 'Occupied']);
-    //         $submission->update(['status' => 'Hired']);
-
-    //         // Update plantilla structure
-    //         $this->updatePlantillaStructure($jobPost, $finalControlNo);
-
-    //         DB::commit();
-
-    //         return response()->json([
-    //             'success'    => true,
-    //             'message'    => 'Applicant hired successfully and plantilla updated.',
-    //             'control_no' => $finalControlNo,
-    //             'job_post'   => $jobPost->id,
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Error hiring applicant',
-    //             'error'   => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
-    // --- Private helper methods for modularity ---
 
     private function generateControlNo()
     {
@@ -434,7 +358,7 @@ class ApplicantHiringService
         }
     }
 
-    private function updatePlantillaStructure($jobPost, $controlNo)
+    private function updatePlantillaStructure($jobPost, $controlNo, $sepdate, $sepcause, $vicename, $vicecause)
     {
 
         $tblStructureDetails_ID = $jobPost->tblStructureDetails_ID;
@@ -448,10 +372,6 @@ class ApplicantHiringService
         }
         DB::table('tempRegAppointmentReorg')->where('ControlNo', $controlNo)->delete();
 
-        // $designation = DB::table('yDesignation') // codes // descripstions // status // Grade
-        //     ->select('Codes', 'Descriptions', 'Status')
-        //     ->where('Descriptions', $jobPost->Position)
-        //     ->first();
         $designation = DB::table('yDesignation')
             ->select('Codes', 'Descriptions', 'Status')
             ->where('Descriptions', $jobPost->Position)
@@ -470,12 +390,13 @@ class ApplicantHiringService
             ->where('Steps', 1)
             ->first();
 
-        $fromDate = Carbon::now()->startOfDay();
-        $toDate   = $fromDate->copy()->addYears(50);
-
         $rateMon  = $salary->Salary ?? 0;
         $rateDay  = $rateMon > 0 ? $rateMon / 22 : 0;
         $rateYear = $rateMon * 12;
+
+        $fromDate = Carbon::now()->startOfDay();
+        $toDate   = $fromDate->copy()->addYears(50);
+
 
         $Division = DB::table('yDivision')
             ->where('Descriptions', $jobPost->Division)
@@ -566,10 +487,10 @@ class ApplicantHiringService
             // 'group',//
             'unitcode' =>     $UnitCode ?? null,
             'unit' => $jobPost->Unit ?? null,
-            // 'sepdate',
-            // 'sepcause',
-            // 'vicename',
-            // 'vicecause'
+            'sepdate' => $sepdate,
+            'sepcause' => $sepcause,
+            'vicename' => $vicename,
+            'vicecause' => $vicecause
 
         ]);
 

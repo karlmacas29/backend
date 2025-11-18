@@ -54,24 +54,10 @@ class Submission extends Model
         return $this->belongsTo(JobBatchesRsp::class, 'job_batches_rsp_id', 'id');
     }
 
-    protected static function booted()
+
+    public function schedules()
     {
-        // Prevent duplicate submissions for the same email and job
-        static::creating(function ($submission) {
-            $personalInfo = nPersonal_info::find($submission->nPersonalInfo_id);
-
-            if ($personalInfo && $personalInfo->email_address) {
-                $existingSubmission = Submission::whereHas('nPersonalInfo', function ($query) use ($personalInfo) {
-                    $query->where('email_address', $personalInfo->email_address);
-                })->where('job_batches_rsp_id', $submission->job_batches_rsp_id)
-                    ->where('nPersonalInfo_id', '!=', $submission->nPersonalInfo_id)
-                    ->exists();
-
-                if ($existingSubmission) {
-                    throw new \Exception('An application with this email address already exists for this job position.');
-                }
-            }
-        });
+        return $this->hasMany(Schedule::class, 'submission_id', 'id');
     }
 }
 

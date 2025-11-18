@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{{ $subject }}</title>
+    <title>{{ $mailSubject }}</title>
     <style>
         body {
             font-family: Arial, Helvetica, sans-serif;
@@ -37,12 +36,6 @@
 
         .content {
             padding: 25px;
-        }
-
-        .content h4 {
-            margin: 0 0 15px;
-            font-size: 18px;
-            color: #333;
         }
 
         .content p {
@@ -78,12 +71,11 @@
 <body>
     <div class="container">
         <div class="header">
-            <h2>{{ $subject }}</h2>
+            <h2>{{ $mailSubject }}</h2>
         </div>
 
         <div class="content">
-            {{-- <h4>Hello,</h4> --}}
-             <p>{!! $mailmessage !!}</p>
+            <p>{!! $mailmessage !!}</p>
         </div>
 
         <div class="footer">

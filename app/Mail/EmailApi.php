@@ -6,59 +6,48 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Log;
 
 class EmailApi extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-
     public $mailmessage;
+    public $mailSubject;
 
-    public $subject;
-    /**
-     * Create a new message instance.
-     */
-    public function __construct($message , $subject)
+    public function __construct($message, $subject)
     {
-        //
         $this->mailmessage = $message;
-        $this->subject = $subject;
+        $this->mailSubject = $subject;
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
         return new Envelope(
             from: new Address("tagumcityrsp@gmail.com", "Recruitment, Selection and Placement"),
-          subject: $this->subject,
+            subject: $this->mailSubject
         );
     }
 
-    /**
-     * Get the message content definition.
-     */
     public function content(): Content
     {
-        return new Content(
-            view: 'mail-template.mail',
-            with: [
-                'mailmessage' => $this->mailmessage,
-                'subject' => $this->subject,
-            ],
-
-        );
+        try {
+            return new Content(
+                view: 'mail-template.mail',
+                with: [
+                    'mailmessage' => $this->mailmessage,
+                    'mailSubject' => $this->mailSubject
+                ]
+            );
+        } catch (\Exception $e) {
+            Log::error("❌ EmailApi failed to build email: " . $e->getMessage());
+            throw $e;
+        }
     }
 
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
-     */
     public function attachments(): array
     {
         return [];

@@ -3,27 +3,36 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use App\Models\xPersonal;
 use App\Models\Submission;
 use Illuminate\Http\Request;
 use App\Models\JobBatchesRsp;
 use App\Models\TempRegHistory;
 use Illuminate\Support\Facades\DB;
+use App\Services\AppiontmentService;
 use App\Services\ApplicantHiringService;
 
 class AppointmentController extends Controller
 {
-
+    protected $appiontmentService;
     protected $hiringService;
 
-    public function __construct(ApplicantHiringService $hiringService)
+    public function __construct(ApplicantHiringService $hiringService, AppiontmentService $appiontmentService)
     {
         $this->hiringService = $hiringService;
+        $this->appiontmentService = $appiontmentService;
     }
 
     public function hireApplicant($submissionId)
     {
         // Call the service method
         return $this->hiringService->hireApplicant($submissionId);
+    }
+
+    public function appiontment(Request $request)
+    {
+
+        return $this->appiontmentService->appiontment($request);
     }
 
 
@@ -89,5 +98,25 @@ class AppointmentController extends Controller
         ]);
     }
 
+
+
+
+
+
+
+    public function position()
+    {
+
+        $status = DB::table('yDesignation')->get();
+        return response()->json($status);
+    }
+
+    public function  employee()
+    {
+
+        $employee = xPersonal::select('ControlNo', 'Firstname', 'Surname', 'Occupation')->get();
+
+        return response()->json($employee);
+    }
 
 }

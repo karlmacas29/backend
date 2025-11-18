@@ -40,6 +40,34 @@ class PlantillaController extends Controller
         return response()->json($plantilla);
     }
 
+    // public function index(Request $request)
+    // {
+    //     $query = vwplantillastructure::select([
+    //         'vwplantillaStructure.ControlNo',
+    //         'vwplantillaStructure.ID',
+    //         'vwplantillaStructure.office',
+    //         'vwplantillaStructure.office2',
+    //         'vwplantillaStructure.group',
+    //         'vwplantillaStructure.division',
+    //         'vwplantillaStructure.section',
+    //         'vwplantillaStructure.unit',
+    //         'vwplantillaStructure.position',
+    //         'vwplantillaStructure.PositionID',
+    //         'vwplantillaStructure.PageNo',
+    //         'vwplantillaStructure.ItemNo',
+    //         'vwplantillaStructure.SG',
+    //         'vwplantillaStructure.Funded',
+    //         'vwplantillaStructure.level',
+    //         'vwplantillaStructure.Name1',
+    //         'vwplantillaStructure.Pics',
+    //         'vwplantillaStructure.Status',
+    //         'vwplantillaStructure.Name4',
+    //         'vwplantillaStructure.OfficeID',
+    //         'vwActive.BirthDate',
+    //         'vwActive.Designation',
+    //         'yDesignation.Status',
+    //         'yDesignation.PMID',
+    //     ])->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')->leftJoin('yDesignation', 'vwplantillaStructure.PositionID', '=', 'yDesignation.PMID')->distinct();
     public function index(Request $request)
     {
         $query = vwplantillastructure::select([
@@ -60,15 +88,20 @@ class PlantillaController extends Controller
             'vwplantillaStructure.level',
             'vwplantillaStructure.Name1',
             'vwplantillaStructure.Pics',
-            'vwplantillaStructure.Status',
+            'vwplantillaStructure.Status as plantillaStatus',
             'vwplantillaStructure.Name4',
             'vwplantillaStructure.OfficeID',
             'vwActive.BirthDate',
             'vwActive.Designation',
-        ])->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')->distinct();
+            'yDesignation.Status as designationStatus',
+            'yDesignation.PMID',
+        ])
+            ->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')
+            ->leftJoin('yDesignation', 'vwplantillaStructure.PositionID', '=', 'yDesignation.PMID')
+            ->distinct();
 
-        // Filter by office if provided: /plantilla?office=OfficeName
-        if ($office = $request->query('office')) {
+// Filter by office if provided: /plantilla?office=OfficeName
+if ($office = $request->query('office')) {
             $query->where('vwplantillaStructure.office', $office);
         }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Submission;
+use App\Models\xPersonal;
 use Illuminate\Http\Request;
 
 class EmployeeController extends Controller
@@ -28,4 +29,16 @@ class EmployeeController extends Controller
             })
         ]);
     }
+
+
+
+   
+
+    // public function  ()
+    // {
+
+    //     $employee = xPersonal::select('ControlNo', 'Firstname', 'Surname', 'Occupation')->get();
+
+    //     return response()->json($employee);
+    // }
 }
