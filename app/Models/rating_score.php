@@ -26,6 +26,10 @@ class rating_score extends Model
         'rater_name'
     ];
 
+    // protected $casts = [
+    //     'behavioral_score' => 'numeric',
+    // ];
+
     public function applicant()
     {
         return $this->belongsTo(\App\Models\excel\nPersonal_info::class, 'nPersonalInfo_id', 'id');

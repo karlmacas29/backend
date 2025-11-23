@@ -94,10 +94,12 @@ class PlantillaController extends Controller
             'vwActive.BirthDate',
             'vwActive.Designation',
             'yDesignation.Status as designationStatus',
-            'yDesignation.PMID',
+            'yDesignation.PMID as designationPositionId',
+
         ])
             ->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')
             ->leftJoin('yDesignation', 'vwplantillaStructure.PositionID', '=', 'yDesignation.PMID')
+
             ->distinct();
 
 // Filter by office if provided: /plantilla?office=OfficeName
@@ -111,7 +113,7 @@ if ($office = $request->query('office')) {
     }
 
     // office and rater on the modal rater mdoule
-    public function fetch_office_rater()
+    public function fetchOfficeRater()
     {
         $data = vwplantillastructure::select([
             'vwplantillaStructure.ControlNo',

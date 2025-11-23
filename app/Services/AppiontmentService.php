@@ -17,7 +17,7 @@ class AppiontmentService
 
 
 {
-    public function Elective(Request $request)
+    public function appiontment(Request $request)
     {
         // ✅ Step 1: Validate all inputs
         $validated = $request->validate([
@@ -28,14 +28,14 @@ class AppiontmentService
             'Section' => 'nullable|string',
             'Unit' => 'nullable|string',
             'Position' => 'required|string',
-            'PositionID' => 'nullable|integer',
+            'PositionID' => 'required|integer',
             'isOpen' => 'boolean',
             'PageNo' => 'required|string',
             'ItemNo' => 'required|string',
             'SalaryGrade' => 'required|string',
             'salaryMin' => 'nullable|string',
             'salaryMax' => 'nullable|string',
-            'level' => 'nullable|string',
+            'level' => 'required|string',
             'tblStructureDetails_ID' => 'required|string',
 
             // xService
@@ -43,13 +43,16 @@ class AppiontmentService
             'ToDate' => 'required|date',
             'Status' => 'required|string',
 
+            //posting date
+            'post_date'   => 'required|date',
+            'end_date' => 'required|date',
 
             // tempRegAppointmentReorg
-            'sepdate' => 'nullable|date',
-            'sepcause' => 'nullable|string',
+            // 'sepdate' => 'nullable|date',
+            // 'sepcause' => 'nullable|string',
             'vicename' => 'nullable|string',
             'vicecause' => 'nullable|string',
-            'Renew' => 'nullable|string',
+            'Renew' => 'required|string', // this is type not  renew
 
             // for identifying control number or user
             'controlNo' => 'required|string',
@@ -72,7 +75,7 @@ class AppiontmentService
 
                 if ($exists) {
                     return response()->json([
-                        'status' => 'error',
+                        'success' => false,
                         'message' => 'Duplicate PageNo and ItemNo already exists in plantilla.'
                     ], 422);
                 }
@@ -99,12 +102,14 @@ class AppiontmentService
             DB::commit();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Plantilla structure updated successfully!',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('ElectiveService Error: ' . $e->getMessage());
             return response()->json([
+                'success' =>  false,
                 'error' => 'Failed to update plantilla structure',
                 'details' => $e->getMessage(),
             ], 500);
@@ -258,11 +263,11 @@ class AppiontmentService
 
         ]);
 
-        // DB::table('posting_date')->insert([
-        //     'ControlNo'     => $job->controlNo, //1
-        //     'post_date' =>$job->post_date,
-        //     'end_date' => $job->end_date,
-        //     'job_batches_rsp_id' =>$job->id
-        // ]);
+        DB::table('posting_date')->insert([
+            'ControlNo'     => $job->controlNo, //1
+            'post_date' =>$job->post_date,
+            'end_date' => $job->end_date,
+
+        ]);
     }
 }

@@ -12,7 +12,7 @@ class ViewActiveController extends Controller
 {
     //
 
-    public function fetch_all_employee()
+    public function fetchAllEmployee()
     {
         $employee = vwplantillastructure::where('ControlNo', '001028')->get();
         return response()->json(['data' => $employee]);

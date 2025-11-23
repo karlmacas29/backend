@@ -44,7 +44,7 @@ class ScheduleController extends Controller
 
         }
 
-    public function fetch_applicant_have_schedule()
+    public function fetchApplicantHaveSchedule()
     {
         $schedules = Schedule::select('batch_name', 'venue_interview', 'date_interview', 'time_interview')
             ->get()
@@ -67,7 +67,7 @@ class ScheduleController extends Controller
     }
 
 
-    public function get_applicant_interview($date, $time)
+    public function getApplicantInterview($date, $time)
     {
         $applicants = Schedule::with(['submission.job_batch_rsp'])
             ->where('date_interview', $date)

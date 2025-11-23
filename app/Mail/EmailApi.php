@@ -15,13 +15,15 @@ class EmailApi extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public $mailmessage;
+    // public $mailmessage;
     public $mailSubject;
-
-    public function __construct($message, $subject)
+    public $template;
+    public $data;
+    public function __construct($subject, $template, $data = [])
     {
-        $this->mailmessage = $message;
         $this->mailSubject = $subject;
+        $this->template = $template;
+        $this->data = $data;
     }
 
     public function envelope(): Envelope
@@ -35,12 +37,15 @@ class EmailApi extends Mailable implements ShouldQueue
     public function content(): Content
     {
         try {
+            Log::info("🛠 EmailApi content called with template: {$this->template}, data: " . json_encode($this->data));
+
             return new Content(
-                view: 'mail-template.mail',
-                with: [
-                    'mailmessage' => $this->mailmessage,
-                    'mailSubject' => $this->mailSubject
-                ]
+                view: $this->template,
+                with: $this->data
+                // with: [
+                //     'mailmessage' => $this->mailmessage,
+                //     'mailSubject' => $this->mailSubject
+                // ]
             );
         } catch (\Exception $e) {
             Log::error("❌ EmailApi failed to build email: " . $e->getMessage());

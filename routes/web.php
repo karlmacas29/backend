@@ -10,3 +10,6 @@ Route::get('/', function () {
 Route::get('/applicant/read', [ApplicantSubmissionController::class, 'read_excel']);
 
 Route::get('/email', [EmailController::class, 'sendEmail']);
+Route::view('/interview', 'mail-template.interview');
+Route::view('/qualified', 'mail-template.qualified');
+Route::view('/unqualified', 'mail-template.unqualified');

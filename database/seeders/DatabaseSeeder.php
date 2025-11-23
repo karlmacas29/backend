@@ -23,7 +23,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             UserSeeder::class,
-
+            CriteriaLibraryASeeder::class,
+            CriteriaLibraryBSeeder::class
             // Add other seeders here
         ]);
 

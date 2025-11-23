@@ -12,7 +12,7 @@ class ExportApplicantController extends Controller
     /**
      * Fetch all applicants (internal + external) from the full job post history
      */
-    public function history_applicant_all($job_post_id)
+    public function historyApplicantAll($job_post_id)
     {
         // Step 1: Fetch the base job post
         $job_post = JobBatchesRsp::with(['previousJob', 'nextJob'])->findOrFail($job_post_id);

@@ -50,7 +50,7 @@ class ApplicantSubmissionController extends Controller
     //     return response()->json($applicants);
     // }
 
-    public function list_of_applicants()
+    public function listOfApplicants()
     {
         // Fetch all submissions including related info
         $submissions = Submission::with('nPersonalInfo:id,firstname,lastname,date_of_birth')->get();
@@ -85,7 +85,7 @@ class ApplicantSubmissionController extends Controller
     }
 
 
-    public function get_applicant_details(Request $request)
+    public function getApplicantDetails(Request $request)
     {
         $validated = $request->validate([
             'firstname' => 'required|string',
@@ -145,7 +145,7 @@ class ApplicantSubmissionController extends Controller
         return response()->json($submission);
     }
 
-    public function employee_applicant(Request $request)
+    public function employeeApplicant(Request $request) // employee applicant applying job
     {
         // ✅ Validate input
         $validated = $request->validate([
@@ -238,7 +238,7 @@ class ApplicantSubmissionController extends Controller
 
 
 
-    public function applicant_store(Request $request)
+    public function applicantStore(Request $request)
     {
         $validated = $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,xls,csv,xlsm',

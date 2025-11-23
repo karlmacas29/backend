@@ -37,7 +37,7 @@ class AppointmentController extends Controller
 
 
 
-    public function find_appointment()
+    public function findAppointment()
     {
         $data = DB::table('vwplantillaStructure')
             ->where(function ($query) {
@@ -65,7 +65,7 @@ class AppointmentController extends Controller
     }
 
 
-    public function job_post()
+    public function jobPost()
     {
 
         $data = DB::table('tblStructureDetails')->limit(5)->get();
@@ -99,11 +99,6 @@ class AppointmentController extends Controller
     }
 
 
-
-
-
-
-
     public function position()
     {
 
@@ -111,12 +106,74 @@ class AppointmentController extends Controller
         return response()->json($status);
     }
 
-    public function  employee()
+    public function employee()
     {
 
-        $employee = xPersonal::select('ControlNo', 'Firstname', 'Surname', 'Occupation')->get();
+        $employee = DB::table('xPersonal')->select('ControlNo', 'Firstname', 'Surname', 'Occupation')->get();
 
         return response()->json($employee);
     }
 
+    // public function employee(Request $request)
+    // {
+    //     $perPage = $request->input('per_page', 10); // default 10
+
+    //     return DB::table('xPersonal')
+    //         ->select('ControlNo', 'Firstname', 'Surname', 'Occupation')
+    //         ->paginate($perPage);
+    // }
+
+
+    // get the employee Previous appiontment on the  position
+    // public function getEmployeePreviousDesignation($position,$status){
+
+    //     $employee = DB::table('vwpartitionforseparated')->select('ControlNo','FromDate','ToDate','Designation','Status','SepDate','Sepcause')
+    //     ->where('Designation',$position)
+    //     ->where('Status',$status)
+    //     ->get();
+
+
+    //     return response()->json($employee);
+
+    // }
+
+    public function getEmployeePreviousDesignation($position, $status)
+    {
+        $today = now()->toDateString();
+
+        $employee = DB::table(DB::raw("(SELECT
+            ControlNo,
+            FromDate,
+            ToDate,
+            Designation,
+            Status,
+            SepDate,
+            Sepcause,
+            ROW_NUMBER() OVER (
+                PARTITION BY ControlNo
+                ORDER BY FromDate DESC
+            ) AS rn
+        FROM vwpartitionforseparated
+        WHERE Designation = '$position'
+          AND Status = '$status'
+    ) AS t"))
+            ->join('xPersonal as p', 'p.ControlNo', '=', 't.ControlNo')
+            ->where('t.rn', 1)
+            ->whereDate('t.ToDate', '<', $today) // inactive employees only
+            ->select(
+                't.ControlNo',
+                'p.Surname',
+                'p.Firstname',
+                'p.Middlename',
+                't.FromDate',
+                't.ToDate',
+                't.Designation',
+                't.Status',
+                't.SepDate',
+                't.SepCause'
+            )
+            ->get();
+
+        return response()->json($employee);
+    }
 }

@@ -46,7 +46,23 @@ class RatingService
         $experience  = array_sum(array_column($scores, 'experience')) / $count;
         $training    = array_sum(array_column($scores, 'training')) / $count;
         $performance = array_sum(array_column($scores, 'performance')) / $count;
-        $bei         = array_sum(array_column($scores, 'bei')) / $count;
+        // $bei         = array_sum(array_column($scores, 'bei')) / $count;
+        $beiValues = [];
+
+        foreach ($scores as $s) {
+
+            // IGNORE only NULL
+            if (is_null($s['bei'])) {
+                continue;
+            }
+
+            // Accept 0 - 100 as VALID score
+            $beiValues[] = (float)$s['bei'];
+        }
+
+        $bei = count($beiValues) > 0
+            ? array_sum($beiValues) / count($beiValues)
+            : 0;
 
         $total_qs    = $education + $experience + $training + $performance;
         $grand_total = $total_qs + $bei;
@@ -61,7 +77,7 @@ class RatingService
             'grand_total' => number_format($grand_total, 2, '.', ''),
         ];
     }
-    
+
     public static function addRanking(array $applicants)
     {
         // Sort applicants by grand_total (descending)
@@ -89,4 +105,5 @@ class RatingService
 
         return $applicants;
     }
+
 }

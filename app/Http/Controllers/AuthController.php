@@ -29,7 +29,7 @@ class AuthController extends Controller
     }
 
     // create account
-    public function Token_Register(UserAdminRegisterRequest $request)
+    public function userRegister(UserAdminRegisterRequest $request)
     {
 
         try {
@@ -163,7 +163,13 @@ class AuthController extends Controller
 
         // Generate a token for the user
         // $token = $user->createToken('my-secret-token')->plainTextToken;
+        // $token = $user->createToken('admin_token')->plainTextToken;
+        // Force logout any previous sessions
+        $user->tokens()->delete();
+
+        // Generate fresh token
         $token = $user->createToken('admin_token')->plainTextToken;
+
         // Set the token in a secure cookie
         $cookie = cookie('admin_token', $token, 60 * 24, null, null, true, true, false, 'None');
 
@@ -198,7 +204,7 @@ class AuthController extends Controller
 
 
     // logout
-    public function Token_Logout(Request $request)
+    public function userLogout(Request $request)
     {
         $user = Auth::user();
 

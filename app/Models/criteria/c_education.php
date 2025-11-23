@@ -13,18 +13,16 @@ class c_education extends Model
 
     protected $fillable = [
         'criteria_rating_id',
-        'Rate',
+        'weight',
         'description',
-        // 'Min_qualification',
-        // 'Title',
-        // 'Description',
+        'percentage'
 
 
     ];
     // This will automatically convert JSON <-> array
-    protected $casts = [
-        'description' => 'array',
-    ];
+    // protected $casts = [
+    //     'description' => 'array',
+    // ];
 
     public function criteriaRating()
     {

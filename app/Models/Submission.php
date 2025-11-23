@@ -26,6 +26,11 @@ class Submission extends Model
          'status',
         'ControlNo',
 
+        'education_qualification',
+        'experience_qualification',
+        'training_qualification',
+        'eligibility_qualification',
+
     ];
     public $timestamps = true; // or just remove if not set
 

@@ -12,14 +12,14 @@ class c_performance extends Model
 
     protected $fillable = [
         'criteria_rating_id',
-        'Rate',
-        'description'
-
+        'weight',
+        'description',
+        'percentage'
     ];
     // This will automatically convert JSON <-> array
-    protected $casts = [
-        'description' => 'array',
-    ];
+    // protected $casts = [
+    //     'description' => 'array',
+    // ];
 
     public function criteriaRating()
     {

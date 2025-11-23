@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Storage;
 class JobBatchesRspController extends Controller
 {
 
-    public function Unoccupied(Request $request, $JobPostingId)
+    public function unoccupied(Request $request, $JobPostingId)
     {
         $validated = $request->validate([
             'status' => 'required|string|in:Unoccupied',
@@ -48,7 +48,7 @@ class JobBatchesRspController extends Controller
     }
 
 
-    public function job_post()
+    public function jobPost()
     {
         // 🔹 Fetch job posts EXCLUDING republished ones
         $jobPosts = JobBatchesRsp::select('id', 'Position', 'post_date', 'Office', 'PositionID', 'ItemNo', 'status','end_date', 'tblStructureDetails_ID')
@@ -129,7 +129,7 @@ class JobBatchesRspController extends Controller
 
 
 
-    public function job_list()
+    public function jobList()
 
     {
         // Get all job posts with criteria and assigned raters
@@ -148,30 +148,6 @@ class JobBatchesRspController extends Controller
         return response()->json($jobsWithDetails);
     }
 
-    // public function job_list()
-    // {
-    //     // Get all job posts with criteria, assigned raters, and status
-    //     $jobs = JobBatchesRsp::with(['criteriaRatings', 'users:id,name'])
-    //         ->select('id', 'office', 'isOpen', 'Position', 'PositionID', 'ItemNo', 'status') // include actual status
-    //         ->where('status', '!=', 'occupied')
-    //         ->get();
-
-    //     // Add criteria status and assigned raters to each job
-    //     $jobsWithDetails = $jobs->map(function ($job) {
-    //         // Add a computed field for criteria presence
-    //         $job->criteria_status = $job->criteriaRatings->isNotEmpty() ? 'created' : 'no criteria';
-
-    //         // Include users as assigned raters
-    //         $job->assigned_raters = $job->users;
-
-    //         // Clean up relations if desired
-    //         unset($job->users, $job->criteriaRatings);
-
-    //         return $job;
-    //     });
-
-    //     return response()->json($jobsWithDetails);
-    // }
 
 
     public function show($positionId, $itemNo): JsonResponse
@@ -199,7 +175,7 @@ class JobBatchesRspController extends Controller
         ]);
     }
 
-    public function get_applicant($id)
+    public function getApplicant($id)
     {
         // All submissions for this job post
         $qualifiedApplicants = Submission::where('job_batches_rsp_id', $id)
@@ -280,25 +256,7 @@ class JobBatchesRspController extends Controller
     }
 
 
-
-    // public function job_post_view($job_post_id)
-    // {
-    //     // ✅ Fetch job post with relations
-    //     $job_post = JobBatchesRsp::with(['criteria', 'plantilla'])->findOrFail($job_post_id);
-
-    //     // ✅ Get complete history (both previous and next reposts)
-    //     $history = $this->getFullJobHistory($job_post);
-
-    //     // ✅ Convert to array and clean up nested relations
-    //     $job_post_array = $job_post->toArray();
-    //     unset($job_post_array['previous_job'], $job_post_array['next_job']);
-
-    //     // ✅ Return structured response
-    //     return response()->json(array_merge($job_post_array, [
-    //         'history' => $history
-    //     ]));
-    // }
-    public function job_post_view($job_post_id)
+    public function jobPostView($job_post_id)
     {
         // ✅ Fetch job post with relations
         $job_post = JobBatchesRsp::with(['criteria', 'plantilla'])
@@ -485,7 +443,7 @@ class JobBatchesRspController extends Controller
         ], 201);
     }
 
-    public function job_post_update(Request $request, $jobBatchId)
+    public function jobPostUpdate(Request $request, $jobBatchId)
     {
         // 1️⃣ Validate job batch fields
         $jobValidated = $request->validate([
@@ -572,92 +530,7 @@ class JobBatchesRspController extends Controller
         ], 200);
     }
 
-    // public function republished(Request $request)
-    // {
-    //     // ✅ Step 1: Validate Job Batch fields
-    //     $jobValidated = $request->validate([
-    //         'Office' => 'required|string',
-    //         'Office2' => 'nullable|string',
-    //         'Group' => 'nullable|string',
-    //         'Division' => 'nullable|string',
-    //         'Section' => 'nullable|string',
-    //         'Unit' => 'nullable|string',
-    //         'Position' => 'required|string',
-    //         'PositionID' => 'nullable|integer',
-    //         'isOpen' => 'boolean',
-    //         'post_date' => 'required|date',
-    //         'end_date' => 'required|date',
-    //         'PageNo' => 'required|string',
-    //         'ItemNo' => 'required|string',
-    //         'SalaryGrade' => 'nullable|string',
-    //         'salaryMin' => 'nullable|string',
-    //         'salaryMax' => 'nullable|string',
-    //         'level' => 'nullable|string',
-    //         'tblStructureDetails_ID' => 'required|string',
-    //         'old_job_id' => 'required|integer',
-    //     ]);
 
-    //     // ✅ Step 2: Require criteria fields
-    //     $criteriaValidated = $request->validate([
-    //         'Education' => 'nullable|string',
-    //         'Eligibility' => 'nullable|string',
-    //         'Training' => 'nullable|string',
-    //         'Experience' => 'nullable|string',
-    //     ]);
-
-    //     // ✅ Step 3: Mark old job as Republished
-    //     JobBatchesRsp::where('id', $jobValidated['old_job_id'])
-    //         ->update(['status' => 'Republished']);
-
-    //     // ✅ Step 4: Validate file if uploaded
-    //     if ($request->hasFile('fileUpload')) {
-    //         $request->validate([
-    //             'fileUpload' => 'required|mimes:pdf|max:5120',
-    //         ]);
-    //     }
-
-    //     // ✅ Step 5: Create new Job Post
-    //     $jobBatch = JobBatchesRsp::create($jobValidated);
-
-    //     // ✅ Step 6: Create new Criteria (required)
-    //     $criteria = OnCriteriaJob::create([
-    //         'job_batches_rsp_id' => $jobBatch->id,
-    //         'PositionID' => $jobValidated['PositionID'] ?? null,
-    //         'ItemNo' => $jobValidated['ItemNo'] ?? null,
-    //         'Education' => $criteriaValidated['Education'] ?? null,
-    //         'Eligibility' => $criteriaValidated['Eligibility'] ?? null,
-    //         'Training' => $criteriaValidated['Training'] ?? null,
-    //         'Experience' => $criteriaValidated['Experience'] ?? null,
-    //     ]);
-    //     $plantillaValidated = $request->validate([
-    //         'fileUpload' => 'required|mimes:pdf|max:5120', // 👈 file required here
-
-    //     ]);
-
-    //     // ✅ Step 7: Handle plantilla and file upload
-    //     $plantilla = new OnFundedPlantilla();
-    //     $plantilla->job_batches_rsp_id = $jobBatch->id;
-    //     $plantilla->PositionID = $jobValidated['PositionID'] ?? null;
-    //     $plantilla->ItemNo = $jobValidated['ItemNo'] ?? null;
-
-    //     if ($request->hasFile('fileUpload')) {
-    //         $file = $request->file('fileUpload');
-    //         $fileName = time() . '_' . $file->getClientOriginalName();
-    //         $filePath = $file->storeAs('plantilla_files', $fileName, 'public');
-    //         $plantilla->fileUpload = $filePath;
-    //     }
-
-    //     $plantilla->save();
-
-    //     // ✅ Step 8: Response
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => 'Job post republished successfully',
-    //         'job_post' => $jobBatch,
-    //         'criteria' => $criteria,
-    //         'plantilla' => $plantilla
-    //     ], 201);
-    // }
     public function republished(Request $request)
     {
         // ✅ Step 1: Validate Job Batch fields
@@ -736,7 +609,7 @@ class JobBatchesRspController extends Controller
         ], 201);
     }
 
-    public function get_applicant_pds($id)
+    public function getApplicantPds($id)
     {
         // 🔹 Fetch the submission by its ID
         $submission = Submission::find($id);
@@ -869,10 +742,21 @@ class JobBatchesRspController extends Controller
             }
         }
         return response()->json([
-            'submission_id' => $submission->id,
+            // 'applicant_id' => $submission->id,
+            'applicant_id' => $submission->id,
+
+            'status' => $submission->status,
+            'education_remark' => $submission->education_remark,
+            'experience_remark' => $submission->experience_remark,
+            'training_remark' => $submission->training_remark,
+            'eligibility_remark' => $submission->eligibility_remark,
+            'education_qualification' => $submission->education_qualification,
+            'experience_qualification' => $submission->experience_qualification,
+            'training_qualification' => $submission->training_qualification,
+            'eligibility_qualification' => $submission->eligibility_qualification,
+
             'ControlNo' => $submission->ControlNo,
             'nPersonalInfo_id' => $submission->nPersonalInfo_id,
-
             'firstname' => $info['firstname'] ?? '',
             'lastname' => $info['lastname'] ?? '',
             'name_extension' => $info['name_extension'] ?? null,

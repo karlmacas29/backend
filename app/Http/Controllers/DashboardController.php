@@ -26,7 +26,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function plantilla_number()
+    public function plantillaNumber()
     {
         $funded = vwplantillastructure::where('Funded', true)->count();
         $unfunded = vwplantillastructure::where('Funded', false)->count();

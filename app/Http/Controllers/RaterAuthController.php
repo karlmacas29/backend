@@ -15,7 +15,7 @@ class RaterAuthController extends Controller
 {
 
     //create account and register rater account
-    public function RatersRegister(Request $request)
+    public function raterRegister(Request $request)
     {
         $authUser = Auth::user(); // The currently logged-in admin (who is creating the rater)
 
@@ -272,7 +272,7 @@ class RaterAuthController extends Controller
 
 
     // change password for the rater
-    public function change_password(Request $request)
+    public function changePassword(Request $request)
     {
         // Validate request
         $validator = Validator::make($request->all(), [
@@ -373,7 +373,7 @@ class RaterAuthController extends Controller
     }
 
     // this is logout  function for rater
-    public function Rater_logout(Request $request)
+    public function raterlogout(Request $request)
     {
         $user = Auth::user();
 
