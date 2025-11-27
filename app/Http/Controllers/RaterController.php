@@ -232,7 +232,8 @@ class RaterController extends Controller
             ->where('user_id', $user->id)
             ->pluck('job_batches_rsp_id');
 
-        $assignedJobs = \App\Models\JobBatchesRsp::whereIn('id', $jobBatchIds)
+        $assignedJobs = \App\Models\JobBatchesRsp::select('id', 'Office', 'Position')
+            ->whereIn('id', $jobBatchIds)
             ->get()
             ->map(function ($job) use ($user) {
                 $job->submitted = rating_score::where('user_id', $user->id)
@@ -255,7 +256,7 @@ class RaterController extends Controller
         $userId = Auth::id(); // ✅ get current logged-in rater
 
         // Get criteria
-        $criteria = criteria_rating::with(['educations', 'experiences', 'trainings', 'performances', 'behaviorals'])
+        $criteria = criteria_rating::with(['educations', 'experiences', 'trainings', 'performances', 'behaviorals','jobBatch:id,PositionID'])
             ->where('job_batches_rsp_id', $id)
             ->get();
 

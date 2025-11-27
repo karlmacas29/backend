@@ -15,25 +15,39 @@ use Illuminate\Support\Facades\Mail;
 class ScheduleController extends Controller
 {
     //
-
     public function applicantList()
     {
         $applicants = Submission::with([
             'nPersonalInfo:id,firstname,lastname',
+            'xpersonal:ControlNo,Surname,Firstname',
             'job_batch_rsp:id,Position'
-        ])
-            // Only get submissions that do NOT have a schedule yet
+        ])->where('status','Qualified')
             ->whereDoesntHave('schedules')
             ->get()
             ->map(function ($item) {
+
+                // 👇 Determine Name Source
+                if ($item->nPersonalInfo_id) {
+                    // Outside applicant
+                    $firstname = optional($item->nPersonalInfo)->firstname;
+                    $lastname  = optional($item->nPersonalInfo)->lastname;
+                } else {
+                    // Employee → get from xpersonal
+                    $firstname = optional($item->xpersonal)->Firstname;
+                    $lastname  = optional($item->xpersonal)->Surname;
+                }
+
                 return [
-                    "submission_id"     => $item->id,
-                    "nPersonalInfo_id"  => $item->nPersonalInfo_id,
-                    "ControlNo"         => $item->ControlNo,
-                    "job_batches_rsp_id" => $item->job_batches_rsp_id,
-                    "firstname"         => optional($item->nPersonalInfo)->firstname,
-                    "lastname"          => optional($item->nPersonalInfo)->lastname,
-                    "job_batch_rsp"     => [
+                    "submission_id"         => $item->id,
+                    "nPersonalInfo_id"      => $item->nPersonalInfo_id,
+                    "ControlNo"             => $item->ControlNo,
+                    "job_batches_rsp_id"    => $item->job_batches_rsp_id,
+
+                    // Final selected fullname
+                    "firstname"             => $firstname,
+                    "lastname"              => $lastname,
+
+                    "job_batch_rsp"         => [
                         "job_batches_rsp_id" => $item->job_batch_rsp->id ?? null,
                         "Position"           => $item->job_batch_rsp->Position ?? null,
                     ],
@@ -41,8 +55,8 @@ class ScheduleController extends Controller
             });
 
         return response()->json($applicants);
+    }
 
-        }
 
     public function fetchApplicantHaveSchedule()
     {

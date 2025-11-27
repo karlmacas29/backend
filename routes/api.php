@@ -30,7 +30,6 @@ use App\Http\Controllers\ScheduleController;
 
 Route::get('test/{controlNo}',[EmployeeController::class, 'findLastdata']);
 
-
 //
 
 Route::post('/verify-code', [VerificationController::class, 'verifyCode']); // verify the code
@@ -141,9 +140,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('/store', [CriteriaController::class, 'store']); // saving criteria
         Route::get('/sg/{sg}', [CriteriaController::class, 'fetchNonCriteriaJob']); // only will be use if the job post are dont have criteria yet
-        Route::get('/{job_batches_rsp_id}', [CriteriaController::class, 'show']);
         Route::delete('/{criteria_id}', [CriteriaController::class, 'delete']);
-        Route::delete('/{id}', [CriteriaController::class, 'delete']);
+        // Route::delete('/{id}', [CriteriaController::class, 'delete']);
 
         // library
         Route::post('/library/store', [CriteriaController::class, 'criteriaLibStore']);
@@ -236,10 +234,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     Route::prefix('employee')->group(function () {
-        Route::get('/{ControlNo}', [EmployeeController::class, 'appliedEmployee']);
         Route::get('/applicant/xpds', [xPDSController::class, 'getPersonalDataSheet']); // employee pds
         Route::get('/list', [AppointmentController::class, 'employee']); // employe list
+        Route::post('/update/{controlNo}', [EmployeeController::class, 'updateEmployeeCredentials']); //  updating the  employee appoitment
+        Route::post('/confirmation', [EmployeeController::class, 'approveUpdate']); //  updating the  employee appoitment
 
+        Route::get('/request', [EmployeeController::class, 'fetchApprovingTable']);
+        Route::get('/{ControlNo}', [EmployeeController::class, 'appliedEmployee']);
+        Route::get('/old/credentail/{pendingId}/{type}', [EmployeeController::class, 'fetchOldAndNew']);
     });
 
     Route::prefix('email')->group(function () {

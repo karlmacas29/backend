@@ -3,13 +3,15 @@
 namespace App\Http\Controllers;
 
 use ZipArchive;
+use Carbon\Carbon;
+
 use App\Mail\EmailApi;
 
 use App\Models\Submission;
-
 use Illuminate\Support\Str;
 use App\Models\ApplicantZip;
 use Illuminate\Http\Request;
+use App\Models\JobBatchesRsp;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Imports\ApplicantDataImport;
@@ -25,31 +27,6 @@ class ApplicantSubmissionController extends Controller
 {
 
     // list of applicant
-    // public function list_of_applicants()
-    // {
-    //     $applicants = Submission::select('id', 'nPersonalInfo_id', 'status')
-    //         ->with('nPersonalInfo:id,firstname,lastname,date_of_birth')
-    //         ->get()
-    //         ->unique(function ($item) {
-    //             return strtolower(
-    //                 $item->nPersonalInfo->firstname . '|' .
-    //                     $item->nPersonalInfo->lastname . '|' .
-    //                     $item->nPersonalInfo->date_of_birth
-    //             );
-    //         })
-    //         ->values()
-    //         ->map(function ($item) {
-    //             return [
-    //                 'id'            => $item->id,
-    //                 'firstname'     => $item->nPersonalInfo->firstname,
-    //                 'lastname'      => $item->nPersonalInfo->lastname,
-    //                 'date_of_birth' => $item->nPersonalInfo->date_of_birth
-    //             ];
-    //         });
-
-    //     return response()->json($applicants);
-    // }
-
     public function listOfApplicants()
     {
         // Fetch all submissions including related info
@@ -85,7 +62,7 @@ class ApplicantSubmissionController extends Controller
     }
 
 
-    public function getApplicantDetails(Request $request)
+    public function getApplicantDetails(Request $request) // applicant details
     {
         $validated = $request->validate([
             'firstname' => 'required|string',
@@ -135,9 +112,6 @@ class ApplicantSubmissionController extends Controller
         ]);
     }
 
-
-
-
     public function index()
     {
         $submission = Submission::all();
@@ -145,61 +119,113 @@ class ApplicantSubmissionController extends Controller
         return response()->json($submission);
     }
 
-    public function employeeApplicant(Request $request) // employee applicant applying job
+
+    public function employeeApplicant(Request $request)
     {
-        // ✅ Validate input
+        // ✅ Validate request
         $validated = $request->validate([
             'ControlNo' => 'required|string',
             'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
         ]);
 
-        $controlNo = $validated['ControlNo'] ?? null;
+        $controlNo = $validated['ControlNo'];
+        $jobId     = $validated['job_batches_rsp_id'];
 
-        // ✅ Create submission first
+        // ✅ Fetch applicant info
+        $applicant = DB::table('xPersonal')
+            ->join('xPersonalAddt', 'xPersonalAddt.ControlNo', '=', 'xPersonal.ControlNo')
+            ->select(
+                'xPersonal.Firstname',
+                'xPersonal.Surname',
+                'xPersonal.BirthDate',
+                'xPersonalAddt.EmailAdd'
+            )
+            ->where('xPersonal.ControlNo', $controlNo)
+            ->first();
+
+        if (!$applicant) {
+            return response()->json([
+                'message' => 'Applicant not found.'
+            ], 404);
+        }
+
+        // Convenience variables
+        $firstname = $applicant->Firstname;
+        $lastname  = $applicant->Surname;
+        $birthdate = $applicant->BirthDate;
+
+        $currentJob = JobBatchesRsp::findOrFail($jobId);
+
+
+        // 2) GET ALL JOB POSTS WITH SAME START/END DATE
+
+        $jobGroupIds = JobBatchesRsp::where('post_date', $currentJob->post_date)
+            ->where('end_date', $currentJob->end_date)
+            ->pluck('id');
+
+
+        // 3) COUNT HOW MANY JOBS THE APPLICANT APPLIED WITHIN GROUP
+
+        $applicationCount = DB::table('submission')
+            ->join('xPersonal', 'xPersonal.ControlNo', '=', 'submission.ControlNo')
+            ->whereIn('submission.job_batches_rsp_id', $jobGroupIds)
+            ->where('xPersonal.Firstname', $firstname)
+            ->where('xPersonal.Surname', $lastname)
+            ->where('xPersonal.BirthDate', $birthdate)
+            ->count();
+
+        $post_date = Carbon::parse($currentJob->post_date)->format('F d, Y');
+        $end_date   = Carbon::parse($currentJob->end_date)->format('F d, Y');
+
+
+        if ($applicationCount >= 3) {
+            return response()->json([
+                'success' => false,
+                'message' => "$firstname $lastname, You have already applied for 3 job posts with the same application period (" .
+                    $post_date . " to " . $end_date . ")."
+            ], 422);
+        }
+
+        //  CHECK IF APPLICANT ALREADY APPLIED TO THIS JOB
+        $existing = DB::table('submission')
+            ->join('xPersonal', 'xPersonal.ControlNo', '=', 'submission.ControlNo')
+            ->where('submission.job_batches_rsp_id', $jobId)
+            ->where('xPersonal.Firstname', $firstname)
+            ->where('xPersonal.Surname', $lastname)
+            ->where('xPersonal.BirthDate', $birthdate)
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'success' => false,
+                'message' => "$firstname $lastname, you have already applied for this job.",
+                'submission_id' => $existing->id ?? null
+            ], 409);
+        }
+
+        //  CREATE SUBMISSION (NO DUPLICATE FOUND)
         $submit = Submission::create([
             'ControlNo' => $controlNo,
             'status' => 'pending',
-            'job_batches_rsp_id' => $validated['job_batches_rsp_id'],
+            'job_batches_rsp_id' => $jobId,
             'nPersonalInfo_id' => null,
         ]);
 
-        // ✅ Fetch applicant email and name in a single query
-        $applicant = DB::table('xPersonalAddt')
-            ->join('xPersonal', 'xPersonal.ControlNo', '=', 'xPersonalAddt.ControlNo')
-            ->select(
-                'xPersonalAddt.EmailAdd as email',
-                'xPersonal.Firstname',
-                'xPersonal.Surname'
-            )
-            ->where('xPersonalAddt.ControlNo', $controlNo)
-            ->first();
+        //  SEND EMAIL USING YOUR PRIVATE FUNCTION
+        if (!empty($applicant->EmailAdd)) {
+            // Format data for private function
+            $emailApplicant = (object) [
+                'email_address' => $applicant->EmailAdd,
+                'firstname'     => $firstname,
+                'lastname'      => $lastname
+            ];
 
-        // ✅ Determine email and fullname
-        $email = $applicant->email ?? null;
-        $fullname = $applicant ? trim("{$applicant->Firstname} {$applicant->Surname}") : 'Applicant';
-
-        // ✅ Fetch job in one call
-        $job = \App\Models\JobBatchesRsp::find($validated['job_batches_rsp_id']);
-        $position = $job->Position ?? 'the applied position';
-        $office   = $job->Office ?? 'the corresponding office';
-
-        // ✅ Queue email if exists
-        if (!empty($email)) {
-            $subject = "Application Received";
-            $message = "
-            Dear {$fullname},<br><br>
-            Your application for the position of <strong>{$position}</strong> under <strong>{$office}</strong> has been received successfully.<br>
-            Please wait for further updates regarding your application.<br><br>
-            Thank you for applying.
-        ";
-            Mail::to($email)->queue(new EmailApi($message, $subject));
-            Log::info("Email queued for external applicant: {$email}");
-        } else {
-            Log::warning("External applicant has no email address. ControlNo: {$controlNo}");
+            $this->sendApplicantEmail($emailApplicant, $jobId, false);
         }
 
         return response()->json([
-            'message' => 'Submission created successfully and email notification sent (if email exists)',
+            'success' => true,
+            'message' => 'Submission created successfully and email sent.',
             'data' => $submit
         ], 201);
     }
@@ -244,12 +270,26 @@ class ApplicantSubmissionController extends Controller
             'excel_file' => 'required|file|mimes:xlsx,xls,csv,xlsm',
             'zip_file' => 'required|file|mimes:zip',
             'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
+            'email' => 'required|email:rfc,dns'
         ]);
 
         try {
+
             // Step 1: Read and parse Excel WITHOUT saving to database
             $excelFile = $request->file('excel_file');
             $excelData = $this->parseExcelData($excelFile);
+
+            // ➤ ADD THE MATCHING CHECK HERE
+            $excelEmail = strtolower(trim($excelData['personal_info']['email_address']));
+            $userEmail  = strtolower(trim($validated['email']));
+
+            if ($excelEmail !== $userEmail) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Please check your email, it doesn’t match with the email inside the PDS (Excel file).",
+                    'email' => "  Your email use on verification:$userEmail"
+                ], 422);
+            }
 
             // Step 2: Check for duplicate applicant based on NAME and BIRTHDATE ONLY
             // This allows same email to apply multiple times
@@ -260,6 +300,36 @@ class ApplicantSubmissionController extends Controller
             })
                 ->where('job_batches_rsp_id', $validated['job_batches_rsp_id'])
                 ->first();
+
+
+            // 1. Get current job post
+            $currentJob = JobBatchesRsp::findOrFail($validated['job_batches_rsp_id']);
+
+            // 2. Get all job posts with the SAME start & end date
+            $jobGroupIds = JobBatchesRsp::where('post_date', $currentJob->post_date)
+                ->where('end_date', $currentJob->end_date)
+                ->pluck('id');
+
+            // 3. Count how many applications the applicant submitted in this job group
+            $applicationCount = Submission::whereIn('job_batches_rsp_id', $jobGroupIds)
+                ->whereHas('nPersonalInfo', function ($q) use ($excelData) {
+                    $q->where('firstname', $excelData['personal_info']['firstname'])
+                        ->where('lastname',  $excelData['personal_info']['lastname'])
+                        ->whereDate('date_of_birth', $excelData['personal_info']['date_of_birth']);
+                })
+                ->count();
+
+            $post_date = Carbon::parse($currentJob->post_date)->format('F d, Y');
+            $end_date   = Carbon::parse($currentJob->end_date)->format('F d, Y');
+
+            // 4. Block if already applied 3 times
+            if ($applicationCount >= 3) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "You have already applied for 3 job posts with the same application period (" .
+                        $post_date . " to " .     $end_date  . ").",
+                ], 422);
+            }
 
             if ($existingSubmission) {
                 // Store files temporarily
@@ -1663,17 +1733,24 @@ class ApplicantSubmissionController extends Controller
         $job = \App\Models\JobBatchesRsp::findOrFail($jobId);
 
         $subject = $isUpdate ? 'Application Updated' : 'Application Received';
-        $message = $isUpdate
-            ? "Dear {$applicant->firstname} {$applicant->lastname},<br><br>
-            Your application for <strong>{$job->Position}</strong> under <strong>{$job->Office}</strong>
-            has been successfully <strong>updated</strong>.<br><br>
-            We have received your updated documents and our HR team is reviewing them."
-            : "Dear {$applicant->firstname} {$applicant->lastname},<br><br>
-            Thank you for submitting your application for <strong>{$job->Position}</strong> under
-            <strong>{$job->Office}</strong>.<br><br>
-            Your application is now under review by our HR team.";
 
-        Mail::to($applicant->email_address)->queue(new EmailApi($message, $subject));
+        $template = 'mail-template.application';
+
+
+        Mail::to($applicant->email_address)->queue(new EmailApi(
+            $subject,
+            $template,
+            [
+                'mailSubject' => $subject,
+                'firstname' => $applicant->firstname,
+                'lastname' => $applicant->lastname,
+                'jobOffice' => $job->Office,
+                'jobPosition' => $job->Position,
+                'isUpdate' => $isUpdate,
+            ]
+
+
+        ));
     }
 
     // Add this method to your controller for testing

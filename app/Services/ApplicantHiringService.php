@@ -10,6 +10,7 @@ use App\Models\JobBatchesRsp;
 use App\Models\TempRegHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
 
@@ -17,8 +18,6 @@ class ApplicantHiringService
 
 
 {
-
-
 
     public function hireApplicant($submissionId,Request $request)
     {
@@ -109,33 +108,55 @@ class ApplicantHiringService
 
             $activeApplicant = $applicant ?? $externalApplicant;
 
-            if ($activeApplicant) {
-                $email = $applicant->email_address ?? $externalApplicant->EmailAdd ?? null;
-                $fullname = $applicant
-                    ? trim("{$applicant->firstname} {$applicant->lastname}")
-                    : trim("{$externalApplicant->Firstname} {$externalApplicant->Surname}");
+            // if ($activeApplicant) {
+            //     $email = $applicant->email_address ?? $externalApplicant->EmailAdd ?? null;
+            //     $fullname = $applicant
+            //         ? trim("{$applicant->firstname} {$applicant->lastname}")
+            //         : trim("{$externalApplicant->Firstname} {$externalApplicant->Surname}");
 
-                $position = $jobPost->Position ?? 'the applied position';
-                $office = $jobPost->Office ?? 'the corresponding office';
+            //     $position = $jobPost->Position ?? 'the applied position';
+            //     $office = $jobPost->Office ?? 'the corresponding office';
 
-                if (!empty($email)) {
-                    $subject = "🎉 Congratulations! You're Hired!";
-                    $message = "
-                    Dear {$fullname},<br><br>
-                    We are delighted to inform you that you have been <strong>officially hired</strong>
-                    for the position of <strong>{$position}</strong> under <strong>{$office}</strong>.<br><br>
-                    Please expect further instructions regarding your onboarding and necessary documentation.<br><br>
-                    Congratulations once again and welcome to the team!<br><br>
-                    Best regards,<br>
-                    <strong>Human Resource Department</strong>
-                ";
+            //     if (!empty($email)) {
+            //         $subject = "🎉 Congratulations! You're Hired!";
+            //         $message = "
+            //         Dear {$fullname},<br><br>
+            //         We are delighted to inform you that you have been <strong>officially hired</strong>
+            //         for the position of <strong>{$position}</strong> under <strong>{$office}</strong>.<br><br>
+            //         Please expect further instructions regarding your onboarding and necessary documentation.<br><br>
+            //         Congratulations once again and welcome to the team!<br><br>
+            //         Best regards,<br>
+            //         <strong>Human Resource Department</strong>
+            //     ";
 
-                    // Send email
-                    Mail::to($email)->queue(new EmailApi($message, $subject));
-                }
-            } else {
-                Log::warning("⚠️ No applicant email found for hired submission ID: {$submissionId}");
+            //         // Send email
+            //         Mail::to($email)->queue(new EmailApi($message, $subject));
+            //     }
+            // } else {
+            //     Log::warning("⚠️ No applicant email found for hired submission ID: {$submissionId}");
+            // }
+
+            $user = Auth::user();
+
+            if ($user && $user instanceof \App\Models\User) {
+
+                $position = $jobPost->Position ?? $jobPost->position ?? 'Unknown Position';
+
+                activity($user->username)
+                    ->causedBy($user)
+                    ->performedOn($submission)
+                    ->withProperties([
+                        'username' => $user->username,
+                        'office' => $user->office,
+                        'job_position'      => $position,
+                        'hired_control_no'  => $finalControlNo,
+                        'submission_id'     => $submission->id,
+                        'ip_address'        => $request->ip(),
+                        'user_agent'        => $request->header('User-Agent'),
+                    ])
+                    ->log("{$user->name} hired applicant (ControlNo: {$finalControlNo}) for job post {$jobPost->id}.");
             }
+
 
             DB::commit();
 

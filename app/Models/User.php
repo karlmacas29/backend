@@ -57,11 +57,13 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(
             JobBatchesRsp::class,
-            'job_batches_user',
-            // 'job_batches_rsp_user',   // correct pivot table name
+            'job_batches_user',       // correct pivot table name
+
             'user_id',                // foreign key sa User
             'job_batches_rsp_id'      // foreign key sa JobBatchesRsp
-        )->withTimestamps();
+        )
+        ->withPivot('status') // ⭐ MUST ADD THIS
+        ->withTimestamps();
     }
 
 
@@ -78,5 +80,34 @@ class User extends Authenticatable
             ->logOnlyDirty() // logs only changed attributes
             ->useLogName('user')
             ->setDescriptionForEvent(fn(string $eventName) => "User has been {$eventName}");
+    }
+
+
+    public function getTotalAssignedAttribute()
+    {
+        return $this->job_batches_rsp()->count();
+    }
+
+    public function getTotalCompletedAttribute()
+    {
+        return $this->job_batches_rsp()
+            ->wherePivot('status', 'complete')
+            ->count();
+    }
+
+    public function getTotalPendingAttribute()
+    {
+        return $this->job_batches_rsp()
+            ->wherePivot('status', 'pending')
+            ->count();
+    }
+
+    public function getCompletionRateAttribute()
+    {
+        if ($this->total_assigned == 0) {
+            return 0;
+        }
+
+        return round(($this->total_completed / $this->total_assigned) * 100, 2);
     }
 }

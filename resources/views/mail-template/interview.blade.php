@@ -7,8 +7,6 @@
     {{-- <title>{{ $mailSubject }}</title> --}}
 
     <style>
-
-
         body {
             font-family: Arial, Helvetica, sans-serif;
             background-color: #e9ecef;
@@ -65,30 +63,55 @@
             color: #666;
             border-radius: 5px;
         }
+         .letterhead {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .letterhead img {
+            max-width: 200px;
+            display: block;
+            margin: 0 auto 10px;
+        }
+
+        .letterhead-text {
+            color: #00703c;
+            line-height: 1.3;
+        }
+
+        .letterhead-text div:nth-child(1),
+        .letterhead-text div:nth-child(2) {
+            font-size: 9pt;
+            font-weight: 500;
+        }
+
+        .letterhead-text div:nth-child(3) {
+            font-size: 14pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
+    <!-- Letterhead -->
+        <div class="letterhead">
+         <img src="{{ $message->embed(public_path('images/logo.png')) }}" alt="Logo" >
+            {{-- <img src="{{ asset('images/logo.png') }}" alt="Logo" > --}}
 
-<table width="100%" cellpadding="0" cellspacing="0">
-    <tr>
-        <td width="90" valign="middle">
-            <img src="https://phshirt.com/wp-content/uploads/2021/11/City-of-Tagum-Logo.png"
-                 width="80" style="display: block;">
-        </td>
-        <td valign="middle" style="color: #00703c; padding-left: 20px;">
-            <div style="font-size: 8pt; font-weight: 500; line-height: 1;">REPUBLIC OF THE PHILIPPINES</div>
-            <div style="font-size: 8pt; font-weight: 500; line-height: 1;">PROVINCE OF DAVAO DEL NORTE</div>
-            <div style="font-size: 13pt; font-weight: bold; line-height: 1; padding-top: 2px; text-transform: uppercase;">CITY OF TAGUM</div>
-        </td>
-    </tr>
-</table>
-     <div style="background-color: #008000; color: white; padding: 10px 20px; margin-top: 5px; margin-bottom: 30px;">
-    <div style="font-weight: bold; text-transform: uppercase; font-size: 13pt; text-align: center;">
-        HUMAN RESOURCE MERIT PROMOTION AND SELECTION
-    </div>
-</div>
+                  <div class="letterhead-text">
+                <div>REPUBLIC OF THE PHILIPPINES</div>
+                <div>PROVINCE OF DAVAO DEL NORTE</div>
+                <div>CITY OF TAGUM</div>
+            </div>
+               <div style="background-color: #008000; color: white; padding: 10px 20px; margin-top: 5px; margin-bottom: 30px;">
+            <div style="font-weight: bold; text-transform: uppercase; font-size: 13pt; text-align: center;">
+                HUMAN RESOURCE MERIT PROMOTION AND SELECTION
+            </div>
+        </div>
+        </div>
+
 
         <div class="content">
             <p>Dear <strong>{{ $fullname }}</strong>,</p>
@@ -107,10 +130,10 @@
 
             <p>
 
-            <strong>Interview details:</strong><br>
-            <strong>Date:</strong> {{ $date }}<br>
-            <strong>Time:</strong> {{ $time }}<br>
-            <strong>Venue:</strong> {{ $venue }}<br>
+                <strong>Interview details:</strong><br>
+                <strong>Date:</strong> {{ $date }}<br>
+                <strong>Time:</strong> {{ $time }}<br>
+                <strong>Venue:</strong> {{ $venue }}<br>
 
             </p>
 
@@ -124,10 +147,6 @@
                     photos will be handled according to data privacy principles.</li>
             </ul>
 
-            <p>
-                <strong>Kindly reply to this email to confirm your attendance for the interview.</strong>
-            </p>
-
             <p>If you have any clarifications, you may reach us from <strong>Monday to Friday, 8:00 AM – 5:00
                     PM</strong> through the following:</p>
 
@@ -136,14 +155,14 @@
                         href="mailto:lgutagumhrmo.recruitment@gmail.com">lgutagumhrmo.recruitment@gmail.com</a></li>
                 <li><strong>Telephone:</strong> (084) 645-3300 local 252</li>
             </ul>
-
+            <p>Kindly reply to this email to <strong>confirm your attendance</strong> for the interview.</p>
             <p>Thank you.</p>
 
         </div>
-
+        {{--
         <div class="footer">
             This is an automated notification. Please confirm your attendance by replying to this email.
-        </div>
+        </div> --}}
 
     </div>
 </body>

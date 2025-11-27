@@ -66,7 +66,7 @@ class AuthController extends Controller
 
 
             // ✅ Activity Log
-            activity($user->name)
+            activity('Register Account')
                 ->causedBy($user)  // The currently logged-in admin creating this new admin
                 ->performedOn($user)
                 ->withProperties([
@@ -175,7 +175,7 @@ class AuthController extends Controller
 
         if ($user instanceof \App\Models\User) {
             $user->load('role'); // make sure the role is loaded
-            activity($user->name)
+            activity('Login')
                 ->causedBy($user)
                 ->performedOn($user)
                 ->withProperties([
@@ -215,7 +215,7 @@ class AuthController extends Controller
         $cookie = cookie()->forget('admin_token');
 
         if ($user instanceof \App\Models\User) {
-            activity($user->name)
+            activity('Logout')
                 ->causedBy($user)
                 ->performedOn($user)
                 ->withProperties([
@@ -375,6 +375,25 @@ class AuthController extends Controller
             }
 
             DB::commit();
+
+            // ➕ Activity log after successful update
+            $currentUser = Auth::user();
+            if ($currentUser instanceof \App\Models\User) {
+                activity('User Management')
+                    ->causedBy($currentUser)
+                    ->performedOn($user)
+                    ->withProperties([
+                        'updated_user_id' => $user->id,
+                        'updated_user_name' => $user->name,
+                        'username' => $user->username,
+                        'position' => $user->position,
+                        'active' => $user->active,
+                        'permissions' => $user->rspControl?->toArray(),
+                        'ip' => $request->ip(),
+                        'user_agent' => $request->header('User-Agent'),
+                    ])
+                    ->log("'{$currentUser->name}' updated user '{$user->name}' successfully.");
+            }
 
             // Fetch updated user with permissions
             $updatedUser = User::with('rspControl')

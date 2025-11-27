@@ -40,34 +40,8 @@ class PlantillaController extends Controller
         return response()->json($plantilla);
     }
 
-    // public function index(Request $request)
-    // {
-    //     $query = vwplantillastructure::select([
-    //         'vwplantillaStructure.ControlNo',
-    //         'vwplantillaStructure.ID',
-    //         'vwplantillaStructure.office',
-    //         'vwplantillaStructure.office2',
-    //         'vwplantillaStructure.group',
-    //         'vwplantillaStructure.division',
-    //         'vwplantillaStructure.section',
-    //         'vwplantillaStructure.unit',
-    //         'vwplantillaStructure.position',
-    //         'vwplantillaStructure.PositionID',
-    //         'vwplantillaStructure.PageNo',
-    //         'vwplantillaStructure.ItemNo',
-    //         'vwplantillaStructure.SG',
-    //         'vwplantillaStructure.Funded',
-    //         'vwplantillaStructure.level',
-    //         'vwplantillaStructure.Name1',
-    //         'vwplantillaStructure.Pics',
-    //         'vwplantillaStructure.Status',
-    //         'vwplantillaStructure.Name4',
-    //         'vwplantillaStructure.OfficeID',
-    //         'vwActive.BirthDate',
-    //         'vwActive.Designation',
-    //         'yDesignation.Status',
-    //         'yDesignation.PMID',
-    //     ])->leftJoin('vwActive', 'vwplantillaStructure.ControlNo', '=', 'vwActive.ControlNo')->leftJoin('yDesignation', 'vwplantillaStructure.PositionID', '=', 'yDesignation.PMID')->distinct();
+
+
     public function index(Request $request)
     {
         $query = vwplantillastructure::select([
@@ -204,7 +178,7 @@ if ($office = $request->query('office')) {
                 ->with([
 
                     'xPersonal' => function ($query) {
-                        $query->select(['ControlNo', 'Surname', 'TINNo', 'Address']); // specify columns from vwplantillastructure
+                        $query->select(['ControlNo', 'Surname', 'TINNo', 'Address','BirthDate','Firstname','MIddlename','Sex']); // specify columns from vwplantillastructure
                     },
                     'active' => function ($query) {
                         $query->select(['ControlNo', 'Name4', 'Sex']); // specify columns from vwplantillastructure
@@ -215,6 +189,7 @@ if ($office = $request->query('office')) {
                 },
                     'tempRegAppointments' => function ($query) {
                         $query->select([
+                            'ID as tempId',
                             'ControlNo',
                             'DesigCode',
                             'NewDesignation',
@@ -236,17 +211,23 @@ if ($office = $request->query('office')) {
                             'Groupcode',
                             'group',
                             'unitcode',
-                            'sepcause',
+
                             'vicecause',
-                            'sepdate'
-                        ])->latest('sepdate')->limit(1); // specify columns from TempRegAppointmentReorg
+                             'vicename',
+                            'sepdate',
+                             'sepcause'
+                        ])->orderBy('ID', 'desc'); // specify columns from TempRegAppointmentReorg
                     },
 
                     'plantilla' => function ($query) {
-                        $query->select(['ControlNo', 'office', 'office2', 'group', 'division', 'section', 'unit', 'position', 'ID', 'StructureID', 'OfficeID', 'OfficeID1', 'GroupID', 'DivisionID', 'SectionID', 'UnitID', 'PositionID', 'PageNo', 'ItemNo', 'SG', 'Ordr', 'Funded', 'groupordr', 'divordr', 'secordr', 'unitordr', 'level', 'Status']);
+                        $query->select(['ControlNo', 'office', 'office2', 'group', 'division', 'section', 'unit', 'position',
+                        'ID', 'StructureID', 'OfficeID', 'OfficeID1', 'GroupID', 'DivisionID', 'SectionID', 'UnitID', 'PositionID',
+                         'PageNo', 'ItemNo', 'SG', 'Ordr', 'Funded',
+                         'groupordr', 'divordr', 'secordr', 'unitordr', 'level', 'Status']);
                     },
                     'tempRegAppointmentReorgExt' => function ($query) {
                         $query->select([
+                            'ID as tempExtId',
                             'ControlNo',
                             'PresAppro',
                             'PrevAppro',
@@ -288,7 +269,7 @@ if ($office = $request->query('office')) {
                             'leaderlevel3',
                             'leaderlevel4',
                             'structureid',
-                        ]); // specify columns from TempRegAppointmentReorg
+                        ])->orderBy('ID', 'desc');; // specify columns from TempRegAppointmentReorg
                     }
                 ])
                 ->where('ControlNo', $ControlNo)

@@ -49,17 +49,16 @@ class VerificationController extends Controller
 
         // Mail::raw("Your verification code is: $code", function ($message) use ($request) {
         //     $message->to($request->email)->subject('Your Verification Code');
-        $subject = "Verification Code";
-        $message = "
+      
+        $template = 'mail-template.verification';
 
-        Your verification code is: <strong>{$code}</strong>.<br><br>
-        Please enter this code within 2 minutes to verify your email address.<br><br>
-        Regards,<br>
-        <strong>Recruitment, Selection and Placement Team</strong>
-    ";
-
-        // ✅ Send the email using your queued mailable
-        Mail::to($request->email)->queue(new EmailApi($message, $subject));
+        Mail::to($request->email)->queue(new EmailApi(
+            "Verification Code",
+            $template,
+            [
+                'code' => $code
+            ]
+        ));
 
         return response()->json([
             'success' => true,

@@ -18,7 +18,7 @@ class criteria_rating extends Model
 
     public function jobBatch()
     {
-        return $this->belongsTo(JobBatchesRsp::class, 'job_batches_rsp_id');
+        return $this->belongsTo(JobBatchesRsp::class, 'job_batches_rsp_id','id');
     }
 
     public function educations(){

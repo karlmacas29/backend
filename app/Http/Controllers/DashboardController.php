@@ -6,6 +6,7 @@ use App\Models\Submission;
 use Illuminate\Http\Request;
 use App\Models\JobBatchesRsp;
 use App\Models\vwplantillastructure;
+use Illuminate\Container\Attributes\Auth;
 
 class DashboardController extends Controller
 {
@@ -46,6 +47,10 @@ class DashboardController extends Controller
             'total' => $total,
         ]);
     }
+
+
+
+
 
 
 

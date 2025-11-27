@@ -28,7 +28,7 @@
         }
 
         .letterhead img {
-            width: 80px;
+            max-width: 200px;
             display: block;
             margin: 0 auto 10px;
         }
@@ -111,6 +111,12 @@
         .signature-auth {
             font-size: 10pt;
         }
+
+        .signatureImage {
+            max-width: 300px;
+            height: auto;
+            display: block;
+        }
     </style>
 </head>
 
@@ -118,7 +124,7 @@
     <div class="container">
         <!-- Letterhead -->
         <div class="letterhead">
-            <img src="https://phshirt.com/wp-content/uploads/2021/11/City-of-Tagum-Logo.png" alt="City of Tagum Logo">
+            <img src="{{ $message->embed(public_path('images/logo.png')) }}" alt="Logo">
             <div class="letterhead-text">
                 <div>REPUBLIC OF THE PHILIPPINES</div>
                 <div>PROVINCE OF DAVAO DEL NORTE</div>
@@ -128,40 +134,34 @@
 
         <!-- Date -->
         <div class="date">
-            December 27, 2024
-            {{-- {{ $date }} --}}
+            {{ $date }}
         </div>
 
         <!-- Recipient -->
         <div class="recipient">
-            <strong>Mr/Ms {{ $fullname }}</strong>
-            {{-- <strong>{{ $fullname }}</strong> --}}
-            48 WPU Residential Complex, Sta. Monica<br>
-            Puerto Princesa, Palawan
-            {{-- {{ $address }} --}}
+            <p>
+                <strong>Mr/Ms. {{ $fullname }}</strong>
+                {{ ucfirst(strtolower($street)) }},
+                {{ ucwords(strtolower($barangay)) }}<br>
+                {{ ucwords(strtolower($city)) }},
+                {{ ucwords(strtolower($province)) }}
+            </p>
         </div>
 
         <div class="recipient">
-            Dear Mr/Ms {{ $fullname }},
-            {{-- Dear {{ $salutation }}, --}}
+            Dear Mr/Ms. {{ $lastname }},
         </div>
 
         <!-- Content -->
         <div class="content">
             <p>
                 This refers to your application for the <strong>{{ $position }}</strong> position in
-                the {{ $office }} of the City
-                  Government of Tagum.
-                {{-- This refers to your application for the <strong>{{ $position }}</strong> position in
-                the {{ $office }} of the Local Government of Tagum. --}}
+                the <strong>{{ $office }}</strong> of the City Government of Tagum.
             </p>
 
             <p>
                 We regret to inform you that based on the evaluation of your qualifications vis-à-vis the
-                qualification standards (QS) for the position, as shown below,
-                {{-- you do not meet the <strong><u>relevant
-                training</u></strong> required of the position you applied for. --}}
-                {{-- you do not meet the <strong><u>{{ $unmetRequirement }}</u></strong> required of the position you applied for. --}}
+                qualification standards (QS) for the position, as shown below:
             </p>
 
             <!-- Qualification Comparison Table -->
@@ -169,51 +169,42 @@
                 <thead>
                     <tr>
                         <th style="width: 15%;">Prescribed QS</th>
-                        <th style="width: 40%;">Position Requirements</th>
-                        <th style="width: 35%;">Mr/Ms {{ $lastname }} Qualification</th>
-                        <th style="width: 40%;">Remarks</th>
-                        {{-- <th style="width: 40%;">{{ $applicantName }}'s Qualification</th> --}}
+                        <th style="width: 35%;">Position Requirements</th>
+                        <th style="width: 35%;">Mr/Ms. {{ $lastname }}'s Qualification</th>
+                        <th style="width: 15%;">Remarks</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td><strong>Education</strong></td>
-                        <td>
-                       {{ $education_qs }}
-                        </td>
-                        <td>
-                             {{ $education_qualification }}<br>
-
-                        </td>
-                         <td> {{ $training_remark}} <br></td>
+                        <td>{!! nl2br(e($education_qs)) !!}</td>
+                        <td>{!! $education_qualification !!}</td>
+                        <td>{{ $education_remark }}</td>
                     </tr>
                     <tr>
                         <td><strong>Training</strong></td>
-                        <td>
-                               {{ $training_qs }} <br>
-                        </td>
-                     <td> {{ $training_qualification }} <br></td>
-                          <td> {{ $training_remark }} <br></td>
+                        <td>{!! nl2br(e($training_qs)) !!}</td>
+                        <td>{!! $training_qualification !!}</td>
+                        <td>{{ $training_remark }}</td>
                     </tr>
                     <tr>
                         <td><strong>Experience</strong></td>
-                        <td>   {{ $experience_qs }}</td>
-                        <td> {{ $experience_qualification }}</td>
-                               <td> {{ $experience_remark }}</td>
+                        <td>{!! nl2br(e($experience_qs)) !!}</td>
+                        <td>{!! $experience_qualification !!}</td>
+                        <td>{{ $experience_remark }}</td>
                     </tr>
                     <tr>
                         <td><strong>Eligibility</strong></td>
-                        <td>{{ $eligibility_qs }}y</td>
-                        <td> {{ $eligibility_qualification }}</td>
-
-                        <td> {{ $eligibility_remark }}</td>
+                        <td>{!! nl2br(e($eligibility_qs)) !!}</td>
+                        <td>{!! $eligibility_qualification !!}</td>
+                        <td>{{ $eligibility_remark }}</td>
                     </tr>
                 </tbody>
             </table>
 
             <p>
                 With this, we highly encourage you to still take part in our future employment opportunities
-                for position/s that will deemed fit to your qualifications.
+                for position/s that will be deemed fit to your qualifications.
             </p>
 
             <p>Thank you.</p>
@@ -221,20 +212,7 @@
 
         <!-- Signature -->
         <div class="signature-section">
-            Very truly yours,<br><br><br>
-
-            <div class="signature-name">
-                EDGAR C. DE GUZMAN
-                {{-- {{ $signatoryName }} --}}
-            </div>
-            <div class="signature-title">
-                City Administrator
-                {{-- {{ $signatoryTitle }} --}}
-            </div>
-            <div class="signature-auth">
-                Authorized Representative of the City Mayor<br>
-                Chairperson
-            </div>
+            <img src="{{ $message->embed(public_path('images/signature1.png')) }}" alt="Signature" class="signatureImage">
         </div>
 
     </div>

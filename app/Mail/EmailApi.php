@@ -19,11 +19,16 @@ class EmailApi extends Mailable implements ShouldQueue
     public $mailSubject;
     public $template;
     public $data;
+    public $imagePath;
+    public $signaturePath;
+
     public function __construct($subject, $template, $data = [])
     {
         $this->mailSubject = $subject;
         $this->template = $template;
         $this->data = $data;
+        $this->imagePath = public_path('images/logo.png');
+        $this->signaturePath = public_path('images/signature.png');
     }
 
     public function envelope(): Envelope
@@ -51,6 +56,15 @@ class EmailApi extends Mailable implements ShouldQueue
             Log::error("❌ EmailApi failed to build email: " . $e->getMessage());
             throw $e;
         }
+    }
+    public function build()
+    {
+        return $this->subject('Email')
+            ->view($this->view) // dynamic view
+            ->with([
+                'embeddedImage' => $this->imagePath,
+                // 'embeddedImage' => $this->signaturePath,
+            ]);
     }
 
     public function attachments(): array

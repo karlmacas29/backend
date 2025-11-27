@@ -7,6 +7,7 @@ use App\Mail\EmailApi;
 use App\Models\Schedule;
 use App\Models\Submission;
 use Illuminate\Http\Request;
+use App\Models\JobBatchesRsp;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -14,106 +15,78 @@ use Illuminate\Support\Facades\Mail;
 class EmailController extends Controller
 {
     //
-
-    // public function sendEmail(){
-
-    //     $toEmail = "clifordmillan2025@gmail.com";
-    //     $message = "testng rako aprt";
-    //     $subject = 'tagum city';
-
-    //    $response =  Mail::to($toEmail)->send(new EmailApi($message, $subject));
-
-    //    dd($response);
-    // }
-
-
     public function sendEmailInterview(Request $request)
     {
         $validated = $request->validate([
-            'applicants' => 'required|array', // array of submission IDs
-            'applicants.*' => 'exists:submission,id',
+            'applicants' => 'required|array',
+            'applicants.*.submission_id' => 'required|exists:submission,id',
+            'applicants.*.job_batches_rsp' => 'required|exists:job_batches_rsp,id',
             'date_interview' => 'required|date',
             'time_interview' => 'required|string',
             'venue_interview' => 'required|string',
             'batch_name' => 'required|string',
-            'job_batches_rsp' => 'required|exists:job_batches_rsp,id'
-
         ]);
 
         $date = Carbon::parse($validated['date_interview'])->format('F d, Y');
-        $time = $validated['time_interview'];
+        $time = Carbon::parse($validated['time_interview'])->format('g:i A'); // <-- changed
         $venue = $validated['venue_interview'];
-        $batchName = $validated['batch_name'] ?? null;
-
-        $job = \App\Models\JobBatchesRsp::find($validated['job_batches_rsp']);
-
-        if (!$job) {
-            return response()->json(['error' => 'Job batch not found'], 404);
-        }
-        // // Get job details
-         $position = $job->Position ?? 'the applied position';
-        // $office = $job->Office ?? 'the corresponding office';
-        $SalaryGrade = $job->SalaryGrade ?? 'the corresponding SG';
+        $batchName = $validated['batch_name'];
 
         $count = 0;
 
-        foreach ($validated['applicants'] as $submissionId) {
-            $submission = Submission::with('nPersonalInfo')->find($submissionId);
+        foreach ($validated['applicants'] as $app) {
 
-            if (!$submission) {
-                Log::warning("⚠️ Submission ID {$submissionId} not found.");
-                continue;
-            }
+            $submission = Submission::with('nPersonalInfo')->find($app['submission_id']);
+            if (!$submission) continue;
 
-            $applicant = $submission->nPersonalInfo;
+            $job = JobBatchesRsp::find($app['job_batches_rsp']);
+            if (!$job) continue;
 
-            // Check external applicant if internal info missing
-            if (!$applicant && $submission->ControlNo) {
-                $externalApplicant = DB::table('xPersonalAddt')
+            $position = $job->Position ?? 'the applied position';
+            $office = $job->Office ?? 'the corresponding office';
+            $SalaryGrade = $job->SalaryGrade ?? 'the corresponding SG';
+
+            // Get applicant info
+            if ($submission->nPersonalInfo_id) {
+                $firstname = $submission->nPersonalInfo->firstname;
+                $lastname  = $submission->nPersonalInfo->lastname;
+                $email     = $submission->nPersonalInfo->email_address ?? null;
+            } else if ($submission->ControlNo) {
+                $employee = DB::table('xPersonalAddt')
                     ->join('xPersonal', 'xPersonalAddt.ControlNo', '=', 'xPersonal.ControlNo')
                     ->where('xPersonalAddt.ControlNo', $submission->ControlNo)
                     ->select('xPersonalAddt.*', 'xPersonal.Firstname', 'xPersonal.Surname', 'xPersonalAddt.EmailAdd')
                     ->first();
-                $applicant = $externalApplicant;
-            }
 
-            $email = $applicant->email_address ?? $applicant->EmailAdd ?? null;
-            $fullname = $applicant->firstname ?? $applicant->Firstname ?? '';
-            $lastname = $applicant->lastname ?? $applicant->Surname ?? '';
-            $fullname = trim("{$fullname} {$lastname}");
+                if (!$employee) continue;
 
-            if (!$email) {
-                Log::warning("⚠️ Applicant {$fullname} has no email address.");
+                $firstname = $employee->Firstname;
+                $lastname = $employee->Surname;
+                $email = $employee->EmailAdd;
+            } else {
                 continue;
             }
 
+            $fullname = trim("$firstname $lastname");
+            if (!$email) continue;
+
             try {
-                Mail::to($email)->queue(
-                    new EmailApi(
-                        "Interview Invitation",       // subject
-                        'mail-template.interview',    // Blade view
-                        [
-                            'mailSubject' => "Interview Invitation",
-                            'fullname' => $fullname,
+                Mail::to($email)->queue(new EmailApi(
 
-                            'date' => $date,
-                            'time' => $time,
-                            'venue' => $venue,
-                            'position' => $position,
-                            'SalaryGrade' => $SalaryGrade,
-                        ]
-                    )
-                );
-                Log::info("📝 Preparing email for {$fullname} ({$email}) with data: " . json_encode([
-                    'mailSubject' => "Interview Invitation",
-                    'fullname' => $fullname,
-                    'date' => $date,
-                    'time' => $time,
-                    'venue' => $venue,
-                ]));
+                    "Interview Invitation",
+                    'mail-template.interview',
+                    [
+                        'mailSubject' => "Interview Invitation",
+                        'fullname' => $fullname,
+                        'date' => $date,
+                        'time' => $time,
+                        'venue' => $venue,
+                        'position' => $position,
+                        'SalaryGrade' => $SalaryGrade,
+                        'office' => $office,
+                    ]
+                ));
 
-
-                // Save schedule in DB
                 Schedule::create([
                     'submission_id' => $submission->id,
                     'batch_name' => $batchName,
@@ -123,7 +96,6 @@ class EmailController extends Controller
                     'venue_interview' => $venue,
                 ]);
 
-                Log::info("📧 Queued INTERVIEW email for {$fullname} ({$email})");
                 $count++;
             } catch (\Exception $e) {
                 Log::error("❌ Failed to send email to {$fullname} ({$email}): {$e->getMessage()}");
@@ -131,210 +103,12 @@ class EmailController extends Controller
         }
 
         return response()->json([
-            'success'=> true,
+            'success' => true,
             'message' => "Interview invitations successfully sent to {$count} applicant(s).",
         ]);
     }
 
-
-
-    // public function sendEmailApplicantBatch(Request $request) // send an email to all applicants of a specific job post for Qualified and Unqualified status
-    // {
-    //     $validated = $request->validate([
-    //         'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
-    //     ]);
-
-    //     $jobId = $validated['job_batches_rsp_id'];
-
-    //     // ✅ Get all applicants for that job with Qualified or Unqualified status
-    //     $submissions = Submission::where('job_batches_rsp_id', $jobId)
-    //         ->with('nPersonalInfo') // eager load relation
-    //         ->whereIn('status', ['Qualified', 'Unqualified'])
-    //         ->get();
-
-    //     if ($submissions->isEmpty()) {
-    //         return response()->json([
-    //             'message' => 'No applicants found with Qualified or Unqualified status for this job post.'
-    //         ], 404);
-    //     }
-
-    //     // ✅ Get job details for context
-    //     $job = \App\Models\JobBatchesRsp::find($jobId);
-    //     $position = $job->Position ?? 'the applied position';
-    //     $office = $job->Office ?? 'the corresponding office';
-
-    //     $count = 0;
-
-    //     foreach ($submissions as $submission) {
-    //         $applicant = $submission->nPersonalInfo;
-
-    //         // Check for internal or external applicant
-    //         $externalApplicant = DB::table('xPersonalAddt')
-    //             ->join('xPersonal', 'xPersonalAddt.ControlNo', '=', 'xPersonal.ControlNo')
-    //             ->where('xPersonalAddt.ControlNo', $submission->ControlNo)
-    //             ->select('xPersonalAddt.*', 'xPersonal.Firstname', 'xPersonal.Surname', 'xPersonalAddt.EmailAdd')
-    //             ->first();
-
-    //         $activeApplicant = $applicant ?? $externalApplicant;
-
-    //         if (!$activeApplicant) {
-    //             Log::warning("⚠️ No applicant found for submission ID: {$submission->id}");
-    //             continue;
-    //         }
-
-    //         $email = $applicant->email_address ?? $externalApplicant->EmailAdd ?? null;
-    //         $fullname = $applicant
-    //             ? trim("{$applicant->firstname} {$applicant->lastname}")
-    //             : trim("{$externalApplicant->Firstname} {$externalApplicant->Surname}");
-
-    //         if (empty($email)) {
-    //             Log::warning("⚠️ Applicant {$fullname} has no email address.");
-    //             continue;
-    //         }
-
-    //         $remarks = "
-    //         <br><br><strong>Evaluation Remarks:</strong><br>
-    //         Education: {$submission->education_remark}<br>
-    //         Experience: {$submission->experience_remark}<br>
-    //         Training: {$submission->training_remark}<br>
-    //         Eligibility: {$submission->eligibility_remark}<br>
-
-    //     ";
-
-    //         // $statusLower = strtolower($submission->status);
-
-    //         // ✅ Email content based on status
-
-    //         try {
-
-    //             Mail::to($email)->queue(
-    //                 new EmailApi(
-    //                     "Applicant Status",       // subject
-    //                     'mail-template.unqlified',    // Blade view
-    //                     [
-    //                         'mailSubject' => "Applicant Status",
-    //                         'fullname' => $fullname,
-    //                         'postion' => $position,
-    //                         'office' => $office,
-    //                         'Education' => $submission->education_remark,
-    //                          'Experience' => $submission->experience_remark,
-    //                         'Training' =>$submission->training_remark,
-    //                          'Eligibility' => $submission->eligibility_remark,
-
-    //                         'education_qualification' => $submission->education_qualification,
-    //                         'experience_qualification' => $submission->experience_qualification,
-    //                         'training_qualification' => $submission->training_qualification,
-    //                         'eligibility_qualification' => $submission->eligibility_qualification,
-
-    //                     ]
-    //                 )
-    //             );
-    //             // Mail::to($email)->queue(new EmailApi($message, $subject));
-
-    //             Log::info("📧 Queued email for {$fullname} ({$email}) with status: {$submission->status}");
-    //             $count++;
-    //         } catch (\Exception $e) {
-    //             Log::error("❌ Failed to queue email for {$fullname} ({$email}): {$e->getMessage()}");
-    //         }
-    //     }
-
-    //     return response()->json([
-    //         'message' => "Email notifications sent to {$count} applicant(s) for this job post.",
-    //     ]);
-    // }
-
-    // public function sendEmailInterview(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
-    //         'date_interview' => 'required|date',
-    //         'time_interview' => 'required|string',
-    //         'venue_interview' => 'required|string',
-
-    //     ]);
-
-    //     $jobId = $validated['job_batches_rsp_id'];
-
-    //     // ✅ Get qualified applicants only
-    //     $submissions = Submission::where('job_batches_rsp_id', $jobId)
-    //         ->with('nPersonalInfo')
-    //         ->where('status', 'Qualified')
-    //         ->get();
-
-    //     if ($submissions->isEmpty()) {
-    //         return response()->json([
-    //             'message' => 'No qualified applicants found for this job post.',
-    //         ], 404);
-    //     }
-
-    //     // ✅ Get job details
-    //     $job = \App\Models\JobBatchesRsp::find($jobId);
-    //     $position = $job->Position ?? 'the applied position';
-    //     $office = $job->Office ?? 'the corresponding office';
-    //     $date = Carbon::parse($validated['date_interview'])->format('F d, Y');
-    //     $time = $validated['time_interview'];
-    //     $venue = $validated['venue_interview'];
-
-    //     $count = 0;
-
-    //     foreach ($submissions as $submission) {
-    //         $applicant = $submission->nPersonalInfo;
-
-    //         // ✅ Check if internal or external
-    //         $externalApplicant = DB::table('xPersonalAddt')
-    //             ->join('xPersonal', 'xPersonalAddt.ControlNo', '=', 'xPersonal.ControlNo')
-    //             ->where('xPersonalAddt.ControlNo', $submission->ControlNo)
-    //             ->select('xPersonalAddt.*', 'xPersonal.Firstname', 'xPersonal.Surname', 'xPersonalAddt.EmailAdd')
-    //             ->first();
-
-    //         $activeApplicant = $applicant ?? $externalApplicant;
-
-    //         if (!$activeApplicant) {
-    //             Log::warning("⚠️ No applicant found for submission ID: {$submission->id}");
-    //             continue;
-    //         }
-
-    //         $email = $applicant->email_address ?? $externalApplicant->EmailAdd ?? null;
-    //         $fullname = $applicant
-    //             ? trim("{$applicant->firstname} {$applicant->lastname}")
-    //             : trim("{$externalApplicant->Firstname} {$externalApplicant->Surname}");
-
-    //         if (empty($email)) {
-    //             Log::warning("⚠️ Applicant {$fullname} has no email address.");
-    //             continue;
-    //         }
-
-    //         // ✅ Construct interview message
-    //         $subject = "Interview Invitation for {$position}";
-    //         $message = "
-    //         Dear {$fullname},<br><br>
-    //         Congratulations! You have been shortlisted for an <strong>interview</strong> for the position of
-    //         <strong>{$position}</strong> under <strong>{$office}</strong>.<br><br>
-    //         Please see the interview details below:<br><br>
-    //         <strong>Date:</strong> {$date}<br>
-    //         <strong>Time:</strong> {$time}<br>
-    //         <strong>Venue:</strong> {$venue}<br><br>
-    //         Kindly confirm your attendance by replying to this email.<br><br>
-    //         We look forward to meeting you.<br><br>
-    //         Best regards,<br>
-    //         <strong>Recruitment, Selection, and Placement Unit</strong>
-    //     ";
-
-    //         try {
-    //             Mail::to($email)->queue(new EmailApi($message, $subject));
-    //             Log::info("📧 Queued INTERVIEW email for {$fullname} ({$email}) — {$position}");
-    //             $count++;
-    //         } catch (\Exception $e) {
-    //             Log::error("❌ Failed to queue interview email for {$fullname} ({$email}): {$e->getMessage()}");
-    //         }
-    //     }
-
-    //     Log::info("✅ Total interview emails queued: {$count} for JobPost ID {$jobId}");
-
-    //     return response()->json([
-    //         'message' => "Interview invitations successfully sent to {$count} qualified applicant(s).",
-    //     ]);
-    // }
+ 
 
     public function sendEmailApplicantBatch(Request $request)
     {
@@ -359,16 +133,16 @@ class EmailController extends Controller
 
         // Get job details
         $job = \App\Models\JobBatchesRsp::with('criteria:id,job_batches_rsp_id,Education,Eligibility,Training,Experience')
-        ->find($jobId);
+            ->find($jobId);
 
-        $position = $job->position ?? 'the applied position';
-        $office = $job->office ?? 'the corresponding office';
+        $position = $job->Position ?? 'the applied position';
+        $office = $job->Office ?? 'the corresponding office';
 
-        //qs of the job post
-        $education_qs = $job->criteria->Education ?? null;
-        $eligibility_qs  = $job->criteria->Eligibility ?? null;
-        $training_qs  = $job->criteria->Training ?? null;
-        $experience_qs  = $job->criteria->Experience ?? null;
+        // QS of the job post
+        $education_qs = $job->criteria->Education ?? 'N/A';
+        $eligibility_qs = $job->criteria->Eligibility ?? 'N/A';
+        $training_qs = $job->criteria->Training ?? 'N/A';
+        $experience_qs = $job->criteria->Experience ?? 'N/A';
 
         $count = 0;
 
@@ -379,7 +153,7 @@ class EmailController extends Controller
             $externalApplicant = DB::table('xPersonalAddt')
                 ->join('xPersonal', 'xPersonalAddt.ControlNo', '=', 'xPersonal.ControlNo')
                 ->where('xPersonalAddt.ControlNo', $submission->ControlNo)
-                ->select('xPersonalAddt.*', 'xPersonal.Firstname', 'xPersonal.Surname', 'xPersonalAddt.EmailAdd')
+                ->select('xPersonalAddt.*', 'xPersonal.Firstname', 'xPersonal.Surname', 'xPersonalAddt.EmailAdd', 'xPersonalAddt.Rstreet', 'xPersonalAddt.Rbarangay', 'xPersonalAddt.Rcity', 'xPersonalAddt.Rprovince')
                 ->first();
 
             $activeApplicant = $applicant ?? $externalApplicant;
@@ -402,45 +176,59 @@ class EmailController extends Controller
                 continue;
             }
 
-            // Fixed: ONLY Unqualified template
+            // ✅ FETCH ACTUAL QUALIFICATION RECORDS
+            $educationRecords = $submission->getEducationRecords();
+            $experienceRecords = $submission->getExperienceRecords();
+            $trainingRecords = $submission->getTrainingRecords();
+            $eligibilityRecords = $submission->getEligibilityRecords();
+
+            // ✅ FORMAT QUALIFICATIONS FOR EMAIL
+            $educationText = $this->formatEducationForEmail($educationRecords);
+            $experienceText = $this->formatExperienceForEmail($experienceRecords);
+            $trainingText = $this->formatTrainingForEmail($trainingRecords);
+            $eligibilityText = $this->formatEligibilityForEmail($eligibilityRecords);
+
             $template = 'mail-template.unqualified';
 
             try {
                 Mail::to($email)->queue(
                     new EmailApi(
-                        "Applicant Status - Unqualified",
+                        "Application - Unqualified",
                         $template,
                         [
                             'fullname' => $fullname,
-                            'lastname' => $applicant->lastname ?? $externalApplicant->Surname,
+                            'lastname' => $applicant->lastname ?? $externalApplicant->Surname ?? 'N/A',
+                            'street' => $applicant->residential_street ?? $externalApplicant->Rstreet ?? 'N/A',
+                            'barangay' => $applicant->residential_barangay ?? $externalApplicant->Rbarangay ?? 'N/A',
+                            'city' => $applicant->residential_city ?? $externalApplicant->Rcity ?? 'N/A',
+                            'province' => $applicant->residential_province ?? $externalApplicant->Rprovince ?? 'N/A',
                             'position' => $position,
                             'office' => $office,
 
-                            // QS Qualifications of applicant
-                            'education_qualification' => $submission->education_qualification,
-                            'experience_qualification' => $submission->experience_qualification,
-                            'training_qualification' => $submission->training_qualification,
-                            'eligibility_qualification' => $submission->eligibility_qualification,
+                            // ✅ FORMATTED QUALIFICATION TEXT (matching blade variable names)
+                            'education_qualification' => $educationText,
+                            'experience_qualification' => $experienceText,
+                            'training_qualification' => $trainingText,
+                            'eligibility_qualification' => $eligibilityText,
 
                             // Remarks
-                            'education_remark' => $submission->education_remark,
-                            'experience_remark' => $submission->experience_remark,
-                            'training_remark' => $submission->training_remark,
-                            'eligibility_remark' => $submission->eligibility_remark,
+                            'education_remark' => $submission->education_remark ?? 'N/A',
+                            'experience_remark' => $submission->experience_remark ?? 'N/A',
+                            'training_remark' => $submission->training_remark ?? 'N/A',
+                            'eligibility_remark' => $submission->eligibility_remark ?? 'N/A',
 
+                            // QS of job post
+                            'education_qs' => $education_qs,
+                            'eligibility_qs' => $eligibility_qs,
+                            'training_qs' => $training_qs,
+                            'experience_qs' => $experience_qs,
 
-                            // qs of job post
-                             'education_qs'=>   $education_qs,
-                            'eligibility_qs' =>    $eligibility_qs,
-                            'training_qs' =>    $training_qs,
-                            'experience_qs' =>   $experience_qs,
-
+                            'date' => now()->format('F d, Y'),
                         ]
                     )
                 );
 
                 Log::info("📧 Queued UNQUALIFIED email for {$fullname} ({$email}).");
-
                 $count++;
             } catch (\Exception $e) {
                 Log::error("❌ Failed to send email for {$fullname}: {$e->getMessage()}");
@@ -452,4 +240,76 @@ class EmailController extends Controller
             'message' => "Unqualified email notifications sent to {$count} applicant(s)."
         ]);
     }
+
+    // ✅ Helper method to format education
+    private function formatEducationForEmail($educationRecords)
+    {
+        if ($educationRecords->isEmpty()) {
+            return 'No education records found.';
+        }
+
+        $formatted = [];
+        foreach ($educationRecords as $edu) {
+            $degree = $edu->degree ?? 'N/A';
+            $school = $edu->school_name ?? 'N/A';
+            $year = $edu->year_graduated ?? 'N/A';
+            $formatted[] = "• {$degree} at {$school} ({$year})";
+        }
+
+        return implode('<br>', $formatted);
+    }
+
+    // ✅ Helper method to format experience
+    private function formatExperienceForEmail($experienceRecords)
+    {
+        if ($experienceRecords->isEmpty()) {
+            return 'No work experience found.';
+        }
+
+        $formatted = [];
+        foreach ($experienceRecords as $exp) {
+            $position = $exp->position_title ?? 'N/A';
+            $department = $exp->department ?? 'N/A';
+            $dateFrom = $exp->work_date_from ?? 'N/A';
+            $dateTo = $exp->work_date_to ?? 'N/A';
+            $formatted[] = "• {$position} at {$department} ({$dateFrom} - {$dateTo})";
+        }
+
+        return implode('<br>', $formatted);
+    }
+
+    // ✅ Helper method to format training
+    private function formatTrainingForEmail($trainingRecords)
+    {
+        if ($trainingRecords->isEmpty()) {
+            return 'No training/seminar records found.';
+        }
+
+        $formatted = [];
+        foreach ($trainingRecords as $training) {
+            $title = $training->training_title ?? 'N/A';
+            $hours = $training->number_of_hours ?? 'N/A';
+            $formatted[] = "• {$title} ({$hours} hours)";
+        }
+
+        return implode('<br>', $formatted);
+    }
+
+    // ✅ Helper method to format eligibility
+    private function formatEligibilityForEmail($eligibilityRecords)
+    {
+        if ($eligibilityRecords->isEmpty()) {
+            return 'No eligibility records found.';
+        }
+
+        $formatted = [];
+        foreach ($eligibilityRecords as $eligibility) {
+            $name = $eligibility->eligibility ?? 'N/A';
+            $rating = $eligibility->rating ? " - Rating: {$eligibility->rating}" : '';
+            $formatted[] = "• {$name}{$rating}";
+        }
+
+        return implode('<br>', $formatted);
+    }
+
 }

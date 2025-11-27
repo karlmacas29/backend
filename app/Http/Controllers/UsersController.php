@@ -57,6 +57,7 @@ class UsersController extends Controller
         ]);
     }
 
+ 
     // this is for rater
     public function getAuthenticatedrater(Request $request)
     {
@@ -66,9 +67,9 @@ class UsersController extends Controller
             return response()->json(['message' => 'Token expired or invalid'], 401);
         }
 
-        // Load only the required relationships
+        // Load only the required relationships including pivot status
         $user->load([
-            'job_batches_rsp:id,Office,Position' // Adjust fields as needed
+            'job_batches_rsp:id,Office,Position'
         ]);
 
         $userData = [
@@ -78,7 +79,23 @@ class UsersController extends Controller
             'position' => $user->position,
             'active' => $user->active,
             'rspControl' => $user->rspControl,
-            // 'assigned_jobs' => $user->job_batches_rsp,
+
+            // ⭐ ADDED STATISTICS
+            'assigned_jobs_count' => $user->total_assigned,
+            'completed_jobs_count' => $user->total_completed,
+            'pending_jobs_count' => $user->total_pending,
+            'completion_rate' => $user->completion_rate . '%',
+
+            // ⭐ Optional: Include job list assigned to the rater
+            'assigned_jobs' => $user->job_batches_rsp->map(function ($job) {
+                return [
+                    'id' => $job->id,
+                    'Office' => $job->Office,
+                    'Position' => $job->Position,
+                    'status' => $job->pivot->status, // from pivot
+                    'assigned_at' => $job->pivot->created_at,
+                ];
+            }),
         ];
 
         return response()->json([
