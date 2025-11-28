@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 use function Laravel\Prompts\table;
 use App\Models\vwplantillastructure;
+use Illuminate\Support\Facades\Auth;
 
 class EmployeeController extends Controller
 {
@@ -36,8 +37,8 @@ class EmployeeController extends Controller
 
   //update tempreg and xservice and xpersonal  of the employee
   public function updateEmployeeCredentials($controlNo, Request $request){
-
-      $validated = $request->validate([
+        $user = Auth::user(); // User performing the update
+        $validated = $request->validate([
 
              //xPersonal
             'Surname' => 'required|string',
@@ -134,6 +135,8 @@ class EmployeeController extends Controller
                 'Address' => $validated['Address'] ?? null,
 
             ]);
+        $updatedEmployee = DB::table('xPersonal')->where('ControlNo', $controlNo)->first();
+        $employeeFullname = $updatedEmployee->Firstname . ' ' . $updatedEmployee->Surname;
 
         $xtempreg = DB::table('tempRegAppointmentReorg')
             ->where('ControlNo', $controlNo)
@@ -223,6 +226,10 @@ class EmployeeController extends Controller
             DB::table('tempRegAppointmentReorgExt')->insert($data);
         }
 
+        activity('Appointment')
+        ->causedBy($user)
+        ->withProperties(['updated_employee' => $employeeFullname, 'control_no' => $controlNo,])
+            ->log("User '{$user->name}' updated the appointment of employee '{$employeeFullname}'.");
         return response()->json([
             'success' => true,
             'message' => 'Update saved successfully. Please wait for an administrator to review and approve the changes.',

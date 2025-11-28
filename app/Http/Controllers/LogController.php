@@ -17,10 +17,27 @@ class LogController extends Controller
 
     public function activityLogs()
     {
-        $logs = DB::table('activity_log')->orderBy('created_at', 'desc')->get();
+        $logs = DB::table('activity_log')
+            ->select('id', 'log_name', 'Description', 'properties', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($log) {
+                // Decode properties JSON if it's a valid JSON string
+                $props = json_decode($log->properties, true);
+
+                // Add ip and userAgent at top-level if they exist
+                $log->ip = $props['ip'] ?? null;
+                $log->userAgent = $props['user_agent'] ?? null;
+
+                // Format created_at → "Nov 23, 2025"
+                $log->created_at_formatted = \Carbon\Carbon::parse($log->created_at)
+                    ->format('F d, Y');
+
+                return $log;
+            });
+
         return response()->json($logs, 200);
     }
-
 
 
     public function logAuth(Request $request)

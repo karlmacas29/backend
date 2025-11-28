@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\JobBatchesRsp;
 use App\Models\Submission;
 use Illuminate\Http\Request;
+use App\Models\JobBatchesRsp;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class ExportApplicantController extends Controller
 {
@@ -91,6 +92,8 @@ class ExportApplicantController extends Controller
 
     public function storeMultiple(Request $request)
     {
+
+        $user = Auth::user(); // Get the authenticated user
         /**
          * job_batches_rsp_id => Job Post ID
          * applicants => array that can contain either:
@@ -105,6 +108,11 @@ class ExportApplicantController extends Controller
         ]);
 
         $jobPostId = $validated['job_batches_rsp_id'];
+
+        // Get job post details for logging
+        $jobPost = \App\Models\JobBatchesRsp::find($jobPostId);
+        $position = $jobPost->Position ?? 'N/A';
+        $office = $jobPost->Office ?? 'N/A';
 
         // ✅ Build insert data
         $insertData = collect($validated['applicants'])->map(function ($applicant) use ($jobPostId) {
@@ -123,6 +131,16 @@ class ExportApplicantController extends Controller
         // ✅ Insert all applicants
         DB::table('submission')->insert($insertData);
 
+        activity('Applicants')
+            ->causedBy($user)
+            ->performedOn($jobPost)
+            ->withProperties([
+                'name' => $user->name,
+                'position' => $position,
+                'office' => $office,
+                'applicants_added_count' => count($insertData),
+            ])
+            ->log("User '{$user->name}' added " . count($insertData) . " applicant(s) to the job post '{$position}' in '{$office}'.");
         return response()->json([
             'message' => 'Applicants stored successfully!',
             'count' => count($insertData),

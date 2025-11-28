@@ -188,11 +188,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/active', [PlantillaController::class, 'vwActiveGet']); // fetching employee active
     Route::get('/view/criteria/{job_batches_rsp_id}', [CriteriaController::class, 'viewCriteria']); // view details of job criteria
 
-    // Route::delete('/job/delete/{id}', [JobBatchesRspController::class, 'destroy']); // delete job post  with the criteria and pdf
-    // Route::post('/job-post/{job_batches_id}/', [JobBatchesRspController::class, 'update']);
+
+
+    Route::delete('/job/delete/{id}', [JobBatchesRspController::class, 'destroy']); // delete job post  with the criteria and pdf
     Route::get('/job-post', [JobBatchesRspController::class, 'jobPost']); // fetching all job post
-    Route::post('/job-post/store', [JobBatchesRspController::class, 'store']);  // create a job post
-    // Route::get('/job-post/republished/', [JobBatchesRspController::class, 'getRepublishHistory']); // fetching all job post
+
 
 
 
@@ -216,7 +216,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [JobBatchesRspController::class, 'store']);   //  create a new job post
         Route::post('/republished', [JobBatchesRspController::class, 'republished']);   // republish job-batches-rsp
         Route::put('/jobpost/{JobPostingId}', [JobBatchesRspController::class, 'unoccupied']);   // update the  job-post status to unoccupied there is no applicant hired
-        Route::delete('/{id}', [JobBatchesRspController::class, 'destroy']); // delete job post
+        // Route::delete('/{id}', [JobBatchesRspController::class, 'destroy']); // delete job post
         Route::get('/{PositionID}/{ItemNo}', [JobBatchesRspController::class, 'show']);
         Route::get('/applicant/view/{id}', [JobBatchesRspController::class, 'getApplicant']); // fetching the applicant per job post
         Route::post('/applicant/evaluation/{applicantId}', [SubmissionController::class, 'evaluation']); // qualified or unqualified of the applicant
@@ -237,7 +237,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/applicant/xpds', [xPDSController::class, 'getPersonalDataSheet']); // employee pds
         Route::get('/list', [AppointmentController::class, 'employee']); // employe list
         Route::post('/update/{controlNo}', [EmployeeController::class, 'updateEmployeeCredentials']); //  updating the  employee appoitment
-        Route::post('/confirmation', [EmployeeController::class, 'approveUpdate']); //  updating the  employee appoitment
+        // Route::post('/confirmation', [EmployeeController::class, 'approveUpdate']); //  updating the  employee appoitment
 
         Route::get('/request', [EmployeeController::class, 'fetchApprovingTable']);
         Route::get('/{ControlNo}', [EmployeeController::class, 'appliedEmployee']);

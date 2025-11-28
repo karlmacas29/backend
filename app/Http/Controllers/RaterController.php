@@ -593,20 +593,29 @@ class RaterController extends Controller
             DB::commit();
 
             //  Log activity
+            // Get job post info
+            $jobPost = DB::table('job_batches_rsp')
+                ->select('Position', 'Office')
+                ->where('id', $jobBatchId)
+                ->first();
+
+            // Log activity
             if ($user instanceof \App\Models\User) {
-                activity($user->name)
+                activity('Score')
                     ->causedBy($user)
                     ->performedOn($user)
                     ->withProperties([
+                         'name' => $user->name,
                         'username' => $user->username,
                         'role' => $user->role?->role_name,
                         'office' => $user->office,
                         'ip' => $request->ip(),
                         'user_agent' => $request->header('User-Agent'),
-                        'job_batches_rsp_id' => $jobBatchId,
+                        'job_position' => $jobPost->Position ?? 'N/A',
+                        'job_office' => $jobPost->Office ?? 'N/A',
                         'submitted_count' => count($results),
                     ])
-                    ->log("Rater {$user->name} submitted scores for job post ID: {$jobBatchId}.");
+                    ->log("Rater {$user->name} submitted scores for job '{$jobPost->Position}' in office '{$jobPost->Office}'.");
             }
 
             return response()->json([
@@ -711,21 +720,55 @@ class RaterController extends Controller
             }
 
             // Log activity after
-            if ($user instanceof \App\Models\User) {
-                $jobBatchIds = collect($results)->pluck('job_batches_rsp_id')->unique()->join(', ');
-                activity($user->name)
+            // if ($user instanceof \App\Models\User) {
+            //     $jobBatchIds = collect($results)->pluck('job_batches_rsp_id')->unique()->join(', ');
+            //     activity($user->name)
+            //         ->causedBy($user)
+            //         ->performedOn($user)
+            //         ->withProperties([
+            //             'username' => $user->username,
+            //             'role' => $user->role?->role_name,
+            //             'office' => $user->office,
+            //             'ip' => $request->ip(),
+            //             'user_agent' => $request->header('User-Agent'),
+            //             'job_batches_rsp_ids' => $jobBatchIds,
+            //             'saved_count' => count($results),
+            //         ])
+            //         ->log("Rater {$user->name} saved draft scores for job post batch ID: {$jobBatchIds}.");
+            // }
+            // Log activity after saving drafts
+            if ($user instanceof \App\Models\User && !empty($results)) {
+                $jobBatchIds = collect($results)->pluck('job_batches_rsp_id')->unique();
+
+                // Fetch job post details for all involved batches
+                $jobPosts = DB::table('job_batches_rsp')
+                    ->whereIn('id', $jobBatchIds)
+                    ->select('id', 'Position', 'Office')
+                    ->get()
+                    ->keyBy('id'); // key by id for easy lookup
+
+                $jobDetails = $jobBatchIds->map(function ($id) use ($jobPosts) {
+                    $job = $jobPosts[$id] ?? null;
+                    if ($job) {
+                        return "{$job->Position} ({$job->Office})";
+                    }
+                    return "ID {$id}";
+                })->join(', ');
+
+                activity('DraftScore')
                     ->causedBy($user)
                     ->performedOn($user)
                     ->withProperties([
+                        'name' => $user->name,
                         'username' => $user->username,
                         'role' => $user->role?->role_name,
                         'office' => $user->office,
                         'ip' => $request->ip(),
                         'user_agent' => $request->header('User-Agent'),
-                        'job_batches_rsp_ids' => $jobBatchIds,
+                        'job_details' => $jobDetails,
                         'saved_count' => count($results),
                     ])
-                    ->log("Rater {$user->name} saved draft scores for job post batch ID: {$jobBatchIds}.");
+                    ->log("Rater {$user->name} saved draft scores for job(s): {$jobDetails}.");
             }
 
             return response()->json([

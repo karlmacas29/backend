@@ -88,19 +88,25 @@ class CriteriaController extends Controller
             ]);
         }
         // Log::info('BEHAVIORAL DATA RECEIVED:', $request->behavioral);
+        // Fetch the job details
+        $job = \App\Models\JobBatchesRsp::find($criteria->job_batches_rsp_id);
 
-        // Log creation or update
-        activity($user->name)
+        $jobPosition = $job->Position ?? 'N/A';
+        $jobOffice = $job->Office ?? 'N/A';
+
+        // Log creation or update with user and job info
+        activity('Criteria')
             ->causedBy($user)
             ->performedOn($criteria)
-            ->log($criteria->wasRecentlyCreated ? 'Created criteria' : 'Updated criteria');
-        $results[] = $criteria->load([
-                'educations',
-                'experiences',
-                'trainings',
-                'performances',
-                'behaviorals',
-            ]);
+            ->withProperties([
+                'name' => $user->name,
+                'job_position' => $jobPosition,
+                'job_office' => $jobOffice,
+                'status' => $criteria->status,
+            ])
+            ->log($criteria->wasRecentlyCreated
+                ? "User '{$user->name}' created criteria for {$jobPosition} position in {$jobOffice}"
+                : "User '{$user->name}' updated criteria for {$jobPosition} position in {$jobOffice}");
 
         return response()->json([
             'success' => true,
@@ -117,6 +123,9 @@ class CriteriaController extends Controller
     // deleting the criteria of job_post
     public function delete($id)
     {
+
+        $user = Auth::user(); // Get the authenticated user
+
         $criteria = criteria_rating::find($id);
 
         if (!$criteria) {
@@ -126,7 +135,23 @@ class CriteriaController extends Controller
             ], 404);
         }
 
+        $job = \App\Models\JobBatchesRsp::find($criteria->job_batches_rsp_id);
+        $jobPosition = $job->Position ?? 'N/A';
+        $jobOffice = $job->Office ?? 'N/A';
+
         $criteria->delete();
+
+
+        // Log the deletion
+        activity('Criteria')
+            ->causedBy($user)
+            ->performedOn($criteria)
+            ->withProperties([
+                'name' => $user->name,
+                'job_position' => $jobPosition,
+                'job_office' => $jobOffice,
+            ])
+            ->log("User '{$user->name}' deleted criteria for {$jobPosition} position in {$jobOffice}");
 
         return response()->json([
             'status' => true,
@@ -162,6 +187,7 @@ class CriteriaController extends Controller
 
     public function criteriaLibStore(Request $request)
     {
+        $user = Auth::user(); // Get the authenticated user
         // --------------------------
         // 1. VALIDATION
         // --------------------------
@@ -273,6 +299,17 @@ class CriteriaController extends Controller
         // --------------------------
         // 8. RESPONSE
         // --------------------------
+
+        activity('Criteria Library')
+            ->causedBy($user)
+            ->performedOn($criteriaRange)
+            ->withProperties([
+                'performed_by' => $user->name,
+                'sg_min' => $criteriaRange->sg_min,
+                'sg_max' => $criteriaRange->sg_max,
+            ])
+            ->log("User '{$user->name}' created a new SG range: {$criteriaRange->sg_min}-{$criteriaRange->sg_max}.");
+
         return response()->json([
             'message' => 'Salary Grade Range Criteria saved successfully',
             'criteria_range_id' => $criteriaRange->id
@@ -282,6 +319,8 @@ class CriteriaController extends Controller
 
     public function criteriaLibUpdate(Request $request, $criteriaId)
     {
+
+        $user = Auth::user(); // Get the authenticated user
         // --------------------------
         // 1. VALIDATION
         // --------------------------
@@ -359,7 +398,15 @@ class CriteriaController extends Controller
 
 
 
-
+        activity('Criteria Library')
+            ->causedBy($user)
+            ->performedOn($criteriaRange)
+            ->withProperties([
+                'name' => $user->name,
+                'sg_min' => $criteriaRange->sg_min,
+                'sg_max' => $criteriaRange->sg_max,
+            ])
+            ->log("User '{$user->name}' updated the SG range to {$criteriaRange->sg_min}-{$criteriaRange->sg_max} for this criteria library.");
         // --------------------------
         // 3. LOAD UPDATED RELATIONS
         // --------------------------
@@ -461,9 +508,19 @@ class CriteriaController extends Controller
 
     public function criteriaDelete($criteriaId, Request $request)
     {
+        $user = Auth::user(); // Get the authenticated user
         $criteria = CriteriaLibrary::findOrFail($criteriaId);
 
         $criteria->delete();
+
+        // Activity log
+        activity('Criteria Library')
+            ->causedBy($user)
+            ->performedOn($criteria)
+            ->withProperties([
+                'name' => $user->name,
+            ])
+            ->log("User '{$user->name}' deleted a criteria.");
 
         return response()->json([
             'message' => 'Criteria deleted successfully',

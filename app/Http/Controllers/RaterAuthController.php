@@ -45,7 +45,7 @@ class RaterAuthController extends Controller
         $rater->job_batches_rsp()->attach($validated['job_batches_rsp_id']);
 
         // ✅ Log the activity using Spatie Activity Log
-        activity($authUser->name)
+        activity('Create')
             ->causedBy($authUser)               // The admin who created the rater
             ->performedOn($rater)               // The new rater account created
             ->withProperties([
@@ -59,7 +59,7 @@ class RaterAuthController extends Controller
                 'ip' => $request->ip(),
                 'user_agent' => $request->header('User-Agent'),
             ])
-            ->log("Rater {$rater->name} was registered successfully by '{$authUser?->name}'.");
+            ->log("Rater {$rater->name} was Created successfully by '{$authUser?->name}'.");
 
         return response()->json([
             'status' => true,
@@ -136,7 +136,7 @@ class RaterAuthController extends Controller
         $rater->load('job_batches_rsp');
 
         // ✅ Log the update activity
-        activity($authUser->name)
+        activity('Update')
             ->causedBy($authUser)                // The admin who made the change
             ->performedOn($rater)                // The rater whose account was edited
             ->withProperties([
@@ -243,11 +243,12 @@ class RaterAuthController extends Controller
         //  Log the activity using Spatie Activity Log
         // ✅ Fix: Ensure the correct type for Spatie activity log
         if ($user instanceof \App\Models\User) {
-            activity($user->name)
+            activity('Login')
                 ->causedBy($user)
                 ->performedOn($user)
                 ->withProperties([
-                    'username' => $user->username,
+                'rater_name' => $user->name,
+                    'rater_username' => $user->username,
                     'role' => $user->role?->role_name,
                     'office' => $user->office,
                     'ip' => $request->ip(),
@@ -305,11 +306,12 @@ class RaterAuthController extends Controller
 
         // ✅ Log activity using Spatie Activitylog
         if ($rater instanceof \App\Models\User) {
-            activity($rater->name)
+            activity('Change Credentials')
                 ->causedBy($rater)
                 ->performedOn($rater)
                 ->withProperties([
-                    'username' => $rater->username,
+                     'rater_name' => $rater->name,
+                    'rater_username' => $rater->username,
                     'role' => $rater->role?->role_name,
                     'office' => $rater->office,
                     'ip' => $request->ip(),
@@ -386,11 +388,12 @@ class RaterAuthController extends Controller
 
         // ✅ Fix: Ensure the correct type for Spatie activity log
         if ($user instanceof \App\Models\User) {
-            activity($user->name)
+            activity('Logout')
                 ->causedBy($user)
                 ->performedOn($user)
                 ->withProperties([
-                    'username' => $user->username,
+                'rater_name' => $user->name,
+                'rater_username' => $user->username,
                     'role' => $user->role?->role_name,
                     'office' => $user->office,
                     'ip' => $request->ip(),

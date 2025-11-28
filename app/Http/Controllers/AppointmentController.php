@@ -106,10 +106,27 @@ class AppointmentController extends Controller
         return response()->json($status);
     }
 
-    public function employee()
+    public function employee(Request $request)
     {
+        // Get page size (default 10)
+        $perPage = (int) $request->input('per_page', 10);
 
-        $employee = DB::table('xPersonal')->select('ControlNo', 'Firstname', 'Surname', 'Occupation')->get();
+        // Get search parameter
+        $search = $request->input('search', '');
+
+        $query = DB::table('xPersonal')
+            ->select('ControlNo', 'Firstname', 'Surname', 'Occupation');
+
+        // Add search filter if search term exists
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('Firstname', 'LIKE', "%{$search}%")
+                    ->orWhere('Surname', 'LIKE', "%{$search}%")
+                    ->orWhere('ControlNo', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $employee = $query->paginate($perPage);
 
         return response()->json($employee);
     }

@@ -10,6 +10,7 @@ use App\Models\JobBatchesRsp;
 use App\Models\TempRegHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
 
@@ -19,6 +20,8 @@ class AppiontmentService
 {
     public function appiontment(Request $request)
     {
+
+        $user = Auth::user(); // Authenticated user
         // ✅ Step 1: Validate all inputs
         $validated = $request->validate([
             'Office' => 'required|string',
@@ -98,6 +101,19 @@ class AppiontmentService
                 // $validated['vicecause'] ?? null,
 
             );
+
+            activity('Plantilla')
+                ->causedBy($user)
+                ->withProperties([
+                    'name' => $user->name,
+                    'position' => $job->Position,
+                    'office' => $job->Office,
+                    'controlNo' => $job->controlNo,
+                    'PageNo' => $job->PageNo,
+                    'ItemNo' => $job->ItemNo
+                ])
+                ->log("User '{$user->name}' added an employee for position '{$job->Position}' in office '{$job->Office}'.");
+
 
             DB::commit();
 
