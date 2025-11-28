@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Models\JobBatchesRsp;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
 class EmailController extends Controller
@@ -96,6 +97,31 @@ class EmailController extends Controller
                     'venue_interview' => $venue,
                 ]);
 
+                $user = Auth::user();
+                if ($user instanceof \App\Models\User) {
+                    activity('Interview Invitation Sent')
+                        ->causedBy($user)
+                        ->performedOn($submission)
+                        ->withProperties([
+                            'name'     => $user->name,
+                            'username'       => $user->username,
+                            'applicant_name' => $fullname,
+                            'email'          => $email,
+                            'job_post_id'    => $job->id,
+                            'position'       => $position,
+                            'office'         => $office,
+                            'salary_grade'   => $SalaryGrade,
+                            'batch_name'     => $batchName,
+                            'date'           => $date,
+                            'time'           => $time,
+                            'venue'          => $venue,
+                            'ip'             => request()->ip(),
+                            'user_agent'     => request()->header('User-Agent'),
+                        ])
+                        ->log("{$user->name} sent an interview invitation to {$fullname} for the {$position} position in {$office}.");
+                }
+
+
                 $count++;
             } catch (\Exception $e) {
                 Log::error("❌ Failed to send email to {$fullname} ({$email}): {$e->getMessage()}");
@@ -110,7 +136,7 @@ class EmailController extends Controller
 
 
 
-    public function sendEmailApplicantBatch(Request $request)
+    public function sendEmailApplicantBatch(Request $request) // for the unqualified applicant that send an  the qualification and remarks
     {
         $validated = $request->validate([
             'job_batches_rsp_id' => 'required|exists:job_batches_rsp,id',
@@ -228,7 +254,31 @@ class EmailController extends Controller
                     )
                 );
 
-                Log::info("📧 Queued UNQUALIFIED email for {$fullname} ({$email}).");
+                // Log::info("📧 Queued UNQUALIFIED email for {$fullname} ({$email}).");
+
+                $user = Auth::user();
+                if ($user instanceof \App\Models\User) {
+                    activity('Unqualified Applicant Email Sent')
+                        ->causedBy($user)
+                        ->performedOn($submission)
+                        ->withProperties([
+                            'name'     => $user->name,
+                            'username'       => $user->username,
+                            'applicant_name' => $fullname,
+                            'email'          => $email,
+                            'job_post_id'    => $jobId,
+                            'position'       => $position,
+                            'office'         => $office,
+                            'date'           => now()->format('F d, Y'),
+                            'education_remark'   => $submission->education_remark ?? 'N/A',
+                            'experience_remark'  => $submission->experience_remark ?? 'N/A',
+                            'training_remark'    => $submission->training_remark ?? 'N/A',
+                            'eligibility_remark' => $submission->eligibility_remark ?? 'N/A',
+                        ])
+                        ->log("{$user->name} sent an unqualified notification to {$fullname} for the {$position} position in {$office}.");
+                }
+
+
                 $count++;
             } catch (\Exception $e) {
                 Log::error("❌ Failed to send email for {$fullname}: {$e->getMessage()}");
