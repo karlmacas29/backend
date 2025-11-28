@@ -106,6 +106,13 @@ class AppointmentController extends Controller
         return response()->json($status);
     }
 
+    // public function employee()
+    // {
+
+    //     $employee = DB::table('xPersonal')->select('ControlNo', 'Firstname', 'Surname', 'Occupation')->get();
+
+    //     return response()->json($employee);
+    // }
     public function employee(Request $request)
     {
         // Get page size (default 10)
