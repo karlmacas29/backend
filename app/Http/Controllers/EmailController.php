@@ -108,7 +108,7 @@ class EmailController extends Controller
         ]);
     }
 
- 
+
 
     public function sendEmailApplicantBatch(Request $request)
     {
@@ -245,7 +245,7 @@ class EmailController extends Controller
     private function formatEducationForEmail($educationRecords)
     {
         if ($educationRecords->isEmpty()) {
-            return 'No education records found.';
+            return 'No relevant education based on the specific requirement of the position.';
         }
 
         $formatted = [];
@@ -259,11 +259,12 @@ class EmailController extends Controller
         return implode('<br>', $formatted);
     }
 
+
     // ✅ Helper method to format experience
     private function formatExperienceForEmail($experienceRecords)
     {
         if ($experienceRecords->isEmpty()) {
-            return 'No work experience found.';
+            return 'No relevant experience based on the specific requirement of the position.';
         }
 
         $formatted = [];
@@ -278,11 +279,12 @@ class EmailController extends Controller
         return implode('<br>', $formatted);
     }
 
+
     // ✅ Helper method to format training
     private function formatTrainingForEmail($trainingRecords)
     {
         if ($trainingRecords->isEmpty()) {
-            return 'No training/seminar records found.';
+            return 'No relevant training based on the specific requirement of the position.';
         }
 
         $formatted = [];
@@ -299,7 +301,7 @@ class EmailController extends Controller
     private function formatEligibilityForEmail($eligibilityRecords)
     {
         if ($eligibilityRecords->isEmpty()) {
-            return 'No eligibility records found.';
+            return 'No relevant eligibility based on the specific requirement of the position.';
         }
 
         $formatted = [];
@@ -311,5 +313,4 @@ class EmailController extends Controller
 
         return implode('<br>', $formatted);
     }
-
 }
