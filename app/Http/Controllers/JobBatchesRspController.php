@@ -12,6 +12,7 @@ use App\Models\OnFundedPlantilla;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use App\Models\vwplantillastructure;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -28,6 +29,28 @@ class JobBatchesRspController extends Controller
         $jobPost->update([
             'status' => $validated['status'],
         ]);
+
+
+        $user = Auth::user();
+
+        if ($user instanceof \App\Models\User) {
+            activity('Job Post Status Update')
+                ->causedBy($user)
+                ->performedOn($jobPost)
+                ->withProperties([
+                    'name'   => $user->name,
+                    'username'     => $user->username,
+                    'job_post_id'  => $jobPost->id,
+                    'position'     => $jobPost->Position ?? null,
+                    'item_no'      => $jobPost->ItemNo ?? null,
+                    'old_status'   => $jobPost->getOriginal('status'),
+                    'new_status'   => $validated['status'],
+                    'ip'           => request()->ip(),
+                    'user_agent'   => request()->header('User-Agent'),
+                ])
+                ->log("{$user->name} marked job post {$jobPost->Position} as Unoccupied.");
+        }
+
 
         return response()->json([
             'message' => 'Status updated successfully.',
@@ -167,7 +190,34 @@ class JobBatchesRspController extends Controller
     public function destroy($id)
     {
         $jobBatch = JobBatchesRsp::findOrFail($id);
+
+        $jobData = [
+            'id'        => $jobBatch->id,
+            'position'  => $jobBatch->Position ?? null,
+            'item_no'   => $jobBatch->ItemNo ?? null,
+            'office'    => $jobBatch->Office ?? null,
+            'page_no'   => $jobBatch->PageNo ?? null,
+            'status'    => $jobBatch->status ?? null,
+        ];
+
         $jobBatch->delete();
+
+
+        $user = Auth::user();
+
+        if ($user instanceof \App\Models\User) {
+            activity('Delete')
+                ->causedBy($user)
+                ->performedOn($jobBatch)
+                ->withProperties([
+                    'name'   => $user->name,
+                    'username'     => $user->username,
+                    'deleted_job'  => $jobData,         // job post details before delete
+                    'ip'           => request()->ip(),
+                    'user_agent'   => request()->header('User-Agent'),
+                ])
+                ->log("{$user->name} deleted job post ({$jobBatch->Position}).");
+        }
 
         return response()->json([
             'message' => 'deleted successfully',
@@ -206,11 +256,6 @@ class JobBatchesRspController extends Controller
                     'image_path' => $employeeJson['User'][0]['Pics'] ?? $employeeJson['User'][0]['image_path'] ?? null,
                 ];
             }
-
-            // Fetch ranking from rating_score
-            // $rating = rating_score::where('nPersonalInfo_id', $submission->nPersonalInfo_id)
-            //     ->where('job_batches_rsp_id', $id)
-            //     ->first();
 
             // Generate image URL
             $imageUrl = null;
@@ -434,6 +479,28 @@ class JobBatchesRspController extends Controller
 
         $plantilla->save();
 
+        // Log activity for creating a job post
+        $user = Auth::user();
+
+        if ($user instanceof \App\Models\User) {
+            activity('Create')
+                ->causedBy($user)
+                ->performedOn($jobBatch)
+                ->withProperties([
+                    'name' => $user->name,
+                    'username' => $user->username,
+                    'job_post_id' => $jobBatch->id,
+                    'position' => $jobBatch->Position ?? null,
+                    'item_no' => $jobBatch->ItemNo ?? null,
+                    'page_no' => $jobBatch->PageNo ?? null,
+                    'salary_grade' => $jobBatch->SalaryGrade ?? null,
+                    'ip' => request()->ip(),
+                    'user_agent' => request()->header('User-Agent'),
+                ])
+                ->log("{$user->name} created a new job post for position {$jobBatch->Position}.");
+        }
+
+
         return response()->json([
             'status' => 'success',
             'message' => 'Job post processed successfully',
@@ -521,6 +588,20 @@ class JobBatchesRspController extends Controller
 
         $plantilla->save();
 
+        $user = Auth::user();
+        activity('Update')
+            ->causedBy($user)
+            ->performedOn($jobBatch)
+            ->withProperties([
+                'name' => $user->name ?? null,
+                'username' => $user->username ?? null,
+                'job_post_id' => $jobBatch->id,
+                'updated_fields' => $jobValidated,
+                'criteria_updated' => $criteriaValidated ?? null,
+                'file_uploaded' => $request->hasFile('fileUpload') ? $fileName : 'No file uploaded',
+            ])
+            ->log("{$user->name} Update  the job post for position {$jobBatch->Position}.");
+
         return response()->json([
             'status' => 'success',
             'message' => 'Job post updated successfully',
@@ -598,6 +679,21 @@ class JobBatchesRspController extends Controller
             'ItemNo' => $jobValidated['ItemNo'] ?? null,
             'fileUpload' => $filePath,
         ]);
+
+        $user = Auth::user();
+        activity('Republished')
+            ->causedBy($user)
+            ->performedOn($jobBatch)
+            ->withProperties([
+                'name' => $user->name,
+                'username' => $user->username,
+                'new_job_post_id' => $jobBatch->id,
+                'old_job_post_id' => $jobValidated['old_job_id'],
+                'criteria' => $criteriaValidated,
+                'file_uploaded' => $fileName,
+            ])
+            // ->log('Republished a job post');
+            ->log("{$user->name} Republished the job post for position {$jobBatch->Position}.");
 
         // ✅ Step 8: Return response
         return response()->json([
